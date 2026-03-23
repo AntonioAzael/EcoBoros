@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ECOBOROS - Control de Calidad</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-10px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        .animate-slide {
+            animation: slideIn 0.3s ease-out forwards;
+        }
+        
+        .status-pending {
+            background-color: #fef3c7;
+            color: #d97706;
+            border-left: 3px solid #f59e0b;
+        }
+        
+        .status-approved {
+            background-color: #dcfce7;
+            color: #15803d;
+            border-left: 3px solid #22c55e;
+        }
+        
+        .status-rejected {
+            background-color: #fee2e2;
+            color: #dc2626;
+            border-left: 3px solid #ef4444;
+        }
+        
+        .status-review {
+            background-color: #e0e7ff;
+            color: #4f46e5;
+            border-left: 3px solid #6366f1;
+        }
+        
+        .modal-enter {
+            animation: fadeIn 0.2s ease-out;
+        }
+        
+        .badge-calidad {
+            background: linear-gradient(135deg, #1a2b4b 0%, #2d4563 100%);
+        }
+        
+        .comment-card:hover {
+            transform: translateX(4px);
+            transition: transform 0.2s ease;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 font-sans min-h-screen text-slate-800">
+
+    <!-- Header - Mismo estilo que figma.html -->
+    <div class="bg-[#1a2b4b] sticky top-0 z-20 shadow-md">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 py-4">
+                <div class="flex items-center">
+                    <img src="Logo.png" alt="ECOBOROS Logo" class="h-14 w-auto object-contain drop-shadow-sm">
+                </div>
+                <div class="flex items-center gap-6">
+                    <div class="flex items-center gap-4 border-l-2 border-slate-600 pl-4">
+                        <div class="text-right">
+                            <p class="text-sm font-bold text-white" id="user-name-display">Control Calidad</p>
+                            <p class="text-xs text-[#78C043] font-medium flex items-center justify-end gap-1">
+                                <span class="w-2 h-2 rounded-full bg-[#78C043] animate-pulse"></span>
+                                <span id="user-role-display">Certificación de Materiales</span>
+                            </p>
+                        </div>
+                        <div id="user-avatar" class="w-12 h-12 rounded-full bg-white text-[#1a2b4b] flex items-center justify-center font-bold text-lg shadow-sm cursor-pointer border-2 border-[#78C043] transition-colors">
+                            CC
+                        </div>
+                        <button onclick="logout()" class="text-white/80 hover:text-white hover:bg-white/20 px-4 py-2 rounded-xl transition-all flex items-center gap-2 text-sm font-medium">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                            </svg>
+                            Salir
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contenido Principal - Control de Calidad -->
+    <div class="max-w-7xl mx-auto px-6 py-8">
+        <!-- Estadísticas Rápidas -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 animate-fade-in">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-slate-500 text-sm font-medium">Pendientes</p>
+                        <p class="text-3xl font-bold text-[#1a2b4b]" id="pending-count">0</p>
+                    </div>
+                    <div class="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
+                        <span class="text-2xl">⏳</span>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 animate-fade-in" style="animation-delay: 50ms">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-slate-500 text-sm font-medium">En Revisión</p>
+                        <p class="text-3xl font-bold text-[#1a2b4b]" id="review-count">0</p>
+                    </div>
+                    <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                        <span class="text-2xl">🔍</span>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 animate-fade-in" style="animation-delay: 100ms">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-slate-500 text-sm font-medium">Aprobados</p>
+                        <p class="text-3xl font-bold text-[#1a2b4b]" id="approved-count">0</p>
+                    </div>
+                    <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                        <span class="text-2xl">✅</span>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 animate-fade-in" style="animation-delay: 150ms">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-slate-500 text-sm font-medium">Rechazados</p>
+                        <p class="text-3xl font-bold text-[#1a2b4b]" id="rejected-count">0</p>
+                    </div>
+                    <div class="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
+                        <span class="text-2xl">❌</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs de Navegación -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 mb-6">
+            <div class="flex border-b border-slate-100">
+                <button onclick="switchTab('pending')" id="tab-pending" class="px-6 py-4 text-sm font-bold transition-all relative">
+                    <span class="flex items-center gap-2">
+                        <span>⏳</span> Pendientes de Revisión
+                    </span>
+                    <span id="pending-badge" class="absolute top-2 right-2 bg-amber-100 text-amber-700 text-xs px-2 py-0.5 rounded-full hidden"></span>
+                </button>
+                <button onclick="switchTab('review')" id="tab-review" class="px-6 py-4 text-sm font-bold text-slate-500 hover:text-slate-700 transition-all relative">
+                    <span class="flex items-center gap-2">
+                        <span>🔍</span> En Revisión
+                    </span>
+                </button>
+                <button onclick="switchTab('approved')" id="tab-approved" class="px-6 py-4 text-sm font-bold text-slate-500 hover:text-slate-700 transition-all">
+                    <span class="flex items-center gap-2">
+                        <span>✅</span> Aprobados
+                    </span>
+                </button>
+                <button onclick="switchTab('rejected')" id="tab-rejected" class="px-6 py-4 text-sm font-bold text-slate-500 hover:text-slate-700 transition-all">
+                    <span class="flex items-center gap-2">
+                        <span>❌</span> Rechazados
+                    </span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Lista de Publicaciones -->
+        <div id="publications-list" class="space-y-4">
+            <!-- Las publicaciones se cargarán dinámicamente -->
+        </div>
+
+        <!-- Mensaje sin publicaciones -->
+        <div id="no-publications" class="hidden flex-col items-center justify-center py-20 text-center bg-white rounded-2xl border border-slate-100">
+            <div class="bg-slate-50 w-20 h-20 rounded-full flex items-center justify-center mb-4">
+                <span class="text-3xl">📋</span>
+            </div>
+            <h3 class="text-xl font-bold text-[#1a2b4b] mb-2">No hay publicaciones</h3>
+            <p class="text-slate-500">No hay publicaciones en esta categoría</p>
+        </div>
+    </div>
+
+    <!-- Modal de Revisión Detallada -->
+    <div id="review-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-3xl mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="bg-[#1a2b4b] p-6 rounded-t-3xl flex justify-between items-center sticky top-0">
+                <h2 class="text-white text-xl font-bold flex items-center gap-3">
+                    <span class="bg-white/20 p-2 rounded-lg">🔍</span>
+                    Revisión de Material
+                </h2>
+                <button onclick="closeModal()" class="text-white/70 hover:text-white hover:bg-white/20 rounded-full p-2 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="p-6" id="modal-content">
+                <!-- Contenido dinámico del modal -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Datos de publicaciones con estados
+        let publications = [
+            { id: 1, title: "Bidones HDPE Tricapa", category: "Plásticos", location: "Otay Industrial", qty: "850 Pzas", weightKg: 850, price: "$ 15.00 / pza", date: "2023-10-01", status: "pending", company: "Reciclados del Norte", companyEmail: "contacto@recicladosnorte.com", description: "Bidones industriales de HDPE de alta densidad, limpios y listos para reciclaje. Material de primera calidad.", images: ["🛢️"], submittedBy: "empresa@ecoboros.com", submittedDate: "2024-03-15", comments: [] },
+            { id: 2, title: "Recortes de Aluminio 6061", category: "Metales", location: "El Florido", qty: "2.5 Ton", weightKg: 2500, price: "$ 28.50 / kg", date: "2023-10-05", status: "review", company: "Aluminios del Pacífico", companyEmail: "ventas@aluminios.com", description: "Recortes de aluminio grado 6061, libres de impurezas. Ideal para fundición.", images: ["🔩"], submittedBy: "empresa@ecoboros.com", submittedDate: "2024-03-14", comments: [{ user: "Control Calidad", text: "Verificar pureza del material", date: "2024-03-14", type: "pending" }] },
+            { id: 3, title: "Pallets de Pino (Reparables)", category: "Maderas", location: "Pacifico", qty: "200 Uds", weightKg: 4000, price: "$ 45.00 / ud", date: "2023-09-28", status: "approved", company: "Maderas del Norte", companyEmail: "info@maderasnorte.com", description: "Pallets de pino en buen estado, reparables. Ideal para logística.", images: ["🪵"], submittedBy: "empresa@ecoboros.com", submittedDate: "2024-03-10", comments: [{ user: "Control Calidad", text: "Material aprobado - Cumple con estándares", date: "2024-03-12", type: "approved" }] },
+            { id: 4, title: "Pacas de Cartón Corrugado", category: "Cartón", location: "La Mesa", qty: "5 Ton", weightKg: 5000, price: "$ 3.20 / kg", date: "2023-10-10", status: "rejected", company: "Cartones del Valle", companyEmail: "ventas@cartonesvalle.com", description: "Cartón corrugado mezclado con impurezas.", images: ["📦"], submittedBy: "empresa@ecoboros.com", submittedDate: "2024-03-05", comments: [{ user: "Control Calidad", text: "Rechazado - Contiene materiales no reciclables mezclados", date: "2024-03-07", type: "rejected" }] },
+            { id: 5, title: "Cobre de Primera (Pelado)", category: "Metales", location: "Otay", qty: "300 kg", weightKg: 300, price: "$ 140.00 / kg", date: "2023-10-15", status: "pending", company: "Metales del Norte", companyEmail: "compras@metalesnorte.com", description: "Cobre de primera calidad, 99.9% pureza. Material pelado y listo.", images: ["🔩"], submittedBy: "empresa@ecoboros.com", submittedDate: "2024-03-16", comments: [] },
+            { id: 6, title: "Botellas PET Cristal", category: "Plásticos", location: "Rosarito", qty: "1 Ton", weightKg: 1000, price: "$ 8.00 / kg", date: "2023-10-02", status: "review", company: "Plásticos Reciclados", companyEmail: "info@plasticos.com", description: "Botellas PET cristal, limpias y clasificadas.", images: ["🛢️"], submittedBy: "empresa@ecoboros.com", submittedDate: "2024-03-13", comments: [{ user: "Control Calidad", text: "Solicitar certificado de origen", date: "2024-03-14", type: "pending" }] }
+        ];
+
+        let currentTab = "pending";
+        let currentPublication = null;
+
+        // Colores por categoría
+        const categoryStyles = {
+            "Metales": { color: "bg-slate-600", icon: "🔩" },
+            "Plásticos": { color: "bg-blue-500", icon: "🛢️" },
+            "Cartón": { color: "bg-amber-500", icon: "📦" },
+            "Papel": { color: "bg-slate-400", icon: "📄" },
+            "Maderas": { color: "bg-[#795548]", icon: "🪵" },
+            "Electrónicos": { color: "bg-orange-500", icon: "🔌" }
+        };
+
+        // Cargar datos del usuario
+        function loadUserData() {
+            const storedUser = localStorage.getItem('ecoboros_user') || sessionStorage.getItem('ecoboros_user');
+            if (storedUser) {
+                const user = JSON.parse(storedUser);
+                if (user.role !== 'calidad') {
+                    window.location.href = 'figma.html';
+                }
+                document.getElementById('user-name-display').textContent = user.name;
+                const avatar = document.getElementById('user-avatar');
+                avatar.textContent = user.name.split(' ').map(n => n[0]).join('').substring(0, 2);
+            } else {
+                window.location.href = 'index.html';
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('ecoboros_user');
+            sessionStorage.removeItem('ecoboros_user');
+            window.location.href = 'index.html';
+        }
+
+        // Actualizar contadores
+        function updateCounters() {
+            document.getElementById('pending-count').textContent = publications.filter(p => p.status === 'pending').length;
+            document.getElementById('review-count').textContent = publications.filter(p => p.status === 'review').length;
+            document.getElementById('approved-count').textContent = publications.filter(p => p.status === 'approved').length;
+            document.getElementById('rejected-count').textContent = publications.filter(p => p.status === 'rejected').length;
+            
+            const pendingBadge = document.getElementById('pending-badge');
+            const pendingCount = publications.filter(p => p.status === 'pending').length;
+            if (pendingCount > 0) {
+                pendingBadge.textContent = pendingCount;
+                pendingBadge.classList.remove('hidden');
+            } else {
+                pendingBadge.classList.add('hidden');
+            }
+        }
+
+        // Cambiar tab
+        function switchTab(tab) {
+            currentTab = tab;
+            
+            // Actualizar estilos de tabs
+            const tabs = ['pending', 'review', 'approved', 'rejected'];
+            tabs.forEach(t => {
+                const btn = document.getElementById(`tab-${t}`);
+                if (t === tab) {
+                    btn.classList.add('text-[#1a2b4b]', 'border-b-2', 'border-[#78C043]');
+                    btn.classList.remove('text-slate-500');
+                } else {
+                    btn.classList.remove('text-[#1a2b4b]', 'border-b-2', 'border-[#78C043]');
+                    btn.classList.add('text-slate-500');
+                }
+            });
+            
+            renderPublications();
+        }
+
+        // Renderizar publicaciones según el tab activo
+        function renderPublications() {
+            const filtered = publications.filter(p => p.status === currentTab);
+            const container = document.getElementById('publications-list');
+            const noResults = document.getElementById('no-publications');
+            
+            if (filtered.length === 0) {
+                container.innerHTML = '';
+                noResults.classList.remove('hidden');
+                return;
+            }
+            
+            noResults.classList.add('hidden');
+            
+            container.innerHTML = filtered.map((pub, index) => {
+                const style = categoryStyles[pub.category] || { color: "bg-gray-500", icon: "❓" };
+                let statusClass = '';
+                let statusText = '';
+                let statusIcon = '';
+                
+                switch(pub.status) {
+                    case 'pending':
+                        statusClass = 'status-pending';
+                        statusText = 'Pendiente de Revisión';
+                        statusIcon = '⏳';
+                        break;
+                    case 'review':
+                        statusClass = 'status-review';
+                        statusText = 'En Revisión';
+                        statusIcon = '🔍';
+                        break;
+                    case 'approved':
+                        statusClass = 'status-approved';
+                        statusText = 'Aprobado';
+                        statusIcon = '✅';
+                        break;
+                    case 'rejected':
+                        statusClass = 'status-rejected';
+                        statusText = 'Rechazado';
+                        statusIcon = '❌';
+                        break;
+                }
+                
+                return `
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 hover:shadow-md transition-all animate-fade-in" style="animation-delay: ${index * 50}ms">
+                        <div class="flex flex-col md:flex-row justify-between gap-4">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-3 mb-3">
+                                    <span class="${style.color} text-white text-xs font-black px-3 py-1.5 rounded-full">${pub.category}</span>
+                                    <div class="flex items-center gap-1 px-3 py-1.5 rounded-full ${statusClass}">
+                                        <span>${statusIcon}</span>
+                                        <span class="text-xs font-medium">${statusText}</span>
+                                    </div>
+                                </div>
+                                <h3 class="text-xl font-bold text-[#1a2b4b] mb-2">${pub.title}</h3>
+                                <p class="text-slate-500 text-sm mb-3 flex items-center gap-2">
+                                    <span>📍 ${pub.location}</span>
+                                    <span>•</span>
+                                    <span>🏢 ${pub.company}</span>
+                                    <span>•</span>
+                                    <span>📅 ${pub.submittedDate}</span>
+                                </p>
+                                <p class="text-slate-600 text-sm line-clamp-2 mb-3">${pub.description}</p>
+                                <div class="flex gap-4 text-sm">
+                                    <span class="text-slate-500">📦 ${pub.qty}</span>
+                                    <span class="text-slate-500">⚖️ ${pub.weightKg} kg</span>
+                                    <span class="text-[#78C043] font-bold">${pub.price}</span>
+                                </div>
+                            </div>
+                            <div class="flex flex-col gap-2">
+                                <button onclick="openReviewModal(${pub.id})" class="px-5 py-2.5 bg-[#1a2b4b] text-white rounded-xl font-medium hover:bg-[#2d4563] transition-all whitespace-nowrap">
+                                    ${pub.status === 'pending' ? '🔍 Revisar' : (pub.status === 'review' ? '✏️ Continuar Revisión' : '📋 Ver Detalles')}
+                                </button>
+                                ${pub.status === 'pending' ? `
+                                    <button onclick="quickAction(${pub.id}, 'review')" class="px-5 py-2.5 bg-blue-50 text-blue-700 rounded-xl font-medium hover:bg-blue-100 transition-all text-sm">
+                                        Tomar en Revisión
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Abrir modal de revisión
+        function openReviewModal(id) {
+            currentPublication = publications.find(p => p.id === id);
+            const modal = document.getElementById('review-modal');
+            const modalContent = document.getElementById('modal-content');
+            const style = categoryStyles[currentPublication.category] || { color: "bg-gray-500", icon: "❓" };
+            
+            modalContent.innerHTML = `
+                <div class="space-y-6">
+                    <!-- Información básica -->
+                    <div class="bg-slate-50 rounded-xl p-5">
+                        <div class="flex items-center gap-3 mb-4">
+                            <span class="text-4xl">${style.icon}</span>
+                            <div>
+                                <h3 class="text-2xl font-bold text-[#1a2b4b]">${currentPublication.title}</h3>
+                                <p class="text-slate-500">${currentPublication.category} • ${currentPublication.location}</p>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+                            <div><span class="text-slate-500 text-xs">Empresa</span><p class="font-medium">${currentPublication.company}</p></div>
+                            <div><span class="text-slate-500 text-xs">Contacto</span><p class="font-medium">${currentPublication.companyEmail}</p></div>
+                            <div><span class="text-slate-500 text-xs">Cantidad</span><p class="font-medium">${currentPublication.qty}</p></div>
+                            <div><span class="text-slate-500 text-xs">Peso Total</span><p class="font-medium">${currentPublication.weightKg} kg</p></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Descripción -->
+                    <div class="border border-slate-100 rounded-xl p-5">
+                        <h4 class="font-bold text-[#1a2b4b] mb-2">📝 Descripción del Material</h4>
+                        <p class="text-slate-600">${currentPublication.description}</p>
+                    </div>
+                    
+                    <!-- Historial de Comentarios -->
+                    <div class="border border-slate-100 rounded-xl p-5">
+                        <h4 class="font-bold text-[#1a2b4b] mb-3">💬 Retroalimentación</h4>
+                        <div id="comments-list" class="space-y-3 mb-4 max-h-48 overflow-y-auto">
+                            ${currentPublication.comments.length > 0 ? currentPublication.comments.map(comment => `
+                                <div class="comment-card p-3 bg-slate-50 rounded-xl">
+                                    <div class="flex justify-between items-start">
+                                        <span class="font-medium text-sm text-[#1a2b4b]">${comment.user}</span>
+                                        <span class="text-xs text-slate-400">${comment.date}</span>
+                                    </div>
+                                    <p class="text-slate-600 text-sm mt-1">${comment.text}</p>
+                                </div>
+                            `).join('') : '<p class="text-slate-400 text-sm">Sin comentarios aún</p>'}
+                        </div>
+                        <textarea id="comment-text" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:border-[#78C043] focus:ring-2 focus:ring-[#78C043]/20 outline-none transition-all" rows="2" placeholder="Escribe tu retroalimentación..."></textarea>
+                    </div>
+                    
+                    <!-- Acciones -->
+                    <div class="flex flex-wrap gap-3 justify-end border-t border-slate-100 pt-5">
+                        ${currentPublication.status !== 'approved' && currentPublication.status !== 'rejected' ? `
+                            <button onclick="addCommentAndAction(${currentPublication.id}, 'review')" class="px-6 py-3 bg-blue-500 text-white rounded-xl font-bold hover:bg-blue-600 transition-all">
+                                🔍 Marcar en Revisión
+                            </button>
+                            <button onclick="addCommentAndAction(${currentPublication.id}, 'approved')" class="px-6 py-3 bg-[#78C043] text-white rounded-xl font-bold hover:bg-[#66a338] transition-all">
+                                ✅ Aprobar Publicación
+                            </button>
+                            <button onclick="addCommentAndAction(${currentPublication.id}, 'rejected')" class="px-6 py-3 bg-red-500 text-white rounded-xl font-bold hover:bg-red-600 transition-all">
+                                ❌ Rechazar Publicación
+                            </button>
+                        ` : `
+                            <button onclick="closeModal()" class="px-6 py-3 bg-slate-200 text-slate-700 rounded-xl font-bold hover:bg-slate-300 transition-all">
+                                Cerrar
+                            </button>
+                        `}
+                        ${currentPublication.status !== 'approved' && currentPublication.status !== 'rejected' ? `
+                            <button onclick="closeModal()" class="px-6 py-3 bg-slate-200 text-slate-700 rounded-xl font-bold hover:bg-slate-300 transition-all">
+                                Cancelar
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+            
+            modal.classList.remove('hidden');
+            document.body.classList.add('overflow-hidden');
+        }
+        
+        // Agregar comentario y realizar acción
+        function addCommentAndAction(id, action) {
+            const commentText = document.getElementById('comment-text')?.value.trim();
+            const publication = publications.find(p => p.id === id);
+            
+            let statusText = '';
+            let actionText = '';
+            
+            switch(action) {
+                case 'approved':
+                    statusText = 'aprobada';
+                    actionText = '✅ Aprobada';
+                    break;
+                case 'rejected':
+                    statusText = 'rechazada';
+                    actionText = '❌ Rechazada';
+                    break;
+                case 'review':
+                    statusText = 'en revisión';
+                    actionText = '🔍 Marcada en revisión';
+                    break;
+            }
+            
+            if (commentText) {
+                publication.comments.push({
+                    user: 'Control Calidad',
+                    text: commentText,
+                    date: new Date().toISOString().split('T')[0],
+                    type: action
+                });
+            }
+            
+            if (action === 'review' && publication.status === 'pending') {
+                publication.status = 'review';
+            } else if (action === 'approved') {
+                publication.status = 'approved';
+                publication.comments.push({
+                    user: 'Control Calidad',
+                    text: `Material ${statusText} - Cumple con los estándares de calidad`,
+                    date: new Date().toISOString().split('T')[0],
+                    type: action
+                });
+            } else if (action === 'rejected') {
+                publication.status = 'rejected';
+                if (!commentText) {
+                    publication.comments.push({
+                        user: 'Control Calidad',
+                        text: `Material rechazado - No cumple con los estándares requeridos`,
+                        date: new Date().toISOString().split('T')[0],
+                        type: action
+                    });
+                }
+            }
+            
+            // Mostrar notificación
+            showNotification(`📋 Publicación ${statusText} correctamente`, 'success');
+            
+            // Actualizar vistas
+            updateCounters();
+            renderPublications();
+            closeModal();
+        }
+        
+        // Acción rápida
+        function quickAction(id, action) {
+            const publication = publications.find(p => p.id === id);
+            if (action === 'review' && publication.status === 'pending') {
+                publication.status = 'review';
+                publication.comments.push({
+                    user: 'Control Calidad',
+                    text: 'Material en proceso de revisión',
+                    date: new Date().toISOString().split('T')[0],
+                    type: 'review'
+                });
+                showNotification('📋 Publicación marcada en revisión', 'success');
+                updateCounters();
+                renderPublications();
+            }
+        }
+        
+        function closeModal() {
+            const modal = document.getElementById('review-modal');
+            modal.classList.add('hidden');
+            document.body.classList.remove('overflow-hidden');
+        }
+        
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `fixed bottom-6 right-6 z-50 px-6 py-3 rounded-xl shadow-lg text-white font-medium animate-fade-in ${type === 'success' ? 'bg-[#78C043]' : 'bg-red-500'}`;
+            notification.innerHTML = message;
+            document.body.appendChild(notification);
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+        
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', () => {
+            loadUserData();
+            updateCounters();
+            renderPublications();
+        });
+        
+        // Cerrar modal con Escape
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeModal();
+            }
+        });
+    </script>
+</body>
+</html>

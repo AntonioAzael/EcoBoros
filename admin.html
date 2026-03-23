@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ECOBOROS | Panel de Administración</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
+        .animate-fade-up { animation: fadeInUp 0.5s ease-out forwards; }
+        .animate-slide { animation: slideIn 0.4s ease-out forwards; }
+        
+        .stat-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+        }
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .product-card, .company-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .product-card:hover, .company-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .tab-active {
+            border-bottom: 2px solid #78C043;
+            color: #1e293b;
+        }
+        
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 100px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .modal-overlay {
+            backdrop-filter: blur(4px);
+        }
+        
+        .dropdown-menu {
+            transition: all 0.2s ease;
+        }
+        
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #78C043; }
+    </style>
+</head>
+<body class="bg-[#f8fafc] font-sans antialiased">
+
+    <!-- Header - MISMO ESTILO QUE figma.html (bg-[#1a2b4b]) -->
+    <div class="bg-[#1a2b4b] sticky top-0 z-30 shadow-md">
+        <div class="max-w-[1400px] mx-auto px-6">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center gap-4">
+                    <img src="Logo.png" alt="ECOBOROS" class="h-14 w-auto object-contain drop-shadow-sm" onerror="this.src='https://placehold.co/120x48/1a2b4b/78C043?text=ECOBOROS'">
+                    <div class="h-8 w-px bg-slate-600"></div>
+                    <span class="text-sm font-medium text-white/70">Panel de Administración</span>
+                </div>
+                <div class="flex items-center gap-6">
+                    <div class="flex items-center gap-4">
+                        <div class="text-right">
+                            <p class="text-sm font-bold text-white" id="admin-name">Administrador</p>
+                            <p class="text-xs text-[#78C043] font-medium flex items-center justify-end gap-1">
+                                <span class="w-2 h-2 rounded-full bg-[#78C043] animate-pulse"></span>
+                                Supervisor del Sistema
+                            </p>
+                        </div>
+                        <div class="w-12 h-12 rounded-full bg-white text-[#1a2b4b] flex items-center justify-center font-bold text-lg shadow-sm border-2 border-[#78C043] transition-colors">
+                            AD
+                        </div>
+                        <button onclick="logout()" class="text-white/80 hover:text-white hover:bg-white/20 px-4 py-2 rounded-xl transition-all flex items-center gap-2 text-sm font-medium">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                            </svg>
+                            Salir
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Menú de Navegación Secundario (fondo blanco, debajo del header) -->
+    <div class="bg-white border-b border-slate-200 sticky top-[72px] z-20">
+        <div class="max-w-[1400px] mx-auto px-6">
+            <div class="flex gap-1">
+                <button onclick="switchView('dashboard')" id="nav-dashboard" class="px-5 py-3 text-sm font-medium text-slate-600 hover:text-[#1a2b4b] transition-all flex items-center gap-2 border-b-2 border-transparent hover:border-[#78C043]">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                    Dashboard
+                </button>
+                <button onclick="switchView('publications')" id="nav-publications" class="px-5 py-3 text-sm font-medium text-slate-600 hover:text-[#1a2b4b] transition-all flex items-center gap-2 border-b-2 border-transparent hover:border-[#78C043]">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                    Publicaciones
+                </button>
+                <button onclick="switchView('companies')" id="nav-companies" class="px-5 py-3 text-sm font-medium text-slate-600 hover:text-[#1a2b4b] transition-all flex items-center gap-2 border-b-2 border-transparent hover:border-[#78C043]">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                    Empresas
+                </button>
+                <button onclick="switchView('transactions')" id="nav-transactions" class="px-5 py-3 text-sm font-medium text-slate-600 hover:text-[#1a2b4b] transition-all flex items-center gap-2 border-b-2 border-transparent hover:border-[#78C043]">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+                    Movimientos
+                </button>
+                <button onclick="switchView('reports')" id="nav-reports" class="px-5 py-3 text-sm font-medium text-slate-600 hover:text-[#1a2b4b] transition-all flex items-center gap-2 border-b-2 border-transparent hover:border-[#78C043] relative">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                    Reportes
+                    <span id="reports-badge" class="absolute -top-1 right-0 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full hidden">0</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- El resto del contenido se mantiene igual que el código anterior... -->
+    <!-- (Continuación con el mismo contenido de dashboard, publicaciones, empresas, etc.) -->
+    
+    <div class="max-w-[1400px] mx-auto px-6 py-8">
+        <!-- DASHBOARD -->
+        <div id="dashboard-view" class="space-y-6">
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-5">
+                <div class="stat-card bg-white rounded-2xl p-5 border border-slate-100 shadow-sm" onclick="switchView('companies')">
+                    <div class="flex justify-between items-start">
+                        <div><p class="text-slate-500 text-sm font-medium">Empresas</p><p class="text-3xl font-bold text-slate-800 mt-1" id="stat-companies">0</p><p class="text-xs text-green-600 mt-1">+2 este mes</p></div>
+                        <div class="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center"><svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg></div>
+                    </div>
+                </div>
+                <div class="stat-card bg-white rounded-2xl p-5 border border-slate-100 shadow-sm" onclick="switchView('publications')">
+                    <div class="flex justify-between items-start">
+                        <div><p class="text-slate-500 text-sm font-medium">Publicaciones</p><p class="text-3xl font-bold text-slate-800 mt-1" id="stat-publications">0</p><p class="text-xs text-amber-600 mt-1" id="stat-pending-badge">0 pendientes</p></div>
+                        <div class="w-12 h-12 bg-amber-50 rounded-xl flex items-center justify-center"><svg class="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg></div>
+                    </div>
+                </div>
+                <div class="stat-card bg-white rounded-2xl p-5 border border-slate-100 shadow-sm">
+                    <div class="flex justify-between items-start">
+                        <div><p class="text-slate-500 text-sm font-medium">Transacciones</p><p class="text-3xl font-bold text-slate-800 mt-1" id="stat-transactions">0</p><p class="text-xs text-green-600 mt-1">Completadas</p></div>
+                        <div class="w-12 h-12 bg-green-50 rounded-xl flex items-center justify-center"><svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg></div>
+                    </div>
+                </div>
+                <div class="stat-card bg-white rounded-2xl p-5 border border-slate-100 shadow-sm">
+                    <div class="flex justify-between items-start">
+                        <div><p class="text-slate-500 text-sm font-medium">Volumen Total</p><p class="text-3xl font-bold text-slate-800 mt-1" id="stat-volume">0</p><p class="text-xs text-slate-500 mt-1">kg reciclados</p></div>
+                        <div class="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center"><svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"></path></svg></div>
+                    </div>
+                </div>
+                <div class="stat-card bg-white rounded-2xl p-5 border border-slate-100 shadow-sm" onclick="switchView('reports')">
+                    <div class="flex justify-between items-start">
+                        <div><p class="text-slate-500 text-sm font-medium">Reportes</p><p class="text-3xl font-bold text-slate-800 mt-1" id="stat-reports">0</p><p class="text-xs text-red-600 mt-1">activos</p></div>
+                        <div class="w-12 h-12 bg-red-50 rounded-xl flex items-center justify-center"><svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gráficos y Actividad -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="lg:col-span-2 bg-white rounded-2xl p-6 border border-slate-100 shadow-sm">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="font-bold text-slate-800">📊 Publicaciones por Categoría</h3>
+                    </div>
+                    <canvas id="categoryChart" height="250"></canvas>
+                </div>
+                <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm">
+                    <h3 class="font-bold text-slate-800 mb-4">🏆 Empresas Destacadas</h3>
+                    <div id="top-companies" class="space-y-3"></div>
+                </div>
+            </div>
+
+            <!-- Publicaciones Recientes -->
+            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+                    <h3 class="font-bold text-slate-800">📦 Publicaciones Recientes</h3>
+                    <button onclick="switchView('publications')" class="text-sm text-[#78C043] font-medium hover:underline">Ver todas →</button>
+                </div>
+                <div id="recent-publications" class="divide-y divide-slate-100"></div>
+            </div>
+
+            <!-- Movimientos Recientes -->
+            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+                    <h3 class="font-bold text-slate-800">🔄 Movimientos Recientes</h3>
+                    <button onclick="switchView('transactions')" class="text-sm text-[#78C043] font-medium hover:underline">Ver historial →</button>
+                </div>
+                <div id="recent-transactions" class="divide-y divide-slate-100"></div>
+            </div>
+        </div>
+
+        <!-- PUBLICACIONES (Grid como figma.html) -->
+        <div id="publications-view" class="hidden space-y-6">
+            <div class="flex justify-between items-center">
+                <h2 class="text-2xl font-bold text-slate-800">📦 Gestión de Publicaciones</h2>
+                <button onclick="openCreatePublicationModal()" class="flex items-center gap-2 px-5 py-2.5 bg-[#78C043] text-white rounded-xl font-medium hover:bg-[#66a338] transition-all shadow-sm">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    Nueva Publicación
+                </button>
+            </div>
+
+            <!-- Filtros -->
+            <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm">
+                <div class="flex flex-wrap gap-3">
+                    <div class="flex-1 min-w-[200px] relative">
+                        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        <input type="text" id="pub-search-input" onkeyup="filterPublications()" placeholder="Buscar por título, categoría o empresa..." class="w-full pl-9 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:border-[#78C043] focus:ring-2 focus:ring-[#78C043]/20 outline-none transition-all">
+                    </div>
+                    <select id="pub-category-select" onchange="filterPublications()" class="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:border-[#78C043] outline-none">
+                        <option value="all">Todas las categorías</option>
+                        <option value="Metales">🔩 Metales</option>
+                        <option value="Plásticos">🛢️ Plásticos</option>
+                        <option value="Cartón">📦 Cartón</option>
+                        <option value="Papel">📄 Papel</option>
+                        <option value="Maderas">🪵 Maderas</option>
+                        <option value="Electrónicos">🔌 Electrónicos</option>
+                    </select>
+                    <select id="pub-status-select" onchange="filterPublications()" class="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:border-[#78C043] outline-none">
+                        <option value="all">Todos los estados</option>
+                        <option value="pending">⏳ Pendiente</option>
+                        <option value="approved">✅ Aprobado</option>
+                        <option value="rejected">❌ Rechazado</option>
+                    </select>
+                    <button onclick="resetPublicationFilters()" class="px-5 py-2.5 bg-slate-100 text-slate-600 rounded-xl text-sm font-medium hover:bg-slate-200 transition-all">Limpiar</button>
+                </div>
+            </div>
+
+            <!-- Grid de publicaciones -->
+            <div id="publications-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+            <div id="no-publications-message" class="hidden text-center py-16 bg-white rounded-2xl border border-slate-100">
+                <div class="text-5xl mb-4">📭</div>
+                <p class="text-slate-500">No hay publicaciones que coincidan con los filtros</p>
+                <button onclick="resetPublicationFilters()" class="mt-4 text-[#78C043] font-medium hover:underline">Limpiar filtros</button>
+            </div>
+        </div>
+
+        <!-- EMPRESAS -->
+        <div id="companies-view" class="hidden space-y-6">
+            <div class="flex justify-between items-center">
+                <h2 class="text-2xl font-bold text-slate-800">🏢 Gestión de Empresas</h2>
+                <button onclick="openCreateCompanyModal()" class="flex items-center gap-2 px-5 py-2.5 bg-[#78C043] text-white rounded-xl font-medium hover:bg-[#66a338] transition-all shadow-sm">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    Registrar Empresa
+                </button>
+            </div>
+
+            <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm">
+                <div class="flex flex-wrap gap-3">
+                    <div class="flex-1 relative">
+                        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        <input type="text" id="company-search-input" onkeyup="filterCompanies()" placeholder="Buscar por nombre, RFC o correo..." class="w-full pl-9 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:border-[#78C043] outline-none">
+                    </div>
+                    <select id="company-status-select" onchange="filterCompanies()" class="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm">
+                        <option value="all">Todos los estados</option>
+                        <option value="active">Activas</option>
+                        <option value="suspended">Suspendidas</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="companies-grid" class="grid grid-cols-1 lg:grid-cols-2 gap-6"></div>
+            <div id="no-companies-message" class="hidden text-center py-16 bg-white rounded-2xl border border-slate-100">
+                <div class="text-5xl mb-4">🏢</div>
+                <p class="text-slate-500">No hay empresas registradas</p>
+            </div>
+        </div>
+
+        <!-- MOVIMIENTOS -->
+        <div id="transactions-view" class="hidden space-y-6">
+            <h2 class="text-2xl font-bold text-slate-800">💰 Historial de Movimientos</h2>
+            <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm">
+                <div class="flex flex-wrap gap-3">
+                    <div class="flex-1 relative">
+                        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        <input type="text" id="trans-search" onkeyup="filterTransactions()" placeholder="Buscar por empresa o material..." class="w-full pl-9 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm">
+                    </div>
+                    <input type="date" id="trans-date-from" onchange="filterTransactions()" class="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm">
+                    <input type="date" id="trans-date-to" onchange="filterTransactions()" class="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm">
+                </div>
+            </div>
+            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                <div id="transactions-list" class="divide-y divide-slate-100"></div>
+            </div>
+        </div>
+
+        <!-- REPORTES -->
+        <div id="reports-view" class="hidden space-y-6">
+            <h2 class="text-2xl font-bold text-slate-800">⚠️ Reportes y Conflictos</h2>
+            <div id="reports-list" class="space-y-4"></div>
+        </div>
+    </div>
+
+    <!-- Modales (igual que antes) -->
+    <div id="publication-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="sticky top-0 bg-white border-b border-slate-100 px-6 py-4 flex justify-between items-center">
+                <h3 class="text-xl font-bold text-slate-800" id="pub-modal-title">Nueva Publicación</h3>
+                <button onclick="closePublicationModal()" class="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
+            </div>
+            <div class="p-6">
+                <form id="publication-form" onsubmit="savePublication(event)">
+                    <input type="hidden" id="pub-id">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="col-span-2"><label class="block text-sm font-medium text-slate-700 mb-1">Título *</label><input type="text" id="pub-title" class="w-full p-3 border border-slate-200 rounded-xl focus:border-[#78C043] focus:ring-2 focus:ring-[#78C043]/20 outline-none" required></div>
+                        <div><label class="block text-sm font-medium text-slate-700 mb-1">Categoría *</label><select id="pub-category" class="w-full p-3 border border-slate-200 rounded-xl"><option value="Metales">🔩 Metales</option><option value="Plásticos">🛢️ Plásticos</option><option value="Cartón">📦 Cartón</option><option value="Papel">📄 Papel</option><option value="Maderas">🪵 Maderas</option><option value="Electrónicos">🔌 Electrónicos</option></select></div>
+                        <div><label class="block text-sm font-medium text-slate-700 mb-1">Ubicación *</label><input type="text" id="pub-location" class="w-full p-3 border border-slate-200 rounded-xl" required></div>
+                        <div><label class="block text-sm font-medium text-slate-700 mb-1">Cantidad *</label><input type="text" id="pub-qty" class="w-full p-3 border border-slate-200 rounded-xl" required></div>
+                        <div><label class="block text-sm font-medium text-slate-700 mb-1">Peso (kg) *</label><input type="number" id="pub-weight" class="w-full p-3 border border-slate-200 rounded-xl" required></div>
+                        <div><label class="block text-sm font-medium text-slate-700 mb-1">Precio *</label><input type="text" id="pub-price" class="w-full p-3 border border-slate-200 rounded-xl" required></div>
+                        <div><label class="block text-sm font-medium text-slate-700 mb-1">Estado</label><select id="pub-status" class="w-full p-3 border border-slate-200 rounded-xl"><option value="pending">⏳ Pendiente</option><option value="approved">✅ Aprobado</option><option value="rejected">❌ Rechazado</option></select></div>
+                        <div><label class="block text-sm font-medium text-slate-700 mb-1">Empresa *</label><input type="text" id="pub-company" class="w-full p-3 border border-slate-200 rounded-xl" required></div>
+                        <div class="col-span-2"><label class="block text-sm font-medium text-slate-700 mb-1">Descripción</label><textarea id="pub-description" rows="3" class="w-full p-3 border border-slate-200 rounded-xl"></textarea></div>
+                    </div>
+                    <div class="flex gap-3 mt-6"><button type="submit" class="flex-1 bg-[#78C043] text-white py-3 rounded-xl font-medium">Guardar</button><button type="button" onclick="closePublicationModal()" class="px-6 py-3 bg-slate-100 text-slate-700 rounded-xl font-medium">Cancelar</button></div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="company-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4">
+            <div class="border-b border-slate-100 px-6 py-4 flex justify-between items-center">
+                <h3 class="text-xl font-bold text-slate-800" id="company-modal-title">Registrar Empresa</h3>
+                <button onclick="closeCompanyModal()" class="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
+            </div>
+            <div class="p-6">
+                <form id="company-form" onsubmit="saveCompany(event)">
+                    <input type="hidden" id="company-id">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="col-span-2"><label class="block text-sm font-medium text-slate-700 mb-1">Nombre de la Empresa *</label><input type="text" id="company-name" class="w-full p-3 border border-slate-200 rounded-xl" required></div>
+                        <div><label class="block text-sm font-medium text-slate-700 mb-1">RFC *</label><input type="text" id="company-rfc" class="w-full p-3 border border-slate-200 rounded-xl" required></div>
+                        <div><label class="block text-sm font-medium text-slate-700 mb-1">Teléfono *</label><input type="tel" id="company-phone" class="w-full p-3 border border-slate-200 rounded-xl" required></div>
+                        <div class="col-span-2"><label class="block text-sm font-medium text-slate-700 mb-1">Correo Electrónico *</label><input type="email" id="company-email" class="w-full p-3 border border-slate-200 rounded-xl" required></div>
+                        <div class="col-span-2"><label class="block text-sm font-medium text-slate-700 mb-1">Dirección *</label><input type="text" id="company-address" class="w-full p-3 border border-slate-200 rounded-xl" required></div>
+                        <div><label class="block text-sm font-medium text-slate-700 mb-1">Estado</label><select id="company-status" class="w-full p-3 border border-slate-200 rounded-xl"><option value="active">Activo</option><option value="suspended">Suspendido</option></select></div>
+                    </div>
+                    <div class="flex gap-3 mt-6"><button type="submit" class="flex-1 bg-[#78C043] text-white py-3 rounded-xl font-medium">Guardar</button><button type="button" onclick="closeCompanyModal()" class="px-6 py-3 bg-slate-100 text-slate-700 rounded-xl font-medium">Cancelar</button></div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="confirm-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 text-center">
+            <div class="w-16 h-16 mx-auto bg-red-100 rounded-full flex items-center justify-center mb-4"><svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg></div>
+            <h3 class="text-xl font-bold text-slate-800 mb-2" id="confirm-title">Confirmar Acción</h3>
+            <p class="text-slate-500 mb-6" id="confirm-message">¿Estás seguro de realizar esta acción?</p>
+            <div class="flex gap-3"><button id="confirm-yes" class="flex-1 bg-red-500 text-white py-2.5 rounded-xl font-medium">Confirmar</button><button id="confirm-no" class="flex-1 bg-slate-100 text-slate-700 py-2.5 rounded-xl font-medium">Cancelar</button></div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== DATOS ====================
+        let companies = [
+            { id: 1, name: "Reciclados del Norte S.A. de C.V.", rfc: "RDN123456XYZ", phone: "(664) 123-4567", email: "contacto@recicladosnorte.com", address: "Av. Industrial 123, Otay, Tijuana", status: "active", createdAt: "2024-01-15", totalPurchases: 12, totalSpent: 45800, lastPurchase: "2024-03-15" },
+            { id: 2, name: "Aluminios del Pacífico S.A.", rfc: "ADP789012ABC", phone: "(664) 234-5678", email: "ventas@aluminios.com", address: "Blvd. Pacífico 456, El Florido", status: "active", createdAt: "2024-01-20", totalPurchases: 8, totalSpent: 32450, lastPurchase: "2024-03-14" },
+            { id: 3, name: "Maderas del Noroeste S.A.", rfc: "MDN345678DEF", phone: "(664) 345-6789", email: "info@maderasnoroeste.com", address: "Calle Roble 789, La Mesa", status: "active", createdAt: "2024-02-01", totalPurchases: 5, totalSpent: 18900, lastPurchase: "2024-03-10" },
+            { id: 4, name: "Plásticos Reciclados BC", rfc: "PRB901234GHI", phone: "(664) 456-7890", email: "ventas@plasticosbc.com", address: "Av. Reciclaje 321, Rosarito", status: "suspended", createdAt: "2024-02-10", totalPurchases: 3, totalSpent: 5200, lastPurchase: "2024-02-28" }
+        ];
+
+        let publications = [
+            { id: 1, title: "Bidones HDPE Tricapa", category: "Plásticos", location: "Otay Industrial", qty: "850 Pzas", weightKg: 850, price: "$15.00/pza", date: "2024-03-15", status: "approved", company: "Reciclados del Norte S.A. de C.V.", description: "Bidones industriales de HDPE de alta densidad, limpios y listos para reciclaje.", images: ["🛢️"] },
+            { id: 2, title: "Recortes de Aluminio 6061", category: "Metales", location: "El Florido", qty: "2.5 Ton", weightKg: 2500, price: "$28.50/kg", date: "2024-03-14", status: "approved", company: "Aluminios del Pacífico S.A.", description: "Recortes de aluminio grado 6061, libres de impurezas.", images: ["🔩"] },
+            { id: 3, title: "Pallets de Pino (Reparables)", category: "Maderas", location: "Pacifico", qty: "200 Uds", weightKg: 4000, price: "$45.00/ud", date: "2024-03-10", status: "pending", company: "Maderas del Noroeste S.A.", description: "Pallets de pino en buen estado, reparables.", images: ["🪵"] },
+            { id: 4, title: "Pacas de Cartón Corrugado", category: "Cartón", location: "La Mesa", qty: "5 Ton", weightKg: 5000, price: "$3.20/kg", date: "2024-03-05", status: "pending", company: "Cartones del Valle", description: "Cartón corrugado estándar para reciclaje.", images: ["📦"] },
+            { id: 5, title: "Cobre de Primera (Pelado)", category: "Metales", location: "Otay", qty: "300 kg", weightKg: 300, price: "$140.00/kg", date: "2024-03-16", status: "pending", company: "Metales del Norte", description: "Cobre de primera calidad, 99.9% pureza.", images: ["🔩"] },
+            { id: 6, title: "Botellas PET Cristal", category: "Plásticos", location: "Rosarito", qty: "1 Ton", weightKg: 1000, price: "$8.00/kg", date: "2024-03-13", status: "approved", company: "Plásticos Reciclados BC", description: "Botellas PET cristal, limpias y clasificadas.", images: ["🛢️"] }
+        ];
+
+        let transactions = [
+            { id: 1, company: "Reciclados del Norte S.A. de C.V.", material: "Bidones HDPE", quantity: "500 Pzas", total: 7500, date: "2024-03-15", status: "completed", buyer: "Plásticos Industriales SA" },
+            { id: 2, company: "Aluminios del Pacífico S.A.", material: "Recortes Aluminio", quantity: "1.2 Ton", total: 34200, date: "2024-03-14", status: "completed", buyer: "Fundiciones del Norte" },
+            { id: 3, company: "Maderas del Noroeste S.A.", material: "Pallets de Pino", quantity: "80 Uds", total: 3600, date: "2024-03-12", status: "completed", buyer: "Logística Express" },
+            { id: 4, company: "Reciclados del Norte S.A. de C.V.", material: "Botellas PET", quantity: "500 kg", total: 4000, date: "2024-03-10", status: "completed", buyer: "PET Recicla SA" },
+            { id: 5, company: "Aluminios del Pacífico S.A.", material: "Aluminio 6061", quantity: "800 kg", total: 22800, date: "2024-03-08", status: "pending", buyer: "Industrias del Metal" }
+        ];
+
+        let reports = [
+            { id: 1, type: "contenido", description: "Publicación con información incorrecta sobre el peso del material", user: "usuario@ejemplo.com", company: "Metales del Norte", status: "pending", date: "2024-03-16" },
+            { id: 2, type: "usuario", description: "Comportamiento inapropiado en comentarios de la publicación", user: "comprador@ejemplo.com", company: "Reciclados del Norte", status: "pending", date: "2024-03-15" }
+        ];
+
+        let currentView = "dashboard";
+        let confirmCallback = null;
+
+        const categoryStyles = {
+            "Metales": { color: "bg-slate-600", icon: "🔩", border: "hover:border-slate-600" },
+            "Plásticos": { color: "bg-blue-500", icon: "🛢️", border: "hover:border-blue-500" },
+            "Cartón": { color: "bg-amber-500", icon: "📦", border: "hover:border-amber-500" },
+            "Papel": { color: "bg-slate-400", icon: "📄", border: "hover:border-slate-400" },
+            "Maderas": { color: "bg-[#795548]", icon: "🪵", border: "hover:border-[#795548]" },
+            "Electrónicos": { color: "bg-orange-500", icon: "🔌", border: "hover:border-orange-500" }
+        };
+
+        const statusStyles = {
+            pending: { bg: "bg-amber-100", text: "text-amber-700", label: "⏳ Pendiente" },
+            approved: { bg: "bg-green-100", text: "text-green-700", label: "✅ Aprobado" },
+            rejected: { bg: "bg-red-100", text: "text-red-700", label: "❌ Rechazado" }
+        };
+
+        function showNotification(msg, type) {
+            const n = document.createElement('div');
+            n.className = `fixed bottom-6 right-6 z-50 px-5 py-3 rounded-xl shadow-lg text-white font-medium animate-fade-up ${type === 'success' ? 'bg-[#78C043]' : 'bg-blue-500'}`;
+            n.innerHTML = msg;
+            document.body.appendChild(n);
+            setTimeout(() => { n.style.opacity = '0'; setTimeout(() => n.remove(), 300); }, 3000);
+        }
+
+        function logout() { localStorage.removeItem('ecoboros_user'); sessionStorage.removeItem('ecoboros_user'); window.location.href = 'index.html'; }
+
+        // Dashboard functions...
+        function updateDashboard() {
+            document.getElementById('stat-companies').textContent = companies.length;
+            document.getElementById('stat-publications').textContent = publications.length;
+            document.getElementById('stat-transactions').textContent = transactions.filter(t => t.status === 'completed').length;
+            document.getElementById('stat-volume').textContent = publications.reduce((sum, p) => sum + p.weightKg, 0).toLocaleString();
+            document.getElementById('stat-reports').textContent = reports.filter(r => r.status === 'pending').length;
+            document.getElementById('stat-pending-badge').innerHTML = `${publications.filter(p => p.status === 'pending').length} pendientes`;
+            document.getElementById('reports-badge').textContent = reports.filter(r => r.status === 'pending').length;
+            document.getElementById('reports-badge').classList.toggle('hidden', reports.filter(r => r.status === 'pending').length === 0);
+
+            const sorted = [...companies].sort((a, b) => b.totalPurchases - a.totalPurchases).slice(0, 3);
+            document.getElementById('top-companies').innerHTML = sorted.map(c => `
+                <div class="flex items-center justify-between p-3 bg-slate-50 rounded-xl">
+                    <div><p class="font-medium text-slate-800">${c.name}</p><p class="text-xs text-slate-500">${c.totalPurchases} compras • $${c.totalSpent.toLocaleString()}</p></div>
+                    <span class="status-badge ${c.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'} text-xs">${c.status === 'active' ? 'Activa' : 'Suspendida'}</span>
+                </div>
+            `).join('');
+
+            const recentPubs = [...publications].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 4);
+            document.getElementById('recent-publications').innerHTML = recentPubs.map(p => `
+                <div class="p-4 flex justify-between items-center hover:bg-slate-50 transition-colors cursor-pointer">
+                    <div><p class="font-medium text-slate-800">${p.title}</p><p class="text-sm text-slate-500">${p.company} • ${p.category}</p></div>
+                    <div class="text-right"><span class="status-badge ${statusStyles[p.status]?.bg} ${statusStyles[p.status]?.text} text-xs">${statusStyles[p.status]?.label}</span><p class="text-xs text-slate-400 mt-1">${p.date}</p></div>
+                </div>
+            `).join('');
+
+            const recentTrans = [...transactions].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 4);
+            document.getElementById('recent-transactions').innerHTML = recentTrans.map(t => `
+                <div class="p-4 flex justify-between items-center">
+                    <div><p class="font-medium text-slate-800">${t.company}</p><p class="text-sm text-slate-500">${t.material} • ${t.quantity}</p></div>
+                    <div class="text-right"><p class="font-bold text-[#78C043]">$${t.total.toLocaleString()}</p><p class="text-xs text-slate-400">${t.date}</p></div>
+                </div>
+            `).join('');
+        }
+
+        let categoryChart;
+        function initChart() {
+            const categories = ['Metales', 'Plásticos', 'Cartón', 'Papel', 'Maderas', 'Electrónicos'];
+            const counts = categories.map(cat => publications.filter(p => p.category === cat).length);
+            const ctx = document.getElementById('categoryChart').getContext('2d');
+            if (categoryChart) categoryChart.destroy();
+            categoryChart = new Chart(ctx, {
+                type: 'bar',
+                data: { labels: categories, datasets: [{ label: 'Publicaciones', data: counts, backgroundColor: '#78C043', borderRadius: 8 }] },
+                options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false } } }
+            });
+        }
+
+        // Publications functions...
+        let pubFilters = { search: '', category: 'all', status: 'all' };
+
+        function filterPublications() {
+            pubFilters.search = document.getElementById('pub-search-input')?.value.toLowerCase() || '';
+            pubFilters.category = document.getElementById('pub-category-select')?.value || 'all';
+            pubFilters.status = document.getElementById('pub-status-select')?.value || 'all';
+            renderPublicationsGrid();
+        }
+
+        function resetPublicationFilters() {
+            if (document.getElementById('pub-search-input')) document.getElementById('pub-search-input').value = '';
+            if (document.getElementById('pub-category-select')) document.getElementById('pub-category-select').value = 'all';
+            if (document.getElementById('pub-status-select')) document.getElementById('pub-status-select').value = 'all';
+            filterPublications();
+        }
+
+        function renderPublicationsGrid() {
+            let filtered = publications.filter(p => {
+                const matchSearch = p.title.toLowerCase().includes(pubFilters.search) || p.category.toLowerCase().includes(pubFilters.search) || p.company.toLowerCase().includes(pubFilters.search);
+                const matchCategory = pubFilters.category === 'all' || p.category === pubFilters.category;
+                const matchStatus = pubFilters.status === 'all' || p.status === pubFilters.status;
+                return matchSearch && matchCategory && matchStatus;
+            });
+
+            const grid = document.getElementById('publications-grid');
+            const noMsg = document.getElementById('no-publications-message');
+
+            if (filtered.length === 0) { grid.innerHTML = ''; noMsg.classList.remove('hidden'); return; }
+            noMsg.classList.add('hidden');
+
+            grid.innerHTML = filtered.map(p => {
+                const style = categoryStyles[p.category] || { color: "bg-gray-500", icon: "❓", border: "hover:border-gray-500" };
+                const statusStyle = statusStyles[p.status] || statusStyles.pending;
+                return `
+                    <div class="product-card bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden hover:shadow-lg transition-all">
+                        <div class="h-36 bg-gradient-to-br from-slate-50 to-slate-100 relative flex items-center justify-center">
+                            <span class="text-6xl">${style.icon}</span>
+                            <div class="absolute top-3 left-3 ${style.color} text-white text-[10px] font-bold px-2 py-1 rounded-full">${p.category}</div>
+                            <div class="absolute top-3 right-3 ${statusStyle.bg} ${statusStyle.text} text-[10px] font-bold px-2 py-1 rounded-full">${statusStyle.label}</div>
+                        </div>
+                        <div class="p-4">
+                            <h3 class="font-bold text-slate-800 text-lg mb-1 line-clamp-1">${p.title}</h3>
+                            <p class="text-sm text-slate-500 flex items-center gap-1 mb-2">📍 ${p.location}</p>
+                            <p class="text-xs text-slate-400">🏢 ${p.company}</p>
+                            <div class="mt-3 flex justify-between items-center">
+                                <div><span class="text-xl font-bold text-[#78C043]">${p.price}</span><p class="text-xs text-slate-400">${p.qty} • ${p.weightKg}kg</p></div>
+                                <div class="flex gap-1">
+                                    ${p.status === 'pending' ? `<button onclick="approvePublication(${p.id})" class="p-1.5 text-green-600 hover:bg-green-50 rounded-lg transition-colors" title="Aprobar">✅</button><button onclick="rejectPublication(${p.id})" class="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Rechazar">❌</button>` : ''}
+                                    <button onclick="editPublication(${p.id})" class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Editar">✏️</button>
+                                    <button onclick="deletePublication(${p.id})" class="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Eliminar">🗑️</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function approvePublication(id) {
+            const pub = publications.find(p => p.id === id);
+            if (pub) { pub.status = 'approved'; showNotification(`✅ Publicación "${pub.title}" aprobada`, 'success'); filterPublications(); if (currentView === 'dashboard') { updateDashboard(); initChart(); } }
+        }
+
+        function rejectPublication(id) {
+            confirmCallback = () => {
+                const pub = publications.find(p => p.id === id);
+                if (pub) { pub.status = 'rejected'; showNotification(`❌ Publicación "${pub.title}" rechazada`, 'warning'); filterPublications(); if (currentView === 'dashboard') { updateDashboard(); initChart(); } }
+                closeConfirmModal();
+            };
+            openConfirmModal('Rechazar Publicación', '¿Estás seguro de rechazar esta publicación?');
+        }
+
+        function openCreatePublicationModal() {
+            document.getElementById('pub-id').value = '';
+            document.getElementById('pub-modal-title').textContent = 'Nueva Publicación';
+            document.getElementById('publication-form').reset();
+            document.getElementById('publication-modal').classList.remove('hidden');
+        }
+
+        function editPublication(id) {
+            const p = publications.find(p => p.id === id);
+            if (p) {
+                document.getElementById('pub-id').value = p.id;
+                document.getElementById('pub-title').value = p.title;
+                document.getElementById('pub-category').value = p.category;
+                document.getElementById('pub-location').value = p.location;
+                document.getElementById('pub-qty').value = p.qty;
+                document.getElementById('pub-weight').value = p.weightKg;
+                document.getElementById('pub-price').value = p.price;
+                document.getElementById('pub-status').value = p.status;
+                document.getElementById('pub-company').value = p.company;
+                document.getElementById('pub-description').value = p.description || '';
+                document.getElementById('pub-modal-title').textContent = 'Editar Publicación';
+                document.getElementById('publication-modal').classList.remove('hidden');
+            }
+        }
+
+        function savePublication(e) {
+            e.preventDefault();
+            const id = document.getElementById('pub-id').value;
+            const data = {
+                title: document.getElementById('pub-title').value,
+                category: document.getElementById('pub-category').value,
+                location: document.getElementById('pub-location').value,
+                qty: document.getElementById('pub-qty').value,
+                weightKg: parseInt(document.getElementById('pub-weight').value),
+                price: document.getElementById('pub-price').value,
+                status: document.getElementById('pub-status').value,
+                company: document.getElementById('pub-company').value,
+                description: document.getElementById('pub-description').value,
+                date: new Date().toISOString().split('T')[0],
+                images: []
+            };
+            if (id) {
+                const idx = publications.findIndex(p => p.id === parseInt(id));
+                if (idx !== -1) publications[idx] = { ...publications[idx], ...data };
+                showNotification('Publicación actualizada', 'success');
+            } else {
+                const newId = Math.max(...publications.map(p => p.id), 0) + 1;
+                publications.push({ id: newId, ...data });
+                showNotification('Publicación creada', 'success');
+            }
+            closePublicationModal();
+            filterPublications();
+            if (currentView === 'dashboard') { updateDashboard(); initChart(); }
+        }
+
+        function deletePublication(id) {
+            confirmCallback = () => {
+                publications = publications.filter(p => p.id !== id);
+                filterPublications();
+                if (currentView === 'dashboard') { updateDashboard(); initChart(); }
+                showNotification('Publicación eliminada', 'success');
+                closeConfirmModal();
+            };
+            openConfirmModal('Eliminar Publicación', 'Esta acción no se puede deshacer. ¿Estás seguro?');
+        }
+
+        function closePublicationModal() { document.getElementById('publication-modal').classList.add('hidden'); }
+
+        // Companies functions...
+        function filterCompanies() {
+            const search = document.getElementById('company-search-input')?.value.toLowerCase() || '';
+            const status = document.getElementById('company-status-select')?.value || 'all';
+            let filtered = companies.filter(c => (c.name.toLowerCase().includes(search) || c.rfc.toLowerCase().includes(search) || c.email.toLowerCase().includes(search)) && (status === 'all' || c.status === status));
+            const grid = document.getElementById('companies-grid');
+            const noMsg = document.getElementById('no-companies-message');
+            if (filtered.length === 0) { grid.innerHTML = ''; noMsg.classList.remove('hidden'); return; }
+            noMsg.classList.add('hidden');
+            grid.innerHTML = filtered.map(c => `
+                <div class="company-card bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+                    <div class="flex justify-between items-start mb-3">
+                        <div class="w-12 h-12 rounded-full bg-gradient-to-br from-[#1a2b4b] to-[#2d4563] text-white flex items-center justify-center text-xl">🏢</div>
+                        <span class="status-badge ${c.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">${c.status === 'active' ? 'Activa' : 'Suspendida'}</span>
+                    </div>
+                    <h3 class="font-bold text-lg text-slate-800">${c.name}</h3>
+                    <p class="text-sm text-slate-500 mt-1">RFC: ${c.rfc}</p>
+                    <p class="text-sm text-slate-500">📞 ${c.phone}</p>
+                    <p class="text-sm text-slate-500">✉️ ${c.email}</p>
+                    <p class="text-sm text-slate-500">📍 ${c.address}</p>
+                    <div class="mt-3 pt-3 border-t border-slate-100 flex justify-between items-center">
+                        <div><p class="text-xs text-slate-400">Compras: ${c.totalPurchases}</p><p class="text-xs text-slate-400 font-medium">Total: $${c.totalSpent.toLocaleString()}</p></div>
+                        <div class="flex gap-2">
+                            <button onclick="editCompany(${c.id})" class="p-2 text-slate-400 hover:text-blue-600 rounded-lg transition-colors" title="Editar">✏️</button>
+                            <button onclick="deleteCompany(${c.id})" class="p-2 text-slate-400 hover:text-red-600 rounded-lg transition-colors" title="Eliminar">🗑️</button>
+                            ${c.status === 'active' ? `<button onclick="suspendCompany(${c.id})" class="p-2 text-slate-400 hover:text-orange-600 rounded-lg transition-colors" title="Suspender">⛔</button>` : `<button onclick="activateCompany(${c.id})" class="p-2 text-slate-400 hover:text-green-600 rounded-lg transition-colors" title="Activar">✅</button>`}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function openCreateCompanyModal() {
+            document.getElementById('company-id').value = '';
+            document.getElementById('company-modal-title').textContent = 'Registrar Empresa';
+            document.getElementById('company-form').reset();
+            document.getElementById('company-modal').classList.remove('hidden');
+        }
+
+        function editCompany(id) {
+            const c = companies.find(c => c.id === id);
+            if (c) {
+                document.getElementById('company-id').value = c.id;
+                document.getElementById('company-name').value = c.name;
+                document.getElementById('company-rfc').value = c.rfc;
+                document.getElementById('company-phone').value = c.phone;
+                document.getElementById('company-email').value = c.email;
+                document.getElementById('company-address').value = c.address;
+                document.getElementById('company-status').value = c.status;
+                document.getElementById('company-modal-title').textContent = 'Editar Empresa';
+                document.getElementById('company-modal').classList.remove('hidden');
+            }
+        }
+
+        function saveCompany(e) {
+            e.preventDefault();
+            const id = document.getElementById('company-id').value;
+            const data = {
+                name: document.getElementById('company-name').value,
+                rfc: document.getElementById('company-rfc').value,
+                phone: document.getElementById('company-phone').value,
+                email: document.getElementById('company-email').value,
+                address: document.getElementById('company-address').value,
+                status: document.getElementById('company-status').value,
+                totalPurchases: 0, totalSpent: 0, createdAt: new Date().toISOString().split('T')[0]
+            };
+            if (id) {
+                const idx = companies.findIndex(c => c.id === parseInt(id));
+                if (idx !== -1) companies[idx] = { ...companies[idx], ...data };
+                showNotification('Empresa actualizada', 'success');
+            } else {
+                const newId = Math.max(...companies.map(c => c.id), 0) + 1;
+                companies.push({ id: newId, ...data });
+                showNotification('Empresa creada', 'success');
+            }
+            closeCompanyModal();
+            filterCompanies();
+            if (currentView === 'dashboard') updateDashboard();
+        }
+
+        function deleteCompany(id) {
+            confirmCallback = () => {
+                companies = companies.filter(c => c.id !== id);
+                filterCompanies();
+                if (currentView === 'dashboard') updateDashboard();
+                showNotification('Empresa eliminada', 'success');
+                closeConfirmModal();
+            };
+            openConfirmModal('Eliminar Empresa', 'Esta acción eliminará todos los datos de la empresa. ¿Estás seguro?');
+        }
+
+        function suspendCompany(id) {
+            const c = companies.find(c => c.id === id);
+            if (c) { c.status = 'suspended'; showNotification(`Empresa ${c.name} suspendida`, 'warning'); filterCompanies(); if (currentView === 'dashboard') updateDashboard(); }
+        }
+
+        function activateCompany(id) {
+            const c = companies.find(c => c.id === id);
+            if (c) { c.status = 'active'; showNotification(`Empresa ${c.name} activada`, 'success'); filterCompanies(); if (currentView === 'dashboard') updateDashboard(); }
+        }
+
+        function closeCompanyModal() { document.getElementById('company-modal').classList.add('hidden'); }
+
+        // Transactions functions...
+        function filterTransactions() {
+            let filtered = [...transactions];
+            const search = document.getElementById('trans-search')?.value.toLowerCase();
+            const from = document.getElementById('trans-date-from')?.value;
+            const to = document.getElementById('trans-date-to')?.value;
+            if (search) filtered = filtered.filter(t => t.company.toLowerCase().includes(search) || t.material.toLowerCase().includes(search));
+            if (from) filtered = filtered.filter(t => t.date >= from);
+            if (to) filtered = filtered.filter(t => t.date <= to);
+            document.getElementById('transactions-list').innerHTML = filtered.map(t => `
+                <div class="p-4 flex justify-between items-center hover:bg-slate-50">
+                    <div><p class="font-medium text-slate-800">${t.company}</p><p class="text-sm text-slate-500">${t.material} • ${t.quantity}</p><p class="text-xs text-slate-400">${t.date}</p></div>
+                    <div class="text-right"><p class="font-bold text-[#78C043]">$${t.total.toLocaleString()}</p><span class="status-badge ${t.status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'} text-xs">${t.status === 'completed' ? 'Completada' : 'Pendiente'}</span></div>
+                </div>
+            `).join('');
+        }
+
+        // Reports functions...
+        function renderReports() {
+            const pending = reports.filter(r => r.status === 'pending');
+            document.getElementById('reports-list').innerHTML = pending.map(r => `
+                <div class="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm">
+                    <div class="flex justify-between items-start">
+                        <div><span class="status-badge bg-red-100 text-red-700 mb-2 inline-block">${r.type === 'contenido' ? '📄 Contenido' : '👤 Usuario'}</span><h3 class="font-bold text-slate-800 mt-2">${r.description}</h3><p class="text-sm text-slate-500 mt-1">Reportado por: ${r.user} • Empresa: ${r.company}</p><p class="text-xs text-slate-400">${r.date}</p></div>
+                        <button onclick="resolveReport(${r.id})" class="px-4 py-2 bg-[#78C043] text-white rounded-xl text-sm font-medium hover:bg-[#66a338] transition-all flex items-center gap-1">✅ Resolver</button>
+                    </div>
+                </div>
+            `).join('');
+            if (pending.length === 0) document.getElementById('reports-list').innerHTML = '<div class="text-center py-16 bg-white rounded-2xl border border-slate-100"><div class="text-5xl mb-4">✅</div><p class="text-slate-500">No hay reportes activos</p></div>';
+        }
+
+        function resolveReport(id) {
+            const r = reports.find(r => r.id === id);
+            if (r) { r.status = 'resolved'; showNotification('Reporte resuelto', 'success'); renderReports(); if (currentView === 'dashboard') updateDashboard(); }
+        }
+
+        // Navigation...
+        function switchView(view) {
+            currentView = view;
+            ['dashboard', 'publications', 'companies', 'transactions', 'reports'].forEach(v => {
+                document.getElementById(`${v}-view`).classList.add('hidden');
+                const navBtn = document.getElementById(`nav-${v}`);
+                if (navBtn) navBtn.classList.remove('tab-active', 'border-[#78C043]', 'text-[#1a2b4b]');
+            });
+            document.getElementById(`${view}-view`).classList.remove('hidden');
+            const activeNav = document.getElementById(`nav-${view}`);
+            if (activeNav) activeNav.classList.add('tab-active', 'border-[#78C043]', 'text-[#1a2b4b]');
+
+            if (view === 'dashboard') { updateDashboard(); initChart(); }
+            if (view === 'publications') filterPublications();
+            if (view === 'companies') filterCompanies();
+            if (view === 'transactions') filterTransactions();
+            if (view === 'reports') renderReports();
+        }
+
+        function openConfirmModal(title, msg) {
+            document.getElementById('confirm-title').textContent = title;
+            document.getElementById('confirm-message').textContent = msg;
+            document.getElementById('confirm-modal').classList.remove('hidden');
+        }
+
+        function closeConfirmModal() { document.getElementById('confirm-modal').classList.add('hidden'); confirmCallback = null; }
+
+        document.getElementById('confirm-yes').onclick = () => { if (confirmCallback) confirmCallback(); };
+        document.getElementById('confirm-no').onclick = closeConfirmModal;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const stored = localStorage.getItem('ecoboros_user') || sessionStorage.getItem('ecoboros_user');
+            if (stored) {
+                const user = JSON.parse(stored);
+                if (user.role !== 'admin') window.location.href = 'figma.html';
+                document.getElementById('admin-name').textContent = user.name;
+            } else window.location.href = 'index.html';
+            switchView('dashboard');
+        });
+    </script>
+</body>
+</html>

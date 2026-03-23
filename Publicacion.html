@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ECOBOROS - Detalles del Material</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Animación suave para la entrada */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.4s ease-out forwards;
+            opacity: 0;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 font-sans min-h-screen text-slate-800">
+
+    <!-- Header -->
+    <div class="bg-white shadow-sm border-b border-slate-100">
+        <div class="max-w-7xl mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                    <button onclick="window.history.back()" class="text-slate-600 hover:text-slate-800 p-2 hover:bg-slate-100 rounded-lg transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                        </svg>
+                    </button>
+                    <img src="Logo.jpg" alt="ECOBOROS Logo" class="h-12 w-auto object-contain">
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="text-right">
+                        <p class="text-sm font-bold text-[#1a2b4b]">Empresa Demo S.A.</p>
+                        <p class="text-xs text-[#78C043] font-medium flex items-center justify-end gap-1">
+                            <span class="w-2 h-2 rounded-full bg-[#78C043] animate-pulse"></span> Usuario Verificado
+                        </p>
+                    </div>
+                    <div class="w-10 h-10 rounded-full bg-white text-[#1a2b4b] flex items-center justify-center font-bold text-sm shadow-sm border border-slate-200">EM</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contenido Principal -->
+    <div id="product-detail" class="max-w-6xl mx-auto px-6 py-8">
+        <!-- Aquí se renderizará el detalle del producto -->
+    </div>
+
+    <script>
+        // --- DATOS ---
+        const productsDB = [
+            { id: 1, title: "Bidones HDPE Tricapa", category: "Plásticos", location: "Otay Industrial", qty: "850 Pzas", weightKg: 850, price: "$ 15.00 / pza", date: "2023-10-01" },
+            { id: 2, title: "Recortes de Aluminio 6061", category: "Metales", location: "El Florido", qty: "2.5 Ton", weightKg: 2500, price: "$ 28.50 / kg", date: "2023-10-05" },
+            { id: 3, title: "Pallets de Pino (Reparables)", category: "Maderas", location: "Pacifico", qty: "200 Uds", weightKg: 4000, price: "$ 45.00 / ud", date: "2023-09-28" },
+            { id: 4, title: "Pacas de Cartón Corrugado", category: "Cartón", location: "La Mesa", qty: "5 Ton", weightKg: 5000, price: "$ 3.20 / kg", date: "2023-10-10" },
+            { id: 5, title: "Tarjetas Madre (Scrap)", category: "Electrónicos", location: "Nordika", qty: "500 kg", weightKg: 500, price: "A Tratar", date: "2023-10-12" },
+            { id: 6, title: "Archivo Muerto (Triturado)", category: "Papel", location: "Zona Centro", qty: "1.2 Ton", weightKg: 1200, price: "$ 2.10 / kg", date: "2023-09-15" },
+            { id: 7, title: "Cobre de Primera (Pelado)", category: "Metales", location: "Otay", qty: "300 kg", weightKg: 300, price: "$ 140.00 / kg", date: "2023-10-15" },
+            { id: 8, title: "Botellas PET Cristal", category: "Plásticos", location: "Rosarito", qty: "1 Ton", weightKg: 1000, price: "$ 8.00 / kg", date: "2023-10-02" },
+        ];
+
+        // --- COLORES POR CATEGORÍA ---
+        const categoryStyles = {
+            "Metales": { color: "bg-slate-600", icon: "🔩" },
+            "Plásticos": { color: "bg-blue-500", icon: "🛢️" },
+            "Cartón": { color: "bg-amber-500", icon: "📦" },
+            "Papel": { color: "bg-slate-400", icon: "📄" },
+            "Maderas": { color: "bg-[#795548]", icon: "🪵" },
+            "Electrónicos": { color: "bg-orange-500", icon: "🔌" }
+        };
+
+        // --- INICIALIZACIÓN ---
+        document.addEventListener("DOMContentLoaded", () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const productId = parseInt(urlParams.get('id'));
+            if (productId) {
+                renderProductDetail(productId);
+            } else {
+                document.getElementById('product-detail').innerHTML = '<p class="text-center text-slate-500">Producto no encontrado.</p>';
+            }
+        });
+
+        // --- RENDERIZADO DEL DETALLE ---
+        function renderProductDetail(productId) {
+            const product = productsDB.find(p => p.id === productId);
+            if (!product) {
+                document.getElementById('product-detail').innerHTML = '<p class="text-center text-slate-500">Producto no encontrado.</p>';
+                return;
+            }
+
+            const style = categoryStyles[product.category] || { color: "bg-gray-500", icon: "❓" };
+            const container = document.getElementById('product-detail');
+
+            container.innerHTML = `
+                <div class="animate-fade-in">
+                    <div class="flex flex-col lg:flex-row gap-8">
+                        <!-- Imagen y Galería -->
+                        <div class="lg:w-1/2">
+                            <div class="bg-white rounded-3xl shadow-lg overflow-hidden">
+                                <div class="h-96 bg-slate-50 flex items-center justify-center">
+                                    <span class="text-9xl opacity-90">${style.icon}</span>
+                                </div>
+                            </div>
+                            <!-- Miniaturas (placeholder) -->
+                            <div class="flex gap-2 mt-4">
+                                <div class="w-16 h-16 bg-slate-100 rounded-lg flex items-center justify-center cursor-pointer">
+                                    <span class="text-2xl">${style.icon}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Información del Producto -->
+                        <div class="lg:w-1/2 space-y-6">
+                            <div>
+                                <div class="flex items-center gap-3 mb-4">
+                                    <span class="inline-block ${style.color} text-white text-sm font-black px-4 py-2 rounded-full shadow-sm uppercase tracking-wider">
+                                        ${product.category}
+                                    </span>
+                                    <span class="text-slate-400 text-sm">Publicado el ${product.date}</span>
+                                </div>
+                                <h1 class="text-4xl font-black text-[#1a2b4b] mb-4">${product.title}</h1>
+                                <div class="flex items-center gap-2 text-slate-600 mb-6">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                    </svg>
+                                    <span class="font-medium">${product.location}</span>
+                                </div>
+                            </div>
+
+                            <!-- Precio -->
+                            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                                <p class="text-slate-500 text-sm font-medium mb-2">Precio</p>
+                                <p class="text-5xl font-black text-[#78C043]">${product.price}</p>
+                            </div>
+
+                            <!-- Detalles -->
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
+                                    <p class="text-slate-500 text-sm font-medium">Cantidad Disponible</p>
+                                    <p class="text-[#1a2b4b] font-bold text-xl">${product.qty}</p>
+                                </div>
+                                <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
+                                    <p class="text-slate-500 text-sm font-medium">Peso Total</p>
+                                    <p class="text-[#1a2b4b] font-bold text-xl">${product.weightKg} kg</p>
+                                </div>
+                            </div>
+
+                            <!-- Descripción (placeholder) -->
+                            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                                <h3 class="text-lg font-bold text-[#1a2b4b] mb-3">Descripción</h3>
+                                <p class="text-slate-600 leading-relaxed">
+                                    ${product.title} disponible en ${product.location}. Material de calidad industrial, perfecto para reciclaje y reutilización. 
+                                    Contacta al vendedor para más detalles sobre las condiciones del material y opciones de entrega.
+                                </p>
+                            </div>
+
+                            <!-- Acciones -->
+                            <div class="space-y-3">
+                                <button class="w-full bg-[#78C043] text-white py-4 rounded-xl font-bold shadow-lg shadow-[#78C043]/30 hover:bg-[#66a338] transition-all flex items-center justify-center gap-2">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                                    </svg>
+                                    Contactar Vendedor
+                                </button>
+                                <button class="w-full bg-white text-[#1a2b4b] py-4 rounded-xl font-bold border-2 border-slate-200 hover:border-[#1a2b4b] transition-all flex items-center justify-center gap-2">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                                    </svg>
+                                    Agregar a Favoritos
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>
