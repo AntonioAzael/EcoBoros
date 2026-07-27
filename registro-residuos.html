@@ -1,0 +1,1350 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ECOBOROS - Registro de Residuos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-card {
+            animation: fadeIn 0.4s ease-out forwards;
+            opacity: 0;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .animate-pulse-custom {
+            animation: pulse 2s infinite;
+        }
+
+        .keyboard-label {
+            position: absolute;
+            background: linear-gradient(135deg, #1a2b4b 0%, #2d4563 100%);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+            pointer-events: none;
+            z-index: 50;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(120, 192, 67, 0.5);
+            animation: labelFadeIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        .shortcut-tag {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.25rem;
+            white-space: nowrap;
+            vertical-align: middle;
+        }
+
+        @keyframes labelFadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.8) translateY(5px);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .matriz-active {
+            box-shadow: 0 0 0 3px #78C043, 0 10px 25px rgba(120, 192, 67, 0.3) !important;
+            transition: all 0.3s ease;
+        }
+
+        .kb-focused {
+            box-shadow: 0 0 0 3px #1a2b4b !important;
+        }
+
+        /* Estilos de categoría */
+        .category-metales {
+            border-color: #4b5563;
+            background-color: #f9fafb;
+        }
+
+        .category-metales.selected {
+            background-color: #4b5563;
+            border-color: #4b5563;
+            color: white;
+            box-shadow: 0 0 0 3px rgba(75, 85, 99, 0.2);
+        }
+
+        .category-plasticos {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+        }
+
+        .category-plasticos.selected {
+            background-color: #3b82f6;
+            border-color: #3b82f6;
+            color: white;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+
+        .category-carton {
+            border-color: #f59e0b;
+            background-color: #fffbeb;
+        }
+
+        .category-carton.selected {
+            background-color: #f59e0b;
+            border-color: #f59e0b;
+            color: white;
+            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2);
+        }
+
+        .category-papel {
+            border-color: #64748b;
+            background-color: #f8fafc;
+        }
+
+        .category-papel.selected {
+            background-color: #64748b;
+            border-color: #64748b;
+            color: white;
+            box-shadow: 0 0 0 3px rgba(100, 116, 139, 0.2);
+        }
+
+        .category-electronicos {
+            border-color: #f97316;
+            background-color: #fff7ed;
+        }
+
+        .category-electronicos.selected {
+            background-color: #f97316;
+            border-color: #f97316;
+            color: white;
+            box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.2);
+        }
+
+        .category-maderas {
+            border-color: #b45309;
+            background-color: #fffbeb;
+        }
+
+        .category-maderas.selected {
+            background-color: #b45309;
+            border-color: #b45309;
+            color: white;
+            box-shadow: 0 0 0 3px rgba(180, 83, 9, 0.2);
+        }
+
+        /* Dropdown menu */
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 8px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.15);
+            min-width: 240px;
+            z-index: 100;
+            border: 1px solid #e2e8f0;
+            overflow: hidden;
+        }
+
+        .dropdown-item {
+            padding: 12px 18px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.2s;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: #1e293b;
+        }
+
+        .dropdown-item:hover {
+            background-color: #f8fafc;
+            color: #78C043;
+        }
+
+        .dropdown-divider {
+            height: 1px;
+            background-color: #e2e8f0;
+            margin: 4px 0;
+        }
+
+        /* === SOLUCIÓN PARA EVITAR EL SALTO VISUAL === */
+        html {
+            overflow-y: scroll;
+            scrollbar-gutter: stable;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+
+<body class="bg-slate-50 font-sans min-h-screen text-slate-800">
+
+    <!-- Header -->
+    <header class="bg-[#1a2b4b] sticky top-0 z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="flex items-center justify-between py-4">
+                <div class="flex items-center gap-4">
+                    <img src="Logo.png" alt="ECOBOROS Logo" class="h-12 w-auto object-contain"
+                        onerror="this.src='https://placehold.co/150x60/1a2b4b/78C043?text=ECOBOROS'">
+                    <div>
+                        <h1 class="text-white text-lg font-bold">ECOBOROS</h1>
+                        <span class="text-[#78C043] text-xs font-medium">Marketplace de Residuos</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4 relative">
+                    <div class="text-right">
+                        <p class="text-white text-sm font-bold" id="user-name-display">Empresa Demo S.A.</p>
+                        <p class="text-[#78C043] text-xs font-medium flex items-center justify-end gap-1">
+                            <span class="w-2 h-2 rounded-full bg-[#78C043] animate-pulse-custom"></span>
+                            <span id="user-role-display">Usuario Verificado</span>
+                        </p>
+                    </div>
+                    <div id="user-avatar" class="w-10 h-10 rounded-full bg-white text-[#1a2b4b] flex items-center justify-center font-bold text-sm border-2 border-white/20 cursor-pointer">
+                        EM
+                    </div>
+                    <button onclick="logout()"
+                        class="text-white/80 hover:text-white hover:bg-white/20 px-4 py-2 rounded-xl transition-all flex items-center gap-2 text-sm font-medium">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1">
+                            </path>
+                        </svg>
+                        Salir
+                    </button>
+
+                    <!-- Dropdown Empresa -->
+                    <div id="company-dropdown" class="dropdown-menu hidden">
+                        <div class="dropdown-item" onclick="window.location.href='figma.html#publicaciones'">
+                            <span>📋</span> Mis Publicaciones
+                        </div>
+                        <div class="dropdown-item" onclick="window.location.href='figma.html#compras'">
+                            <span>🛒</span> Mis Compras
+                        </div>
+                        <div class="dropdown-divider"></div>
+                        <div class="dropdown-item" onclick="window.location.href='registro-residuos.html'">
+                            <span>➕</span> Subir Residuos
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Nav -->
+        <nav class="bg-[#152238] px-6">
+            <div class="max-w-7xl mx-auto flex gap-0">
+                <a href="figma.html" class="text-slate-400 hover:text-white hover:bg-white/5 px-5 py-3 text-sm font-medium transition-colors">Inicio</a>
+                <a href="figma.html#publicaciones" class="text-slate-400 hover:text-white hover:bg-white/5 px-5 py-3 text-sm font-medium transition-colors">Mis Publicaciones</a>
+                <a href="figma.html#compras" class="text-slate-400 hover:text-white hover:bg-white/5 px-5 py-3 text-sm font-medium transition-colors">Mis Compras</a>
+                <a href="#" class="text-white bg-white/5 border-b-2 border-[#78C043] px-5 py-3 text-sm font-medium">Subir Residuos</a>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main -->
+    <main class="max-w-4xl mx-auto px-6 py-8">
+        <!-- Page Header -->
+        <div class="mb-8 animate-card" style="animation-delay: 0.1s;">
+            <h2 class="text-2xl font-bold text-[#1a2b4b] mb-1">Registro de Residuos Industriales</h2>
+            <p class="text-slate-500 text-sm">Complete el formulario para registrar un nuevo material disponible</p>
+        </div>
+
+        <!-- Stepper -->
+        <div class="flex items-center justify-center gap-0 mb-8 animate-card" style="animation-delay: 0.2s;">
+            <div class="step flex items-center gap-2 px-4 py-2 rounded-lg cursor-pointer hover:bg-slate-100 transition-colors"
+                data-step="1" onclick="goToStep(1)">
+                <div
+                    class="step-number w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold bg-[#1a2b4b] text-white">
+                    1</div>
+                <span class="step-label text-sm font-bold text-[#1a2b4b]">Categoria</span>
+            </div>
+            <div class="step-divider w-10 h-0.5 bg-slate-200"></div>
+            <div class="step flex items-center gap-2 px-4 py-2 rounded-lg cursor-pointer hover:bg-slate-100 transition-colors"
+                data-step="2" onclick="goToStep(2)">
+                <div
+                    class="step-number w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold bg-slate-200 text-slate-500">
+                    2</div>
+                <span class="step-label text-sm font-medium text-slate-500">Datos</span>
+            </div>
+            <div class="step-divider w-10 h-0.5 bg-slate-200"></div>
+            <div class="step flex items-center gap-2 px-4 py-2 rounded-lg cursor-pointer hover:bg-slate-100 transition-colors"
+                data-step="3" onclick="goToStep(3)">
+                <div
+                    class="step-number w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold bg-slate-200 text-slate-500">
+                    3</div>
+                <span class="step-label text-sm font-medium text-slate-500">Evidencia</span>
+            </div>
+            <div class="step-divider w-10 h-0.5 bg-slate-200"></div>
+            <div class="step flex items-center gap-2 px-4 py-2 rounded-lg cursor-pointer hover:bg-slate-100 transition-colors"
+                data-step="4" onclick="goToStep(4)">
+                <div
+                    class="step-number w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold bg-slate-200 text-slate-500">
+                    4</div>
+                <span class="step-label text-sm font-medium text-slate-500">Resumen</span>
+            </div>
+        </div>
+
+        <!-- Form Card -->
+        <div class="bg-white rounded-2xl shadow-lg border border-slate-100 p-8 animate-card"
+            style="animation-delay: 0.3s;">
+
+            <!-- Step 1: Categoria -->
+            <div id="step-1" class="form-section">
+                <h3 class="text-lg font-bold text-[#1a2b4b] mb-1">Selecciona la Categoria del Material</h3>
+                <p class="text-sm text-slate-500 mb-6">Usa las teclas 1-6 o las flechas para navegar</p>
+
+                <div id="category-grid" class="grid grid-cols-3 gap-4 mb-6">
+                    <!-- Metales -->
+                    <div class="category-card category-metales relative border-2 rounded-xl p-4 text-center cursor-pointer transition-all group"
+                        data-category="Metales" onclick="selectCategory('Metales')">
+                        <span
+                            class="absolute top-2 right-2 bg-gradient-to-br from-[#1a2b4b] to-[#2d4563] text-white text-[10px] font-bold w-5 h-5 rounded flex items-center justify-center border border-[#78C043]/30">1</span>
+                        <div
+                            class="w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-2 text-6xl group-[.selected]:bg-white/20">
+                            🔩
+                        </div>
+                        <p class="font-bold text-[#1a2b4b] text-sm group-[.selected]:text-white">Metales</p>
+                        <p class="text-xs text-slate-400 group-[.selected]:text-white/80">Hierro, aluminio, cobre</p>
+                    </div>
+                    <!-- Plasticos -->
+                    <div class="category-card category-plasticos relative border-2 rounded-xl p-4 text-center cursor-pointer transition-all group"
+                        data-category="Plasticos" onclick="selectCategory('Plasticos')">
+                        <span
+                            class="absolute top-2 right-2 bg-gradient-to-br from-[#1a2b4b] to-[#2d4563] text-white text-[10px] font-bold w-5 h-5 rounded flex items-center justify-center border border-[#78C043]/30">2</span>
+                        <div
+                            class="w-20 h-20 rounded-full bg-blue-50 flex items-center justify-center mx-auto mb-2 text-6xl group-[.selected]:bg-white/20">
+                            🛢️
+                        </div>
+                        <p class="font-bold text-[#1a2b4b] text-sm group-[.selected]:text-white">Plasticos</p>
+                        <p class="text-xs text-slate-400 group-[.selected]:text-white/80">PET, HDPE, PVC</p>
+                    </div>
+                    <!-- Carton -->
+                    <div class="category-card category-carton relative border-2 rounded-xl p-4 text-center cursor-pointer transition-all group"
+                        data-category="Carton" onclick="selectCategory('Carton')">
+                        <span
+                            class="absolute top-2 right-2 bg-gradient-to-br from-[#1a2b4b] to-[#2d4563] text-white text-[10px] font-bold w-5 h-5 rounded flex items-center justify-center border border-[#78C043]/30">3</span>
+                        <div
+                            class="w-20 h-20 rounded-full bg-amber-50 flex items-center justify-center mx-auto mb-2 text-6xl group-[.selected]:bg-white/20">
+                            📦
+                        </div>
+                        <p class="font-bold text-[#1a2b4b] text-sm group-[.selected]:text-white">Carton</p>
+                        <p class="text-xs text-slate-400 group-[.selected]:text-white/80">Corrugado, kraft</p>
+                    </div>
+                    <!-- Papel -->
+                    <div class="category-card category-papel relative border-2 rounded-xl p-4 text-center cursor-pointer transition-all group"
+                        data-category="Papel" onclick="selectCategory('Papel')">
+                        <span
+                            class="absolute top-2 right-2 bg-gradient-to-br from-[#1a2b4b] to-[#2d4563] text-white text-[10px] font-bold w-5 h-5 rounded flex items-center justify-center border border-[#78C043]/30">4</span>
+                        <div
+                            class="w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-2 text-6xl group-[.selected]:bg-white/20">
+                            📄
+                        </div>
+                        <p class="font-bold text-[#1a2b4b] text-sm group-[.selected]:text-white">Papel</p>
+                        <p class="text-xs text-slate-400 group-[.selected]:text-white/80">Archivo, bond</p>
+                    </div>
+                    <!-- Electronicos -->
+                    <div class="category-card category-electronicos relative border-2 rounded-xl p-4 text-center cursor-pointer transition-all group"
+                        data-category="Electronicos" onclick="selectCategory('Electronicos')">
+                        <span
+                            class="absolute top-2 right-2 bg-gradient-to-br from-[#1a2b4b] to-[#2d4563] text-white text-[10px] font-bold w-5 h-5 rounded flex items-center justify-center border border-[#78C043]/30">5</span>
+                        <div
+                            class="w-20 h-20 rounded-full bg-orange-50 flex items-center justify-center mx-auto mb-2 text-6xl group-[.selected]:bg-white/20">
+                            🔌
+                        </div>
+                        <p class="font-bold text-[#1a2b4b] text-sm group-[.selected]:text-white">Electronicos</p>
+                        <p class="text-xs text-slate-400 group-[.selected]:text-white/80">PCB, cables, scrap</p>
+                    </div>
+                    <!-- Maderas -->
+                    <div class="category-card category-maderas relative border-2 rounded-xl p-4 text-center cursor-pointer transition-all group"
+                        data-category="Maderas" onclick="selectCategory('Maderas')">
+                        <span
+                            class="absolute top-2 right-2 bg-gradient-to-br from-[#1a2b4b] to-[#2d4563] text-white text-[10px] font-bold w-5 h-5 rounded flex items-center justify-center border border-[#78C043]/30">6</span>
+                        <div
+                            class="w-20 h-20 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-2 text-6xl group-[.selected]:bg-white/20">
+                            🪵
+                        </div>
+                        <p class="font-bold text-[#1a2b4b] text-sm group-[.selected]:text-white">Maderas</p>
+                        <p class="text-xs text-slate-400 group-[.selected]:text-white/80">Pallets, tarimas</p>
+                    </div>
+                </div>
+
+                <div class="flex justify-end pt-4 border-t border-slate-100">
+                    <button id="btn-next-1" onclick="nextStep()" disabled
+                        class="px-6 py-3 bg-[#78C043] text-white rounded-xl font-bold shadow-lg shadow-[#78C043]/30 hover:bg-[#66a338] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+                        Siguiente
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7">
+                            </path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 2: Datos -->
+            <div id="step-2" class="form-section hidden">
+                <h3 class="text-lg font-bold text-[#1a2b4b] mb-1">Informacion del Material</h3>
+                <p class="text-sm text-slate-500 mb-6">Presiona Alt + letra para enfocar campos</p>
+
+                <div class="grid grid-cols-2 gap-5 mb-5">
+                    <div class="col-span-2">
+                        <label class="flex items-center gap-2 text-sm font-semibold text-[#1a2b4b] mb-2">
+                            Titulo del Material <span class="text-red-500">*</span>
+                            <span
+                                class="bg-slate-100 border border-slate-200 text-slate-500 px-2 py-0.5 rounded text-[10px] font-bold">Alt+T</span>
+                        </label>
+                        <input id="input-titulo" type="text" placeholder="Ej: Recortes de Aluminio 6061"
+                            class="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl text-slate-700 focus:border-[#78C043] focus:ring-2 focus:ring-[#78C043]/20 focus:bg-white outline-none transition-all">
+                    </div>
+                    <div class="col-span-2">
+                        <label class="flex items-center gap-2 text-sm font-semibold text-[#1a2b4b] mb-2">
+                            Descripcion Tecnica <span class="text-red-500">*</span>
+                            <span
+                                class="bg-slate-100 border border-slate-200 text-slate-500 px-2 py-0.5 rounded text-[10px] font-bold">Alt+D</span>
+                        </label>
+                        <textarea id="input-descripcion" rows="3"
+                            placeholder="Describe las caracteristicas del material..."
+                            class="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl text-slate-700 focus:border-[#78C043] focus:ring-2 focus:ring-[#78C043]/20 focus:bg-white outline-none transition-all resize-none"></textarea>
+                    </div>
+                    <div>
+                        <label class="flex items-center gap-2 text-sm font-semibold text-[#1a2b4b] mb-2">
+                            Peso (kg) <span class="text-red-500">*</span>
+                            <span
+                                class="bg-slate-100 border border-slate-200 text-slate-500 px-2 py-0.5 rounded text-[10px] font-bold">Alt+P</span>
+                        </label>
+                        <div class="relative">
+                            <input id="input-peso" type="number" placeholder="500"
+                                class="w-full px-4 py-3 pr-14 bg-slate-50 border-2 border-slate-200 rounded-xl text-slate-700 focus:border-[#78C043] focus:ring-2 focus:ring-[#78C043]/20 focus:bg-white outline-none transition-all">
+                            <span
+                                class="absolute right-4 top-3.5 text-slate-400 font-bold text-sm bg-slate-100 px-2 py-0.5 rounded">KG</span>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="flex items-center gap-2 text-sm font-semibold text-[#1a2b4b] mb-2">
+                            Cantidad
+                            <span
+                                class="bg-slate-100 border border-slate-200 text-slate-500 px-2 py-0.5 rounded text-[10px] font-bold">Alt+C</span>
+                        </label>
+                        <input id="input-cantidad" type="text" placeholder="Ej: 200 piezas"
+                            class="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl text-slate-700 focus:border-[#78C043] focus:ring-2 focus:ring-[#78C043]/20 focus:bg-white outline-none transition-all">
+                    </div>
+                    <div>
+                        <label class="flex items-center gap-2 text-sm font-semibold text-[#1a2b4b] mb-2">
+                            Fecha de Generacion <span class="text-red-500">*</span>
+                            <span
+                                class="bg-slate-100 border border-slate-200 text-slate-500 px-2 py-0.5 rounded text-[10px] font-bold">Alt+G</span>
+                        </label>
+                        <input id="input-fecha-gen" type="date"
+                            class="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl text-slate-700 focus:border-[#78C043] focus:ring-2 focus:ring-[#78C043]/20 focus:bg-white outline-none transition-all">
+                    </div>
+                    <div>
+                        <label class="flex items-center gap-2 text-sm font-semibold text-[#1a2b4b] mb-2">
+                            Fecha de Disponibilidad
+                            <span
+                                class="bg-slate-100 border border-slate-200 text-slate-500 px-2 py-0.5 rounded text-[10px] font-bold">Alt+F</span>
+                        </label>
+                        <input id="input-fecha-disp" type="date"
+                            class="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl text-slate-700 focus:border-[#78C043] focus:ring-2 focus:ring-[#78C043]/20 focus:bg-white outline-none transition-all">
+                    </div>
+                    <div>
+                        <label class="flex items-center gap-2 text-sm font-semibold text-[#1a2b4b] mb-2">
+                            Ubicacion
+                            <span
+                                class="bg-slate-100 border border-slate-200 text-slate-500 px-2 py-0.5 rounded text-[10px] font-bold">Alt+U</span>
+                        </label>
+                        <input id="input-ubicacion" type="text" placeholder="Ej: Nave 3, Otay Industrial"
+                            class="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl text-slate-700 focus:border-[#78C043] focus:ring-2 focus:ring-[#78C043]/20 focus:bg-white outline-none transition-all">
+                    </div>
+                    <div>
+                        <label class="flex items-center gap-2 text-sm font-semibold text-[#1a2b4b] mb-2">
+                            Precio Sugerido
+                            <span
+                                class="bg-slate-100 border border-slate-200 text-slate-500 px-2 py-0.5 rounded text-[10px] font-bold">Alt+R</span>
+                        </label>
+                        <input id="input-precio" type="text" placeholder="Ej: $28.50 / kg"
+                            class="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl text-slate-700 focus:border-[#78C043] focus:ring-2 focus:ring-[#78C043]/20 focus:bg-white outline-none transition-all">
+                    </div>
+                </div>
+
+                <div class="flex justify-between pt-4 border-t border-slate-100">
+                    <button onclick="prevStep()"
+                        class="px-6 py-3 bg-slate-100 text-[#1a2b4b] rounded-xl font-bold hover:bg-slate-200 transition-all flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7">
+                            </path>
+                        </svg>
+                        Anterior
+                    </button>
+                    <button onclick="nextStep()"
+                        class="px-6 py-3 bg-[#78C043] text-white rounded-xl font-bold shadow-lg shadow-[#78C043]/30 hover:bg-[#66a338] transition-all flex items-center gap-2">
+                        Siguiente
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7">
+                            </path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 3: Evidencia -->
+            <div id="step-3" class="form-section hidden">
+                <h3 class="text-lg font-bold text-[#1a2b4b] mb-1">Evidencia Visual y Documentos</h3>
+                <p class="text-sm text-slate-500 mb-6">Presiona Alt+I para imagenes, Alt+O para documentos</p>
+
+                <!-- Imagenes -->
+                <div class="mb-6">
+                    <div class="flex items-center gap-2 mb-3">
+                        <h4 class="text-sm font-bold text-[#1a2b4b]">Fotografias del Material</h4>
+                        <span
+                            class="bg-slate-100 border border-slate-200 text-slate-500 px-2 py-0.5 rounded text-[10px] font-bold">Alt+I</span>
+                    </div>
+                    <div id="upload-images"
+                        class="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center cursor-pointer hover:border-[#78C043] hover:bg-[#78C043]/5 transition-all"
+                        onclick="document.getElementById('file-images').click()">
+                        <input type="file" id="file-images" class="hidden" accept="image/*" multiple
+                            onchange="handleFileUpload(event, 'images')">
+                        <svg class="w-10 h-10 text-slate-400 mx-auto mb-3" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z">
+                            </path>
+                        </svg>
+                        <p class="text-slate-600 text-sm font-medium">Arrastra imagenes aqui o haz clic para seleccionar
+                        </p>
+                        <p class="text-slate-400 text-xs mt-1">JPG, PNG, WEBP (max 10MB c/u)</p>
+                    </div>
+                    <div id="list-images" class="flex flex-col gap-2 mt-3"></div>
+                </div>
+
+                <!-- Documentos -->
+                <div class="mb-6">
+                    <div class="flex items-center gap-2 mb-3">
+                        <h4 class="text-sm font-bold text-[#1a2b4b]">Documentos Tecnicos</h4>
+                        <span
+                            class="bg-slate-100 border border-slate-200 text-slate-500 px-2 py-0.5 rounded text-[10px] font-bold">Alt+O</span>
+                    </div>
+                    <div id="upload-docs"
+                        class="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center cursor-pointer hover:border-[#78C043] hover:bg-[#78C043]/5 transition-all"
+                        onclick="document.getElementById('file-docs').click()">
+                        <input type="file" id="file-docs" class="hidden" accept=".pdf,.doc,.docx,.xls,.xlsx" multiple
+                            onchange="handleFileUpload(event, 'docs')">
+                        <svg class="w-10 h-10 text-slate-400 mx-auto mb-3" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                            </path>
+                        </svg>
+                        <p class="text-slate-600 text-sm font-medium">Arrastra documentos aqui o haz clic para
+                            seleccionar</p>
+                        <p class="text-slate-400 text-xs mt-1">PDF, DOC, XLS (max 25MB c/u)</p>
+                    </div>
+                    <div id="list-docs" class="flex flex-col gap-2 mt-3"></div>
+                </div>
+
+                <div class="flex justify-between pt-4 border-t border-slate-100">
+                    <button onclick="prevStep()"
+                        class="px-6 py-3 bg-slate-100 text-[#1a2b4b] rounded-xl font-bold hover:bg-slate-200 transition-all flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7">
+                            </path>
+                        </svg>
+                        Anterior
+                    </button>
+                    <button onclick="nextStep()"
+                        class="px-6 py-3 bg-[#78C043] text-white rounded-xl font-bold shadow-lg shadow-[#78C043]/30 hover:bg-[#66a338] transition-all flex items-center gap-2">
+                        Siguiente
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7">
+                            </path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 4: Resumen -->
+            <div id="step-4" class="form-section hidden">
+                <h2 class="text-lg font-bold text-[#1a2b4b] mb-1">Resumen del Registro</h2>
+                <p class="text-sm text-slate-500 mb-6">Verifica la informacion antes de enviar (Enter para enviar)</p>
+
+                <div id="summary-content" class="grid grid-cols-2 gap-4 mb-6"></div>
+
+                <div class="flex justify-between pt-4 border-t border-slate-100">
+                    <button onclick="prevStep()"
+                        class="px-6 py-3 bg-slate-100 text-[#1a2b4b] rounded-xl font-bold hover:bg-slate-200 transition-all flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7">
+                            </path>
+                        </svg>
+                        Anterior
+                    </button>
+                    <button onclick="submitForm()"
+                        class="px-8 py-3 bg-[#78C043] text-white rounded-xl font-bold shadow-lg shadow-[#78C043]/30 hover:bg-[#66a338] transition-all flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7">
+                            </path>
+                        </svg>
+                        Enviar a Revision
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Keyboard Shortcuts Panel -->
+    <div id="commands-modal" class="hidden fixed z-50 w-[360px] shadow-2xl rounded-2xl border border-slate-200 bg-white"
+        style="bottom: 100px; right: 24px;">
+        <div class="bg-[#1a2b4b] p-4 rounded-t-2xl flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <svg class="w-5 h-5 text-[#78C043]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253">
+                    </path>
+                </svg>
+                <h3 class="text-white font-bold text-sm">Atajos de Teclado</h3>
+            </div>
+            <button onclick="toggleCommands()"
+                class="text-white/70 hover:text-white hover:bg-white/20 rounded-lg px-2 py-1 text-xs font-bold transition-colors">ESC</button>
+        </div>
+        <div class="p-0 max-h-[400px] overflow-y-auto">
+            <table class="w-full text-left">
+                <tbody class="divide-y divide-slate-100">
+                    <tr class="bg-slate-50">
+                        <td colspan="2" class="px-4 py-2 text-xs font-bold text-slate-400 uppercase tracking-wider">
+                            Navegacion</td>
+                    </tr>
+                    <tr class="hover:bg-slate-50">
+                        <td class="px-4 py-3 text-sm text-slate-600">Paso Anterior</td>
+                        <td class="px-4 py-3 text-right"><span
+                                class="bg-slate-100 border border-slate-200 text-slate-500 px-2 py-1 rounded text-xs font-bold">Alt
+                                + ←</span></td>
+                    </tr>
+                    <tr class="hover:bg-slate-50">
+                        <td class="px-4 py-3 text-sm text-slate-600">Ir a Inicio</td>
+                        <td class="px-4 py-3 text-right"><span
+                                class="bg-slate-100 border border-slate-200 text-slate-500 px-2 py-1 rounded text-xs font-bold">Alt
+                                + H</span></td>
+                    </tr>
+                    <tr class="hover:bg-slate-50">
+                        <td class="px-4 py-3 text-sm text-slate-600">Paso Siguiente</td>
+                        <td class="px-4 py-3 text-right"><span
+                                class="bg-slate-100 border border-slate-200 text-slate-500 px-2 py-1 rounded text-xs font-bold">Alt
+                                + →</span></td>
+                    </tr>
+                    <tr class="hover:bg-slate-50">
+                        <td class="px-4 py-3 text-sm text-slate-600">Ir a Paso 1/2/3/4</td>
+                        <td class="px-4 py-3 text-right"><span
+                                class="bg-slate-100 border border-slate-200 text-slate-500 px-2 py-1 rounded text-xs font-bold">Alt
+                                + 1/2/3/4</span></td>
+                    </tr>
+                    <tr class="bg-slate-50">
+                        <td colspan="2" class="px-4 py-2 text-xs font-bold text-slate-400 uppercase tracking-wider">Paso
+                            1: Categorias</td>
+                    </tr>
+                    <tr class="hover:bg-slate-50">
+                        <td class="px-4 py-3 text-sm text-slate-600">Seleccionar Categoria</td>
+                        <td class="px-4 py-3 text-right"><span
+                                class="bg-slate-100 border border-slate-200 text-slate-500 px-2 py-1 rounded text-xs font-bold">1-6</span>
+                        </td>
+                    </tr>
+                    <tr class="hover:bg-slate-50">
+                        <td class="px-4 py-3 text-sm text-slate-600">Navegar Grilla</td>
+                        <td class="px-4 py-3 text-right"><span
+                                class="bg-slate-100 border border-slate-200 text-slate-500 px-2 py-1 rounded text-xs font-bold">←
+                                → ↑ ↓</span></td>
+                    </tr>
+                    <tr class="hover:bg-slate-50">
+                        <td class="px-4 py-3 text-sm text-slate-600">Confirmar Seleccion</td>
+                        <td class="px-4 py-3 text-right"><span
+                                class="bg-slate-100 border border-slate-200 text-slate-500 px-2 py-1 rounded text-xs font-bold">Enter
+                                / Space</span></td>
+                    </tr>
+                    <tr class="bg-slate-50">
+                        <td colspan="2" class="px-4 py-2 text-xs font-bold text-slate-400 uppercase tracking-wider">Paso
+                            2: Campos</td>
+                    </tr>
+                    <tr class="hover:bg-slate-50">
+                        <td class="px-4 py-3 text-sm text-slate-600">Titulo</td>
+                        <td class="px-4 py-3 text-right"><span
+                                class="bg-slate-100 border border-slate-200 text-slate-500 px-2 py-1 rounded text-xs font-bold">Alt
+                                + T</span></td>
+                    </tr>
+                    <tr class="hover:bg-slate-50">
+                        <td class="px-4 py-3 text-sm text-slate-600">Descripcion</td>
+                        <td class="px-4 py-3 text-right"><span
+                                class="bg-slate-100 border border-slate-200 text-slate-500 px-2 py-1 rounded text-xs font-bold">Alt
+                                + D</span></td>
+                    </tr>
+                    <tr class="hover:bg-slate-50">
+                        <td class="px-4 py-3 text-sm text-slate-600">Peso</td>
+                        <td class="px-4 py-3 text-right"><span
+                                class="bg-slate-100 border border-slate-200 text-slate-500 px-2 py-1 rounded text-xs font-bold">Alt
+                                + P</span></td>
+                    </tr>
+                    <tr class="hover:bg-slate-50">
+                        <td class="px-4 py-3 text-sm text-slate-600">Cantidad</td>
+                        <td class="px-4 py-3 text-right"><span
+                                class="bg-slate-100 border border-slate-200 text-slate-500 px-2 py-1 rounded text-xs font-bold">Alt
+                                + C</span></td>
+                    </tr>
+                    <tr class="hover:bg-slate-50">
+                        <td class="px-4 py-3 text-sm text-slate-600">Fecha Generacion</td>
+                        <td class="px-4 py-3 text-right"><span
+                                class="bg-slate-100 border border-slate-200 text-slate-500 px-2 py-1 rounded text-xs font-bold">Alt
+                                + G</span></td>
+                    </tr>
+                    <tr class="hover:bg-slate-50">
+                        <td class="px-4 py-3 text-sm text-slate-600">Fecha Disponibilidad</td>
+                        <td class="px-4 py-3 text-right"><span
+                                class="bg-slate-100 border border-slate-200 text-slate-500 px-2 py-1 rounded text-xs font-bold">Alt
+                                + F</span></td>
+                    </tr>
+                    <tr class="hover:bg-slate-50">
+                        <td class="px-4 py-3 text-sm text-slate-600">Ubicacion</td>
+                        <td class="px-4 py-3 text-right"><span
+                                class="bg-slate-100 border border-slate-200 text-slate-500 px-2 py-1 rounded text-xs font-bold">Alt
+                                + U</span></td>
+                    </tr>
+                    <tr class="hover:bg-slate-50">
+                        <td class="px-4 py-3 text-sm text-slate-600">Precio</td>
+                        <td class="px-4 py-3 text-right"><span
+                                class="bg-slate-100 border border-slate-200 text-slate-500 px-2 py-1 rounded text-xs font-bold">Alt
+                                + R</span></td>
+                    </tr>
+                    <tr class="bg-slate-50">
+                        <td colspan="2" class="px-4 py-2 text-xs font-bold text-slate-400 uppercase tracking-wider">Paso
+                            3: Archivos</td>
+                    </tr>
+                    <tr class="hover:bg-slate-50">
+                        <td class="px-4 py-3 text-sm text-slate-600">Subir Imagenes</td>
+                        <td class="px-4 py-3 text-right"><span
+                                class="bg-slate-100 border border-slate-200 text-slate-500 px-2 py-1 rounded text-xs font-bold">Alt
+                                + I</span></td>
+                    </tr>
+                    <tr class="hover:bg-slate-50">
+                        <td class="px-4 py-3 text-sm text-slate-600">Subir Documentos</td>
+                        <td class="px-4 py-3 text-right"><span
+                                class="bg-slate-100 border border-slate-200 text-slate-500 px-2 py-1 rounded text-xs font-bold">Alt
+                                + O</span></td>
+                    </tr>
+                    <tr class="bg-slate-50">
+                        <td colspan="2" class="px-4 py-2 text-xs font-bold text-slate-400 uppercase tracking-wider">
+                            General</td>
+                    </tr>
+                    <tr class="hover:bg-slate-50">
+                        <td class="px-4 py-3 text-sm text-slate-600">Mostrar/Ocultar Ayuda</td>
+                        <td class="px-4 py-3 text-right"><span
+                                class="shortcut-tag bg-slate-100 border border-slate-200 text-[#78C043] px-2 py-1 rounded text-xs font-bold">Shift
+                                + ?</span></td>
+                    </tr>
+                    <tr class="hover:bg-slate-50">
+                        <td class="px-4 py-3 text-sm text-slate-600">Activar Modo Matriz</td>
+                        <td class="px-4 py-3 text-right"><span
+                                class="shortcut-tag bg-slate-100 border border-slate-200 text-slate-500 px-2 py-1 rounded text-xs font-bold">Q + A</span></td>
+                    </tr>
+                    <tr class="hover:bg-slate-50">
+                        <td class="px-4 py-3 text-sm text-slate-600">Enviar Formulario</td>
+                        <td class="px-4 py-3 text-right"><span
+                                class="bg-slate-100 border border-slate-200 text-slate-500 px-2 py-1 rounded text-xs font-bold">Enter
+                                (paso 4)</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Help FAB -->
+    <div class="fixed bottom-6 right-6 z-40 flex items-center gap-3">
+        <span
+            class="bg-gradient-to-br from-[#1a2b4b] to-[#2d4563] text-slate-300 px-3 py-1.5 rounded-lg text-xs font-medium shadow-lg opacity-0 hover:opacity-100 transition-opacity border border-[#78C043]/30">Shift
+            + ?</span>
+        <button onclick="toggleCommands()"
+            title="Atajos y Modo Matriz"
+            class="w-12 h-12 rounded-full bg-gradient-to-br from-[#1a2b4b] to-[#2d4563] text-white font-bold text-xl shadow-xl hover:scale-110 transition-transform flex items-center justify-center border-2 border-[#78C043]/30">
+            ⌨
+        </button>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast"
+        class="fixed bottom-24 left-1/2 -translate-x-1/2 text-white px-5 py-3 rounded-xl shadow-xl text-sm font-medium flex items-center gap-2 opacity-0 transition-all duration-300 pointer-events-none z-50"
+        style="background-color: #1a2b4b;">
+        <svg class="w-5 h-5 text-[#78C043]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+        </svg>
+        <span id="toast-message">Accion completada</span>
+    </div>
+
+    <!-- Success Modal -->
+    <div id="success-modal"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 hidden">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 p-8 text-center animate-card">
+            <div class="w-20 h-20 rounded-full bg-[#78C043]/15 flex items-center justify-center mx-auto mb-5">
+                <svg class="w-10 h-10 text-[#78C043]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+            </div>
+            <h3 class="text-xl font-bold text-[#1a2b4b] mb-2">Registro Enviado</h3>
+            <p class="text-slate-500 text-sm mb-6">Tu registro ha sido enviado al equipo de calidad para su revision.
+                Recibiras una notificacion cuando sea procesado.</p>
+            <button onclick="closeSuccessModal()"
+                class="px-8 py-3 bg-[#78C043] text-white rounded-xl font-bold shadow-lg shadow-[#78C043]/30 hover:bg-[#66a338] transition-all">
+                Entendido
+            </button>
+        </div>
+    </div>
+
+    <footer class="text-center py-6 text-slate-400 text-xs">
+        Universidad Tecnologica de Tijuana - ECOBOROS - Marketplace de Residuos Industriales
+    </footer>
+
+    <script>
+        // === STATE ===
+        let currentStep = 1;
+        let selectedCategory = null;
+        let uploadedImages = [];
+        let uploadedDocs = [];
+        let gridFocusIndex = 0;
+
+        // === CARGAR DATOS DEL USUARIO ===
+        function loadUserData() {
+            const storedUser = localStorage.getItem('ecoboros_user') || sessionStorage.getItem('ecoboros_user');
+            if (storedUser) {
+                try {
+                    const user = JSON.parse(storedUser);
+                    const nameDisplay = document.getElementById('user-name-display');
+                    const roleDisplay = document.getElementById('user-role-display');
+                    const userAvatar = document.getElementById('user-avatar');
+                    if (nameDisplay) nameDisplay.textContent = user.name;
+                    if (roleDisplay) roleDisplay.textContent = user.description || "Empresa Verificada";
+                    if (userAvatar) {
+                        const initials = user.name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+                        userAvatar.textContent = initials;
+                    }
+                } catch (e) {
+                    console.log('Error al cargar usuario');
+                }
+            } else {
+                window.location.href = 'index.html';
+            }
+        }
+
+        // === DROPDOWN EMPRESA ===
+        function toggleCompanyDropdown() {
+            const dropdown = document.getElementById('company-dropdown');
+            dropdown.classList.toggle('hidden');
+        }
+
+        document.addEventListener('click', function(e) {
+            const dropdown = document.getElementById('company-dropdown');
+            const avatar = document.getElementById('user-avatar');
+            if (dropdown && !dropdown.classList.contains('hidden') && avatar && !avatar.contains(e.target) && !dropdown.contains(e.target)) {
+                dropdown.classList.add('hidden');
+            }
+        });
+
+        document.getElementById('user-avatar')?.addEventListener('click', toggleCompanyDropdown);
+
+        // === LOGOUT ===
+        function logout() {
+            localStorage.removeItem('ecoboros_user');
+            sessionStorage.removeItem('ecoboros_user');
+            window.location.href = 'index.html';
+        }
+
+        // === TOAST ===
+        function showToast(message, bgColor = '#1a2b4b') {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toast-message');
+            toast.style.backgroundColor = bgColor;
+            toastMessage.textContent = message;
+            toast.classList.remove('opacity-0', 'pointer-events-none');
+            toast.classList.add('opacity-100');
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'pointer-events-none');
+                toast.classList.remove('opacity-100');
+            }, 2000);
+        }
+
+        // === FUNCION PARA OBTENER COLOR SEGUN CATEGORIA ===
+        function getCategoryColor(category) {
+            const colors = {
+                'Metales': '#4b5563',
+                'Plasticos': '#3b82f6',
+                'Carton': '#f59e0b',
+                'Papel': '#64748b',
+                'Electronicos': '#f97316',
+                'Maderas': '#b45309'
+            };
+            return colors[category] || '#1a2b4b';
+        }
+
+        // === NAVIGATION ===
+        function goToStep(step) {
+            if (step < 1 || step > 4) return;
+            currentStep = step;
+            updateStepUI();
+            if (step === 4) buildSummary();
+            if (matrizMode) activateMatrizLabels();
+            showToast('Paso ' + step);
+        }
+
+        function nextStep() {
+            if (currentStep === 1 && !selectedCategory) return;
+            if (currentStep < 4) {
+                currentStep++;
+                updateStepUI();
+                if (currentStep === 4) buildSummary();
+                if (matrizMode) activateMatrizLabels();
+                showToast('Paso ' + currentStep);
+            }
+        }
+
+        function prevStep() {
+            if (currentStep > 1) {
+                currentStep--;
+                updateStepUI();
+                if (matrizMode) activateMatrizLabels();
+                showToast('Paso ' + currentStep);
+            }
+        }
+
+        function updateStepUI() {
+            document.querySelectorAll('.form-section').forEach(s => s.classList.add('hidden'));
+            document.getElementById('step-' + currentStep).classList.remove('hidden');
+
+            document.querySelectorAll('.step').forEach((step, i) => {
+                const num = step.querySelector('.step-number');
+                const label = step.querySelector('.step-label');
+                if (i + 1 < currentStep) {
+                    num.className = 'step-number w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold bg-[#78C043] text-white';
+                    num.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>';
+                    label.className = 'step-label text-sm font-medium text-[#78C043]';
+                } else if (i + 1 === currentStep) {
+                    num.className = 'step-number w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold bg-[#1a2b4b] text-white';
+                    num.textContent = i + 1;
+                    label.className = 'step-label text-sm font-bold text-[#1a2b4b]';
+                } else {
+                    num.className = 'step-number w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold bg-slate-200 text-slate-500';
+                    num.textContent = i + 1;
+                    label.className = 'step-label text-sm font-medium text-slate-500';
+                }
+            });
+
+            document.querySelectorAll('.step-divider').forEach((div, i) => {
+                div.className = i < currentStep - 1 ? 'step-divider w-10 h-0.5 bg-[#78C043]' : 'step-divider w-10 h-0.5 bg-slate-200';
+            });
+        }
+
+        // === CATEGORIES ===
+        function selectCategory(cat) {
+            selectedCategory = cat;
+            document.querySelectorAll('.category-card').forEach(card => {
+                const category = card.dataset.category;
+                card.classList.remove('selected');
+                if (category === cat) {
+                    card.classList.add('selected');
+                }
+            });
+            document.getElementById('btn-next-1').disabled = false;
+            const categoryColor = getCategoryColor(cat);
+            showToast('Categoria: ' + cat, categoryColor);
+        }
+
+        function updateGridFocus() {
+            const cards = document.querySelectorAll('.category-card');
+            cards.forEach((card, i) => {
+                if (i === gridFocusIndex) {
+                    card.classList.add('kb-focused');
+                } else {
+                    card.classList.remove('kb-focused');
+                }
+            });
+        }
+
+        // === FILE UPLOAD ===
+        function handleFileUpload(event, type) {
+            const files = Array.from(event.target.files);
+            files.forEach(file => {
+                if (type === 'images') {
+                    uploadedImages.push(file);
+                    renderFileItem(file, 'list-images', 'images');
+                } else {
+                    uploadedDocs.push(file);
+                    renderFileItem(file, 'list-docs', 'docs');
+                }
+            });
+            showToast(files.length + ' archivo(s) agregado(s)');
+        }
+
+        function renderFileItem(file, containerId, type) {
+            const container = document.getElementById(containerId);
+            const div = document.createElement('div');
+            div.className = 'flex items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded-xl';
+
+            const isImage = file.type.startsWith('image/');
+            const iconHtml = isImage
+                ? `<div class="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center"><svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg></div>`
+                : `<div class="w-10 h-10 rounded-lg bg-red-50 flex items-center justify-center"><svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg></div>`;
+
+            div.innerHTML = `
+                ${iconHtml}
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-semibold text-slate-700 truncate">${file.name}</p>
+                    <p class="text-xs text-slate-400">${(file.size / 1024).toFixed(1)} KB</p>
+                </div>
+                <button onclick="removeFile('${file.name}', '${type}', this)" class="w-8 h-8 rounded-full bg-red-50 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            `;
+            container.appendChild(div);
+        }
+
+        function removeFile(name, type, btn) {
+            if (type === 'images') {
+                uploadedImages = uploadedImages.filter(f => f.name !== name);
+            } else {
+                uploadedDocs = uploadedDocs.filter(f => f.name !== name);
+            }
+            btn.closest('div').remove();
+            showToast('Archivo eliminado');
+        }
+
+        function setupDragDrop() {
+            ['upload-images', 'upload-docs'].forEach(id => {
+                const zone = document.getElementById(id);
+                ['dragenter', 'dragover'].forEach(evt => {
+                    zone.addEventListener(evt, e => {
+                        e.preventDefault();
+                        zone.classList.add('border-[#78C043]', 'bg-[#78C043]/5');
+                    });
+                });
+                ['dragleave', 'drop'].forEach(evt => {
+                    zone.addEventListener(evt, e => {
+                        e.preventDefault();
+                        zone.classList.remove('border-[#78C043]', 'bg-[#78C043]/5');
+                    });
+                });
+                zone.addEventListener('drop', e => {
+                    const files = Array.from(e.dataTransfer.files);
+                    const type = id === 'upload-images' ? 'images' : 'docs';
+                    files.forEach(file => {
+                        if (type === 'images') {
+                            uploadedImages.push(file);
+                            renderFileItem(file, 'list-images', 'images');
+                        } else {
+                            uploadedDocs.push(file);
+                            renderFileItem(file, 'list-docs', 'docs');
+                        }
+                    });
+                    showToast(files.length + ' archivo(s) agregado(s)');
+                });
+            });
+        }
+
+        // === SUMMARY ===
+        function buildSummary() {
+            const container = document.getElementById('summary-content');
+            const items = [
+                { label: 'Categoria', value: selectedCategory || '-' },
+                { label: 'Titulo', value: document.getElementById('input-titulo').value || '-' },
+                { label: 'Peso', value: (document.getElementById('input-peso').value || '-') + ' kg' },
+                { label: 'Cantidad', value: document.getElementById('input-cantidad').value || '-' },
+                { label: 'Fecha Generacion', value: document.getElementById('input-fecha-gen').value || '-' },
+                { label: 'Fecha Disponibilidad', value: document.getElementById('input-fecha-disp').value || '-' },
+                { label: 'Ubicacion', value: document.getElementById('input-ubicacion').value || '-' },
+                { label: 'Precio', value: document.getElementById('input-precio').value || '-' },
+            ];
+
+            let html = '';
+            items.forEach(item => {
+                html += `
+                    <div class="p-4 bg-slate-50 rounded-xl border-l-4 border-[#78C043]">
+                        <p class="text-[10px] text-slate-400 uppercase tracking-wider font-semibold mb-1">${item.label}</p>
+                        <p class="text-sm font-semibold text-[#1a2b4b]">${item.value}</p>
+                    </div>
+                `;
+            });
+
+            const desc = document.getElementById('input-descripcion').value || '-';
+            html += `
+                <div class="col-span-2 p-4 bg-slate-50 rounded-xl border-l-4 border-[#78C043]">
+                    <p class="text-[10px] text-slate-400 uppercase tracking-wider font-semibold mb-1">Descripcion</p>
+                    <p class="text-sm font-semibold text-[#1a2b4b]">${desc}</p>
+                </div>
+            `;
+
+            html += `
+                <div class="col-span-2 p-4 bg-slate-50 rounded-xl border-l-4 border-[#78C043]">
+                    <p class="text-[10px] text-slate-400 uppercase tracking-wider font-semibold mb-2">Archivos Adjuntos</p>
+                    <div class="flex flex-wrap gap-2">
+                        ${uploadedImages.map(f => `<span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">${f.name}</span>`).join('')}
+                        ${uploadedDocs.map(f => `<span class="px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-medium">${f.name}</span>`).join('')}
+                        ${(uploadedImages.length + uploadedDocs.length === 0) ? '<span class="text-sm text-slate-400">Sin archivos</span>' : ''}
+                    </div>
+                </div>
+            `;
+
+            container.innerHTML = html;
+        }
+
+        // === SUBMIT ===
+        function submitForm() {
+            document.getElementById('success-modal').classList.remove('hidden');
+        }
+
+        function closeSuccessModal() {
+            document.getElementById('success-modal').classList.add('hidden');
+            currentStep = 1;
+            selectedCategory = null;
+            uploadedImages = [];
+            uploadedDocs = [];
+            document.querySelectorAll('input, textarea').forEach(el => el.value = '');
+            document.querySelectorAll('.category-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            document.getElementById('list-images').innerHTML = '';
+            document.getElementById('list-docs').innerHTML = '';
+            document.getElementById('btn-next-1').disabled = true;
+            updateStepUI();
+        }
+
+        // === COMMANDS MODAL ===
+        function toggleCommands() {
+            const modal = document.getElementById('commands-modal');
+            modal.classList.toggle('hidden');
+        }
+
+        let matrizMode = false;
+        let keySequence = [];
+        let lastKeyTime = 0;
+
+        function toggleMatrizMode() {
+            matrizMode = !matrizMode;
+            if (matrizMode) activateMatrizLabels();
+            else deactivateMatrizLabels();
+        }
+
+        function activateMatrizLabels() {
+            deactivateMatrizLabels();
+            if (currentStep === 1) {
+                document.querySelectorAll('.category-card').forEach((card, index) => {
+                    addKeyLabelInside(card, `Alt + ${index + 1}`);
+                });
+            }
+            if (currentStep === 2) {
+                const fieldMaps = [
+                    { id: 'input-titulo', label: 'Alt + T' },
+                    { id: 'input-descripcion', label: 'Alt + D' },
+                    { id: 'input-peso', label: 'Alt + P' },
+                    { id: 'input-cantidad', label: 'Alt + C' },
+                    { id: 'input-fecha-gen', label: 'Alt + G' },
+                    { id: 'input-fecha-disp', label: 'Alt + F' },
+                    { id: 'input-ubicacion', label: 'Alt + U' },
+                    { id: 'input-precio', label: 'Alt + R' }
+                ];
+                fieldMaps.forEach(field => {
+                    const el = document.getElementById(field.id);
+                    if (el) addKeyLabelInside(el, field.label);
+                });
+            }
+            if (currentStep === 3) {
+                const uploadImages = document.getElementById('upload-images');
+                const uploadDocs = document.getElementById('upload-docs');
+                if (uploadImages) addKeyLabelInside(uploadImages, 'Alt + I');
+                if (uploadDocs) addKeyLabelInside(uploadDocs, 'Alt + O');
+            }
+            const commandsButton = document.querySelector('button[onclick="toggleCommands()"]');
+            if (commandsButton) addKeyLabelInside(commandsButton, 'Shift + ?');
+        }
+
+        function deactivateMatrizLabels() {
+            document.querySelectorAll('.keyboard-label').forEach(el => el.remove());
+            document.querySelectorAll('.matriz-active').forEach(el => el.classList.remove('matriz-active'));
+        }
+
+        function addKeyLabelInside(parentEl, text) {
+            parentEl.classList.add('matriz-active', 'relative');
+            parentEl.style.overflow = 'visible';
+            const label = document.createElement('div');
+            label.className = 'keyboard-label';
+            label.innerHTML = `<span class="text-[#78C043] mr-1">⌨</span> ${text}`;
+            label.style.top = '-12px';
+            label.style.right = '-12px';
+            parentEl.appendChild(label);
+        }
+
+        // === KEYBOARD SHORTCUTS ===
+        function setupKeyboardShortcuts() {
+            document.addEventListener('keydown', e => {
+                const now = Date.now();
+                if (now - lastKeyTime > 500) keySequence = [];
+                lastKeyTime = now;
+                keySequence.push(e.key.toLowerCase());
+
+                const tag = document.activeElement.tagName;
+                const isInput = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
+
+                if (keySequence.length >= 2 && keySequence.slice(-2).join('') === 'qa') {
+                    if (!isInput) {
+                        e.preventDefault();
+                        toggleMatrizMode();
+                    }
+                    keySequence = [];
+                    return;
+                }
+
+                if (e.shiftKey && e.key === '?') {
+                    e.preventDefault();
+                    toggleCommands();
+                    return;
+                }
+
+                if (e.key === 'Escape') {
+                    document.getElementById('commands-modal').classList.add('hidden');
+                    document.getElementById('success-modal').classList.add('hidden');
+                    return;
+                }
+
+                if (e.altKey && e.key.toLowerCase() === 'h') {
+                    e.preventDefault();
+                    window.location.href = 'figma.html';
+                    return;
+                }
+                if (e.altKey && e.key === 'ArrowRight') {
+                    e.preventDefault();
+                    nextStep();
+                    return;
+                }
+                if (e.altKey && e.key === 'ArrowLeft') {
+                    e.preventDefault();
+                    prevStep();
+                    return;
+                }
+
+                if (e.altKey && ['1', '2', '3', '4'].includes(e.key)) {
+                    e.preventDefault();
+                    goToStep(parseInt(e.key));
+                    return;
+                }
+
+                if (currentStep === 1 && !isInput) {
+                    const categories = ['Metales', 'Plasticos', 'Carton', 'Papel', 'Electronicos', 'Maderas'];
+                    if (['1', '2', '3', '4', '5', '6'].includes(e.key)) {
+                        e.preventDefault();
+                        selectCategory(categories[parseInt(e.key) - 1]);
+                        return;
+                    }
+
+                    const cards = document.querySelectorAll('.category-card');
+                    if (e.key === 'ArrowRight') {
+                        e.preventDefault();
+                        gridFocusIndex = (gridFocusIndex + 1) % 6;
+                        updateGridFocus();
+                    } else if (e.key === 'ArrowLeft') {
+                        e.preventDefault();
+                        gridFocusIndex = (gridFocusIndex - 1 + 6) % 6;
+                        updateGridFocus();
+                    } else if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        gridFocusIndex = (gridFocusIndex + 3) % 6;
+                        updateGridFocus();
+                    } else if (e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        gridFocusIndex = (gridFocusIndex - 3 + 6) % 6;
+                        updateGridFocus();
+                    } else if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        selectCategory(categories[gridFocusIndex]);
+                    }
+                }
+
+                if (currentStep === 2 && e.altKey) {
+                    const fieldMap = {
+                        't': 'input-titulo',
+                        'd': 'input-descripcion',
+                        'p': 'input-peso',
+                        'c': 'input-cantidad',
+                        'g': 'input-fecha-gen',
+                        'f': 'input-fecha-disp',
+                        'u': 'input-ubicacion',
+                        'r': 'input-precio'
+                    };
+                    if (fieldMap[e.key.toLowerCase()]) {
+                        e.preventDefault();
+                        document.getElementById(fieldMap[e.key.toLowerCase()]).focus();
+                        return;
+                    }
+                }
+
+                if (currentStep === 3 && e.altKey) {
+                    if (e.key.toLowerCase() === 'i') {
+                        e.preventDefault();
+                        document.getElementById('file-images').click();
+                    } else if (e.key.toLowerCase() === 'o') {
+                        e.preventDefault();
+                        document.getElementById('file-docs').click();
+                    }
+                }
+
+                if (currentStep === 4 && e.key === 'Enter' && !isInput) {
+                    e.preventDefault();
+                    submitForm();
+                }
+            });
+        }
+
+        // === INIT ===
+        document.addEventListener('DOMContentLoaded', () => {
+            loadUserData();
+            updateStepUI();
+            setupKeyboardShortcuts();
+            setupDragDrop();
+        });
+    </script>
+</body>
+
+</html>
