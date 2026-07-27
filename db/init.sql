@@ -55,7 +55,20 @@ CREATE TABLE Categories (
 
 /* Inserción de categorías ecológicas e industriales base */
 INSERT INTO Categories (CategoryName) VALUES ('Metales'), ('Plasticos'), ('Cartones'), ('Papeles'), ('Electronicos'), ('Maderas');
+CREATE TABLE Statuses (
+    StatusId SERIAL PRIMARY KEY,
+    StatusName VARCHAR(50) NOT NULL UNIQUE,
+    Description TEXT NULL
+);
 
+/* Inserción de los registros de estado solicitados */
+INSERT INTO Statuses (StatusName, Description) VALUES 
+('Revision', 'Cuando suben una publicacion'),
+('Aprobado', 'Publicación validada por calidad'),
+('Rechazado', 'Publicación rechazada por calidad'),
+('Pendiente', 'Cuando la empresa hace la peticion para la compra'),
+('Proceso', 'Calidad verifica documentos y cantidad real vendida'),
+('Completado', 'Compra finalizada y dinero reflejado');
 
 /* -------------------------------------------------------------------------- */
 /* TABLA: Wastes                                                              */
@@ -76,9 +89,7 @@ CREATE TABLE Wastes (
     
     GenerationDate DATE NOT NULL,
     AvailabilityDate DATE NOT NULL,
-    
-    PublishStatus VARCHAR(20) DEFAULT 'Pendiente', /* Estatus operativo del lote */
-    
+    StatusId INT DEFAULT 1,    
     /* Lógica: Restringe y audita qué usuario con perfil de calidad aprobó 
        la veracidad y rigor técnico de la publicación. */
     QualityValidatorId INT NULL,          
@@ -122,7 +133,7 @@ CREATE TABLE PurchaseRequests (
        de contra-ofertas de precio propuesto por el comprador. */
     OfferedPrice DECIMAL(10,2) NULL,        
     
-    RequestStatus VARCHAR(30) DEFAULT 'Pendiente', /* Ej: Pendiente, Contra-ofertada, Aceptada, Rechazada */
+    StatusId INT DEFAULT 4,
     RequestDate TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     ResponseDate TIMESTAMP NULL,
     
@@ -139,11 +150,14 @@ CREATE TABLE PurchaseRequests (
 CREATE TABLE WasteStatusLogs (
     LogId SERIAL PRIMARY KEY,
     WasteId INT NOT NULL,
+    PurchaseRequestId INT NULL,             /* Referencia a la solicitud de compra que originó el cambio de estado */
+    PreviousStatus VARCHAR(50) NOT NULL,    /* Descripción del estado anterior */
     StatusChanged VARCHAR(50) NOT NULL,     /* Descripción del nuevo estado aplicado */
     PartialWeight DECIMAL(10,2) NULL,       /* Cantidad de peso específica afectada en este movimiento parcial */
     Description TEXT NULL,                  /* Notas o bitácora detallada del movimiento operativo */
     ChangedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (WasteId) REFERENCES Wastes(WasteId)
+    FOREIGN KEY (WasteId) REFERENCES Wastes(WasteId),
+    FOREIGN KEY (PurchaseRequestId) REFERENCES PurchaseRequests(RequestId)
 );
 
 
