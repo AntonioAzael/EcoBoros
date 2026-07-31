@@ -84,8 +84,8 @@ DATABASES = {
         'NAME': 'ecoboros',
         'USER': 'postgres',
         'PASSWORD': 'eco472',
-        'HOST': '127.0.0.1',
-        'PORT': '5434',
+        'HOST': 'db',
+        'PORT': '5432',
     }
 }
 
