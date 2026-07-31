@@ -1,7 +1,7 @@
 from rest_framework import viewsets
 from ecoboros_api.models import Wastes
-from ecoboros_api.serializers.waste_serializer import WastesSerializer
+from ecoboros_api.serializers.waste_serializer import WasteSerializer
 
-class WastesViewSet(viewsets.ModelViewSet):
+class WasteViewSet(viewsets.ModelViewSet):
     queryset = Wastes.objects.all()
-    serializer_class = WastesSerializer
+    serializer_class = WasteSerializer

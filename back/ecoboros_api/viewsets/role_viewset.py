@@ -1,7 +1,7 @@
 from rest_framework import viewsets
 from ecoboros_api.models import Roles
-from ecoboros_api.serializers.role_serializer import RolesSerializer
+from ecoboros_api.serializers.role_serializer import RoleSerializer
 
-class RolesViewSet(viewsets.ModelViewSet):
+class RoleViewSet(viewsets.ModelViewSet):
     queryset = Roles.objects.all()
-    serializer_class = RolesSerializer
+    serializer_class = RoleSerializer

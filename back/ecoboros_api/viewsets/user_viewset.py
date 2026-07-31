@@ -1,7 +1,7 @@
 from rest_framework import viewsets
 from ecoboros_api.models import Users
-from ecoboros_api.serializers.user_serializer import UsersSerializer
+from ecoboros_api.serializers.user_serializer import UserSerializer
 
-class UsersViewSet(viewsets.ModelViewSet):
+class UserViewSet(viewsets.ModelViewSet):
     queryset = Users.objects.all()
-    serializer_class = UsersSerializer
+    serializer_class = UserSerializer
