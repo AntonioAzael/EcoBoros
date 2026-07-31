@@ -64,3 +64,55 @@ La documentación se mostrará en el visor PDF embebido justo debajo de las mini
 
 - El script `generate_product_pdfs.py` crea la carpeta `pdfs/` automáticamente si no existe.
 - Si se actualiza la documentación en el código, vuelve a ejecutar `generate_product_pdfs.py` para regenerar los archivos.
+
+
+
+---
+
+# Ejecución del Backend y Docker (API)
+
+### Opción 1: Con Docker (Recomendado)
+Para levantar todo el entorno de forma automatizada:
+
+1. Construye y levanta los contenedores:
+   ```bash
+   docker compose up --build -d
+   ```
+2. Aplica las migraciones de Django:
+
+   ```bash
+   docker exec -it ecoboros_back python manage.py migrate
+   ```
+
+3. Accede a la documentación (Swagger):
+
+   ```bash
+   http://127.0.0.1:8000/swagger/
+   ```
+
+### Opción 2: Desarrollo Local (Entorno Virtual)
+   Si prefieres correr el backend de forma nativa:
+
+1. Levantar la base de datos:
+   ```BASH
+   cd db && docker compose up -d && cd ..
+   ```
+
+2. Configurar y arrancar el backend(Linux / macOS):
+   ```BASH
+   cd back
+   python3 -m venv venv
+   source venv/bin/activate
+   pip install -r requirements.txt
+   python manage.py migrate
+   python manage.py runserver
+
+
+3. Configurar y arrancar el backend(CMD o PowerShell):
+   ```BASH
+   cd back
+   python -m venv venv
+   venv\Scripts\activate
+   pip install -r requirements.txt
+   python manage.py migrate
+   python manage.py runserver
