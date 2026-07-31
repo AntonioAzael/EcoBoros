@@ -1,0 +1,67 @@
+/* ============================================
+   PUBLICACION.CSS - Detalle de Producto
+   ============================================ */
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+@keyframes labelFadeIn {
+    from { opacity: 0; transform: scale(0.8) translateY(5px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.4s ease-out forwards;
+    opacity: 0;
+}
+
+/* ========== KEYBOARD LABELS ========== */
+.keyboard-label {
+    position: absolute;
+    background: linear-gradient(135deg, #1a2b4b 0%, #2d4563 100%);
+    color: white;
+    padding: 4px 10px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    pointer-events: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(120, 192, 67, 0.5);
+    z-index: 20;
+    animation: labelFadeIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.shortcut-tag {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.matriz-active {
+    box-shadow: 0 0 0 3px #78C043, 0 10px 25px rgba(120, 192, 67, 0.3) !important;
+    transition: all 0.3s ease;
+}
+
+/* ========== PDF CONTAINER ========== */
+.pdf-container {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.pdf-header {
+    background: linear-gradient(135deg, #1a2b4b 0%, #2d4563 100%);
+    color: white;
+    padding: 20px;
+    border-radius: 8px 8px 0 0;
+    text-align: center;
+}

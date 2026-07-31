@@ -1,0 +1,138 @@
+/* ============================================
+   REGISTRO.CSS - Registro de Residuos
+   ============================================ */
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+@keyframes labelFadeIn {
+    from { opacity: 0; transform: scale(0.8) translateY(5px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.animate-card {
+    animation: fadeIn 0.4s ease-out forwards;
+    opacity: 0;
+}
+.animate-pulse-custom {
+    animation: pulse 2s infinite;
+}
+
+/* ========== KEYBOARD LABELS ========== */
+.keyboard-label {
+    position: absolute;
+    background: linear-gradient(135deg, #1a2b4b 0%, #2d4563 100%);
+    color: white;
+    padding: 4px 10px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 50;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(120, 192, 67, 0.5);
+    animation: labelFadeIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.shortcut-tag {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.matriz-active {
+    box-shadow: 0 0 0 3px #78C043, 0 10px 25px rgba(120, 192, 67, 0.3) !important;
+    transition: all 0.3s ease;
+}
+
+.kb-focused {
+    box-shadow: 0 0 0 3px #1a2b4b !important;
+}
+
+/* ========== CATEGORÍAS ========== */
+.category-metales { border-color: #4b5563; background-color: #f9fafb; }
+.category-metales.selected { background-color: #4b5563; border-color: #4b5563; color: white; box-shadow: 0 0 0 3px rgba(75, 85, 99, 0.2); }
+
+.category-plasticos { border-color: #3b82f6; background-color: #eff6ff; }
+.category-plasticos.selected { background-color: #3b82f6; border-color: #3b82f6; color: white; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2); }
+
+.category-carton { border-color: #f59e0b; background-color: #fffbeb; }
+.category-carton.selected { background-color: #f59e0b; border-color: #f59e0b; color: white; box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2); }
+
+.category-papel { border-color: #64748b; background-color: #f8fafc; }
+.category-papel.selected { background-color: #64748b; border-color: #64748b; color: white; box-shadow: 0 0 0 3px rgba(100, 116, 139, 0.2); }
+
+.category-electronicos { border-color: #f97316; background-color: #fff7ed; }
+.category-electronicos.selected { background-color: #f97316; border-color: #f97316; color: white; box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.2); }
+
+.category-maderas { border-color: #b45309; background-color: #fffbeb; }
+.category-maderas.selected { background-color: #b45309; border-color: #b45309; color: white; box-shadow: 0 0 0 3px rgba(180, 83, 9, 0.2); }
+
+/* ========== DROPDOWN ========== */
+.dropdown-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 8px;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.15);
+    min-width: 240px;
+    z-index: 100;
+    border: 1px solid #e2e8f0;
+    overflow: hidden;
+}
+
+.dropdown-item {
+    padding: 12px 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: all 0.2s;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    color: #1e293b;
+}
+
+.dropdown-item:hover {
+    background-color: #f8fafc;
+    color: #78C043;
+}
+
+.dropdown-divider {
+    height: 1px;
+    background-color: #e2e8f0;
+    margin: 4px 0;
+}
+
+/* ========== SCROLLBAR ========== */
+html {
+    overflow-y: scroll;
+    scrollbar-gutter: stable;
+}
+
+::-webkit-scrollbar {
+    width: 8px;
+}
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}

@@ -1,0 +1,139 @@
+/* ============================================
+   CALIDAD.CSS - Control de Calidad ECOBOROS
+   ============================================ */
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+@keyframes slideIn {
+    from { opacity: 0; transform: translateX(-10px); }
+    to { opacity: 0; transform: translateX(0); }
+}
+@keyframes pulse-custom {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+@keyframes labelFadeIn {
+    from { opacity: 0; transform: scale(0.8) translateY(5px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.4s ease-out forwards;
+}
+.animate-slide {
+    animation: slideIn 0.3s ease-out forwards;
+}
+.animate-pulse-custom {
+    animation: pulse-custom 2s infinite;
+}
+
+/* ========== ESTADOS ========== */
+.status-pending {
+    background-color: #fef3c7;
+    color: #d97706;
+    border-left: 3px solid #f59e0b;
+}
+.status-approved {
+    background-color: #dcfce7;
+    color: #15803d;
+    border-left: 3px solid #22c55e;
+}
+.status-rejected {
+    background-color: #fee2e2;
+    color: #dc2626;
+    border-left: 3px solid #ef4444;
+}
+.status-review {
+    background-color: #e0e7ff;
+    color: #4f46e5;
+    border-left: 3px solid #6366f1;
+}
+
+/* ========== TARJETAS DE PRODUCTO ========== */
+.product-card {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.product-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 25px -12px rgba(0, 0, 0, 0.15);
+}
+
+/* ========== MODALES ========== */
+.modal-enter {
+    animation: fadeIn 0.2s ease-out;
+}
+
+/* ========== COMENTARIOS ========== */
+.comment-card:hover {
+    transform: translateX(4px);
+    transition: transform 0.2s ease;
+}
+
+/* ========== KEYBOARD LABELS ========== */
+.keyboard-label {
+    position: absolute;
+    background: linear-gradient(135deg, #1a2b4b 0%, #2d4563 100%);
+    color: white;
+    padding: 4px 10px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    pointer-events: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(120, 192, 67, 0.5);
+    z-index: 20;
+    animation: labelFadeIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.shortcut-tag {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.matriz-active {
+    box-shadow: 0 0 0 3px #78C043, 0 10px 25px rgba(120, 192, 67, 0.3) !important;
+    transition: all 0.3s ease;
+}
+
+/* ========== TABS ========== */
+.tab-active {
+    color: #1a2b4b;
+    border-bottom: 2px solid #78C043;
+    font-weight: 700;
+}
+.tab-inactive {
+    color: #64748b;
+    border-bottom: 2px solid transparent;
+    font-weight: 500;
+}
+
+/* ========== NAV ========== */
+.nav-link {
+    transition: all 0.2s ease;
+}
+.nav-link.active {
+    color: white;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-bottom: 2px solid #78C043;
+}
+.nav-link:hover:not(.active) {
+    color: white;
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* ========== TARJETAS DE ESTADÍSTICAS ========== */
+.stat-card {
+    transition: all 0.3s ease;
+}
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+}

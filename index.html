@@ -3,451 +3,178 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ECOBOROS - Iniciar Sesión</title>
+    <title>ECOBOROS - Cargando...</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-fade-in {
-            animation: fadeIn 0.5s ease-out forwards;
-        }
-        
-        @keyframes slideInRight {
-            from { opacity: 0; transform: translateX(30px); }
-            to { opacity: 1; transform: translateX(0); }
-        }
-        .animate-slide-in {
-            animation: slideInRight 0.6s ease-out forwards;
-        }
-        
-        .input-focus-effect:focus {
-            box-shadow: 0 0 0 3px rgba(120, 192, 67, 0.2);
-            border-color: #78C043;
-        }
-        
-        /* Spinner de carga */
-        .spinner {
-            width: 20px;
-            height: 20px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top-color: white;
-            animation: spin 0.8s linear infinite;
-            display: inline-block;
+        /* Estilos de carga */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #f8fafc;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Inter', sans-serif;
         }
         
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
         
-        /* Animación de pulso para el botón */
-        .btn-pulse {
-            animation: pulse 1.5s ease-in-out infinite;
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
         
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
+        .loader-container {
+            text-align: center;
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+        
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid #e2e8f0;
+            border-top-color: #78C043;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        .logo-text {
+            font-size: 24px;
+            font-weight: 800;
+            color: #1a2b4b;
+        }
+        
+        .logo-text span {
+            color: #78C043;
+        }
+        
+        .subtitle {
+            color: #94a3b8;
+            font-size: 14px;
+            margin-top: 4px;
         }
     </style>
 </head>
-<body class="bg-slate-50 font-sans min-h-screen text-slate-800">
-
-    <!-- Header - Mismo estilo que el header de filtros (ECOBOROS) -->
-    <div class="bg-[#1a2b4b] sticky top-0 z-20 shadow-md">
-        <div class="max-w-7xl mx-auto px-6">
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 py-4">
-                <div class="flex items-center">
-                    <img src="Logo.png" alt="ECOBOROS Logo" class="h-14 w-auto object-contain drop-shadow-sm" onerror="this.src='https://placehold.co/200x60/1a2b4b/78C043?text=ECOBOROS'">
-                   <div>
-                        <h1 class="text-white text-lg font-bold">ECOBOROS</h1>
-                        <span class="text-[#78C043] text-xs font-medium">Marketplace de Residuos</span>
-                    </div>
-                </div>
-                <div class="flex items-center gap-6">
-                    <div class="hidden md:flex items-center gap-4 border-l-2 border-slate-600 pl-4">
-                        <div class="text-right">
-                            <p class="text-sm font-bold text-white">Bienvenido a ECOBOROS</p>
-                            <p class="text-xs text-[#78C043] font-medium flex items-center justify-end gap-1">
-                                <span class="w-2 h-2 rounded-full bg-[#78C043] animate-pulse"></span>
-                                Plataforma de Materiales Reciclables
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Contenido Principal - Login -->
-    <div class="min-h-[calc(100vh-80px)] flex items-center justify-center px-4 py-12">
-        <div class="max-w-md w-full animate-fade-in">
-            <!-- Tarjeta de Login -->
-            <div class="bg-white rounded-3xl shadow-xl overflow-hidden border border-slate-100">
-                <!-- Header de la tarjeta -->
-                <div class="bg-gradient-to-r from-[#1a2b4b] to-[#2d4563] px-8 py-6 text-center">
-                    <div class="flex justify-center mb-4">
-                        <img src="Logo.png" alt="ECOBOROS" class="h-16 w-auto object-contain" onerror="this.src='https://placehold.co/150x60/ffffff/78C043?text=♻️'">
-                    </div>
-                    <h2 class="text-2xl font-bold text-white">Iniciar Sesión</h2>
-                    <p class="text-slate-300 text-sm mt-2">Ingresa tus credenciales para acceder</p>
-                </div>
-
-                <!-- Formulario -->
-                <div class="p-8">
-                    <!-- Mensaje de error -->
-                    <div id="error-message" class="hidden mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm flex items-center gap-2">
-                        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                        <span id="error-text">Credenciales incorrectas</span>
-                    </div>
-
-                    <!-- Indicador de rol detectado (opcional) -->
-                    <div id="role-indicator" class="hidden mb-4 p-3 bg-[#f0fdf4] border border-[#78C043] rounded-xl text-[#1a2b4b] text-sm flex items-center gap-2">
-                        <span id="role-indicator-icon">🏭</span>
-                        <span id="role-indicator-text">Accediendo como Empresa</span>
-                    </div>
-
-                    <form id="login-form" onsubmit="handleLogin(event)">
-                        <!-- Campo Email / Usuario -->
-                        <div class="mb-6">
-                            <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
-                                Correo Electrónico
-                            </label>
-                            <div class="relative">
-                                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-lg">📧</span>
-                                <input 
-                                    type="email" 
-                                    id="email-input"
-                                    class="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 focus:border-[#78C043] focus:ring-2 focus:ring-[#78C043]/20 outline-none transition-all input-focus-effect"
-                                    placeholder="usuario@ecoboros.com"
-                                    autocomplete="off"
-                                    required
-                                >
-                            </div>
-                        </div>
-
-                        <!-- Campo Contraseña -->
-                        <div class="mb-6">
-                            <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
-                                Contraseña
-                            </label>
-                            <div class="relative">
-                                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-lg">🔒</span>
-                                <input 
-                                    type="password" 
-                                    id="password-input"
-                                    class="w-full pl-12 pr-12 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 focus:border-[#78C043] focus:ring-2 focus:ring-[#78C043]/20 outline-none transition-all input-focus-effect"
-                                    placeholder="••••••••"
-                                    required
-                                >
-                                <button type="button" onclick="togglePassword()" class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors">
-                                    <span id="toggle-password-icon">👁️</span>
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Recordar sesión -->
-                        <div class="flex items-center justify-between mb-8">
-                            <label class="flex items-center gap-2 cursor-pointer">
-                                <input type="checkbox" id="remember-checkbox" class="w-4 h-4 rounded border-slate-300 text-[#78C043] focus:ring-[#78C043]/20">
-                                <span class="text-sm text-slate-600">Recordarme</span>
-                            </label>
-                        </div>
-
-                        <!-- Botón Login -->
-                        <button 
-                            type="submit"
-                            id="login-btn"
-                            class="w-full bg-[#78C043] text-white py-4 rounded-xl font-bold shadow-lg shadow-[#78C043]/30 hover:bg-[#66a338] transition-all transform hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2"
-                        >
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
-                            </svg>
-                            Ingresar
-                        </button>
-                    </form>
-
-                    <!-- Credenciales de prueba -->
-                    <div class="mt-8 p-4 bg-slate-50 rounded-xl">
-                        <p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 text-center">📋 Credenciales de prueba</p>
-                        <div class="grid grid-cols-1 gap-2 text-xs">
-                            <div class="flex justify-between items-center p-2 bg-white rounded-lg border border-slate-100">
-                                <div class="flex items-center gap-2">
-                                    <span>🏭</span>
-                                    <span class="font-mono text-slate-600">empresa@ecoboros.com</span>
-                                </div>
-                                <span class="text-slate-400 font-mono">123456</span>
-                            </div>
-                            <div class="flex justify-between items-center p-2 bg-white rounded-lg border border-slate-100">
-                                <div class="flex items-center gap-2">
-                                    <span>👑</span>
-                                    <span class="font-mono text-slate-600">admin@ecoboros.com</span>
-                                </div>
-                                <span class="text-slate-400 font-mono">123456</span>
-                            </div>
-                            <div class="flex justify-between items-center p-2 bg-white rounded-lg border border-slate-100">
-                                <div class="flex items-center gap-2">
-                                    <span>✓</span>
-                                    <span class="font-mono text-slate-600">calidad@ecoboros.com</span>
-                                </div>
-                                <span class="text-slate-400 font-mono">123456</span>
-                            </div>
-                        </div>
-                        <p class="text-xs text-slate-400 text-center mt-3">
-                           
-                        </p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Información adicional -->
-            <div class="mt-6 text-center text-xs text-slate-400">
-                <p>© 2026 ECOBOROS - Todos los derechos reservados</p>
-            </div>
-        </div>
+<body>
+    <div class="loader-container">
+        <img src="Public/Imagenes/Logo.png" alt="ECOBOROS" class="h-20 w-auto mx-auto mb-4 drop-shadow-sm" onerror="this.src='https://placehold.co/200x80/1a2b4b/78C043?text=ECOBOROS'">
+        <div class="spinner"></div>
+        <p class="logo-text">ECOBOROS <span>♻️</span></p>
+        <p class="subtitle">Redirigiendo...</p>
     </div>
 
     <script>
-        // Base de datos de cuentas (cada cuenta tiene su rol definido por el email)
-        const ACCOUNTS_DB = [
-            {
-                email: "empresa@ecoboros.com",
-                password: "123456",
-                role: "empresa",
-                redirect: "figma.html",
-                name: "Empresa Demo S.A.",
-                icon: "🏭",
-                description: "Empresa Verificada"
-            },
-            {
-                email: "admin@ecoboros.com",
-                password: "123456",
-                role: "admin",
-                redirect: "admin.html",
-                name: "Administrador",
-                icon: "👑",
-                description: "Administrador del Sistema"
-            },
-            {
-                email: "calidad@ecoboros.com",
-                password: "123456",
-                role: "calidad",
-                redirect: "calidad.html",
-                name: "Control Calidad",
-                icon: "✓",
-                description: "Control de Calidad"
-            }
-        ];
-
-        // Función para detectar automáticamente la cuenta por email
-        function detectAccountByEmail(email) {
-            return ACCOUNTS_DB.find(account => account.email.toLowerCase() === email.toLowerCase());
-        }
-
-        // Mostrar indicador de rol detectado (opcional - al escribir email)
-        function updateRoleIndicator() {
-            const email = document.getElementById('email-input').value.trim();
-            const roleIndicator = document.getElementById('role-indicator');
-            const roleIcon = document.getElementById('role-indicator-icon');
-            const roleText = document.getElementById('role-indicator-text');
-            
-            if (email) {
-                const detectedAccount = detectAccountByEmail(email);
-                if (detectedAccount) {
-                    // Mostrar el rol detectado
-                    roleIcon.textContent = detectedAccount.icon;
-                    roleText.textContent = `Accediendo como ${detectedAccount.description}`;
-                    roleIndicator.classList.remove('hidden');
-                    roleIndicator.style.animation = 'none';
-                    setTimeout(() => { roleIndicator.style.animation = 'fadeIn 0.3s ease-out'; }, 10);
-                } else {
-                    // Email no reconocido - mostrar mensaje genérico
-                    roleIcon.textContent = '❓';
-                    roleText.textContent = 'Correo no registrado en el sistema';
-                    roleIndicator.classList.remove('hidden');
-                }
-            } else {
-                // Ocultar si no hay email
-                roleIndicator.classList.add('hidden');
-            }
-        }
-
-        // Manejar inicio de sesión
-        async function handleLogin(event) {
-            event.preventDefault();
-            
-            const email = document.getElementById('email-input').value.trim();
-            const password = document.getElementById('password-input').value;
-            const rememberMe = document.getElementById('remember-checkbox').checked;
-            const errorDiv = document.getElementById('error-message');
-            const errorText = document.getElementById('error-text');
-            const loginBtn = document.getElementById('login-btn');
-            const originalBtnText = loginBtn.innerHTML;
-            
-            // Limpiar errores previos
-            errorDiv.classList.add('hidden');
-            
-            // Validaciones básicas
-            if (!email || !password) {
-                errorText.textContent = 'Por favor ingresa correo y contraseña';
-                errorDiv.classList.remove('hidden');
-                return;
-            }
-            
-            // Buscar la cuenta por email
-            const account = detectAccountByEmail(email);
-            
-            // Mostrar estado de carga
-            loginBtn.innerHTML = '<div class="spinner"></div> Verificando credenciales...';
-            loginBtn.disabled = true;
-            loginBtn.classList.add('opacity-70', 'cursor-not-allowed');
-            
-            // Simular un pequeño delay para dar feedback visual
-            await new Promise(resolve => setTimeout(resolve, 800));
-            
-            // Verificar si la cuenta existe y la contraseña es correcta
-            if (account && account.password === password) {
-                // Credenciales correctas - preparar datos de sesión
-                const sessionData = {
-                    email: account.email,
-                    name: account.name,
-                    role: account.role,
-                    icon: account.icon,
-                    description: account.description,
-                    loggedIn: true,
-                    timestamp: new Date().getTime()
-                };
-                
-                // Guardar sesión según preferencia
-                if (rememberMe) {
-                    localStorage.setItem('ecoboros_user', JSON.stringify(sessionData));
-                } else {
-                    sessionStorage.setItem('ecoboros_user', JSON.stringify(sessionData));
-                }
-                
-                // Mostrar mensaje de éxito con el rol detectado
-                loginBtn.innerHTML = '✅ ¡Acceso concedido! Redirigiendo...';
-                
-                // Redirigir según el rol de la cuenta
-                setTimeout(() => {
-                    window.location.href = account.redirect;
-                }, 600);
-            } else {
-                // Credenciales incorrectas
-                if (!account) {
-                    errorText.textContent = `El correo "${email}" no está registrado en el sistema`;
-                } else {
-                    errorText.textContent = 'Contraseña incorrecta';
-                }
-                errorDiv.classList.remove('hidden');
-                
-                // Restaurar botón
-                loginBtn.innerHTML = originalBtnText;
-                loginBtn.disabled = false;
-                loginBtn.classList.remove('opacity-70', 'cursor-not-allowed');
-                
-                // Ocultar error después de 3 segundos
-                setTimeout(() => {
-                    errorDiv.classList.add('hidden');
-                }, 4000);
-            }
-        }
+        /**
+         * ============================================
+         * INDEX.JS - Punto de entrada principal
+         * ============================================
+         * Este script verifica si el usuario tiene
+         * sesión activa y lo redirige automáticamente
+         * a la página correspondiente.
+         */
         
-        // Mostrar notificación flotante
-        function showNotification(message, type = 'info') {
-            const notification = document.createElement('div');
-            notification.className = `fixed top-24 right-6 z-50 px-6 py-3 rounded-xl shadow-lg text-white font-medium animate-fade-in transition-all ${type === 'success' ? 'bg-[#78C043]' : 'bg-red-500'}`;
-            notification.innerHTML = message;
-            document.body.appendChild(notification);
-            
-            setTimeout(() => {
-                notification.style.opacity = '0';
-                notification.style.transform = 'translateX(100px)';
-                setTimeout(() => notification.remove(), 300);
-            }, 2500);
-        }
-        
-        // Alternar visibilidad de contraseña
-        function togglePassword() {
-            const passwordInput = document.getElementById('password-input');
-            const iconSpan = document.getElementById('toggle-password-icon');
-            
-            if (passwordInput.type === 'password') {
-                passwordInput.type = 'text';
-                iconSpan.textContent = '🙈';
-            } else {
-                passwordInput.type = 'password';
-                iconSpan.textContent = '👁️';
-            }
-        }
-        
-        // Verificar si ya hay sesión activa
-        function checkExistingSession() {
-            const storedUser = localStorage.getItem('ecoboros_user') || sessionStorage.getItem('ecoboros_user');
-            if (storedUser) {
-                try {
-                    const user = JSON.parse(storedUser);
-                    if (user.loggedIn === true) {
-                        // Buscar la redirección según el rol guardado
-                        const account = ACCOUNTS_DB.find(acc => acc.role === user.role);
-                        if (account) {
-                            window.location.href = account.redirect;
-                        }
+        (function() {
+            'use strict';
+
+            // ========== MAPA DE ROLES A RUTAS ==========
+            const ROUTES = {
+                'admin': 'Components/admin/admin.html',
+                'calidad': 'Components/calidad/calidad.html',
+                'empresa': 'Components/empresa/empresa.html',
+                'invitado': 'Components/login/login.html'
+            };
+
+            // ========== OBTENER USUARIO DE SESIÓN ==========
+            function getSessionUser() {
+                // Primero buscar en localStorage, luego en sessionStorage
+                const stored = localStorage.getItem('ecoboros_user') || sessionStorage.getItem('ecoboros_user');
+                if (stored) {
+                    try {
+                        return JSON.parse(stored);
+                    } catch (e) {
+                        console.warn('Error al parsear sesión:', e);
+                        return null;
                     }
-                } catch(e) {
-                    console.log('No hay sesión válida');
                 }
+                return null;
             }
-        }
-        
-        // Auto-completar demo (para facilitar pruebas)
-        function autoFillDemo(role) {
-            const account = ACCOUNTS_DB.find(acc => acc.role === role);
-            if (account) {
-                document.getElementById('email-input').value = account.email;
-                document.getElementById('password-input').value = account.password;
-                updateRoleIndicator();
-                // Opcional: auto-enfocar el botón
-                document.getElementById('login-btn').focus();
-            }
-        }
-        
-        // Inicialización
-        document.addEventListener('DOMContentLoaded', () => {
-            checkExistingSession();
-            
-            // Agregar evento para detectar rol al escribir email
-            const emailInput = document.getElementById('email-input');
-            emailInput.addEventListener('input', updateRoleIndicator);
-            emailInput.addEventListener('blur', updateRoleIndicator);
-            
-            // Hacer que las credenciales de prueba sean clickeables
-            const demoItems = document.querySelectorAll('.bg-white.rounded-lg.border');
-            demoItems.forEach((item, index) => {
-                item.style.cursor = 'pointer';
-                item.addEventListener('click', () => {
-                    const roles = ['empresa', 'admin', 'calidad'];
-                    autoFillDemo(roles[index]);
-                });
-                item.title = 'Click para autocompletar';
-            });
-        });
-        
-        // Atajo de teclado: Enter para enviar
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && !document.getElementById('login-form').classList.contains('submitting')) {
-                const form = document.getElementById('login-form');
-                if (form && document.activeElement === document.getElementById('password-input') || 
-                    document.activeElement === document.getElementById('email-input')) {
-                    e.preventDefault();
-                    handleLogin(e);
+
+            // ========== VALIDAR SESIÓN ==========
+            function isValidSession(user) {
+                if (!user) return false;
+                
+                // Verificar que tenga los campos mínimos
+                if (!user.role || !user.loggedIn) return false;
+                
+                // Verificar que el rol sea válido
+                const validRoles = ['admin', 'calidad', 'empresa'];
+                if (!validRoles.includes(user.role)) return false;
+                
+                // Verificar que la sesión no sea demasiado vieja (7 días)
+                const maxAge = 7 * 24 * 60 * 60 * 1000; // 7 días en milisegundos
+                if (user.timestamp) {
+                    const age = Date.now() - user.timestamp;
+                    if (age > maxAge) {
+                        // Sesión expirada, limpiar
+                        localStorage.removeItem('ecoboros_user');
+                        sessionStorage.removeItem('ecoboros_user');
+                        return false;
+                    }
                 }
+                
+                return true;
             }
-        });
+
+            // ========== REDIRIGIR ==========
+            function redirectTo(url) {
+                // Asegurar que la URL sea absoluta desde la raíz
+                if (url.startsWith('/')) {
+                    url = url.substring(1);
+                }
+                // Redirigir con un pequeño delay para que se vea el splash
+                setTimeout(() => {
+                    window.location.href = url;
+                }, 600);
+            }
+
+            // ========== MAIN ==========
+            function main() {
+                const user = getSessionUser();
+                
+                // Determinar la ruta de destino
+                let destination;
+                
+                if (isValidSession(user)) {
+                    // Usuario con sesión válida - ir a su panel
+                    destination = ROUTES[user.role];
+                    if (!destination) {
+                        // Si el rol no está mapeado, ir a login por seguridad
+                        destination = ROUTES['invitado'];
+                    }
+                } else {
+                    // Sin sesión válida - ir a login
+                    destination = ROUTES['invitado'];
+                    // Limpiar cualquier dato de sesión corrupto
+                    localStorage.removeItem('ecoboros_user');
+                    sessionStorage.removeItem('ecoboros_user');
+                }
+                
+                // Redirigir
+                redirectTo(destination);
+            }
+
+            // ========== EJECUTAR ==========
+            // Esperar a que el DOM esté listo
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', main);
+            } else {
+                main();
+            }
+
+        })();
     </script>
 </body>
 </html>

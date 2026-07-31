@@ -1,0 +1,230 @@
+/* ============================================
+   EMPRESA.CSS - Marketplace ECOBOROS
+   ============================================ */
+
+/* --- ESTILOS DE BORDES CIRCULARES --- */
+.bg-slate-50,
+.bg-\[\#1a2b4b\] {
+    border-radius: 15px;
+}
+
+body.bg-slate-50 {
+    border-radius: 0;
+}
+
+header.bg-\[\#1a2b4b\] {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+#filters-modal .bg-\[\#1a2b4b\] {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-card {
+    animation: fadeIn 0.4s ease-out forwards;
+    opacity: 0;
+}
+
+@keyframes pulse-custom {
+    0%,
+    100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.animate-pulse-custom {
+    animation: pulse-custom 2s infinite;
+}
+
+@keyframes labelFadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.8) translateY(5px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.keyboard-label {
+    position: absolute;
+    background: linear-gradient(135deg, #1a2b4b 0%, #2d4563 100%);
+    color: white;
+    padding: 4px 10px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    pointer-events: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(120, 192, 67, 0.5);
+    animation: labelFadeIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    z-index: 20;
+}
+
+.shortcut-tag {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.matriz-active {
+    box-shadow: 0 0 0 3px #78C043, 0 10px 25px rgba(120, 192, 67, 0.3) !important;
+    transition: all 0.3s ease;
+}
+
+.logout-btn:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Estilos para tabs de publicaciones */
+.tab-active {
+    background-color: #1a2b4b;
+    color: white;
+    border-bottom: 2px solid #78C043;
+}
+
+.tab-inactive {
+    background-color: #f1f5f9;
+    color: #475569;
+    border-bottom: 2px solid transparent;
+}
+
+.status-badge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: bold;
+}
+
+.status-revision {
+    background-color: #fef3c7;
+    color: #b45309;
+}
+
+.status-aprobada {
+    background-color: #d1fae5;
+    color: #065f46;
+}
+
+.status-rechazada {
+    background-color: #fee2e2;
+    color: #991b1b;
+}
+
+/* Dropdown menu */
+.dropdown-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 8px;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.15);
+    min-width: 240px;
+    z-index: 100;
+    border: 1px solid #e2e8f0;
+    overflow: hidden;
+}
+
+.dropdown-item {
+    padding: 12px 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: all 0.2s;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    color: #1e293b;
+}
+
+.dropdown-item:hover {
+    background-color: #f8fafc;
+    color: #78C043;
+}
+
+.dropdown-divider {
+    height: 1px;
+    background-color: #e2e8f0;
+    margin: 4px 0;
+}
+
+/* Transición suave entre páginas */
+.page-transition {
+    transition: opacity 0.25s ease-in-out;
+}
+
+.page-hidden {
+    display: none;
+}
+
+.page-visible {
+    display: block;
+}
+
+/* === SOLUCIÓN PARA EVITAR EL SALTO VISUAL === */
+html {
+    overflow-y: scroll;
+    scrollbar-gutter: stable;
+}
+
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* Estilos para imágenes de productos */
+.product-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+}
+
+.image-container {
+    overflow: hidden;
+    height: 100%;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.group:hover .product-image {
+    transform: scale(1.1);
+}

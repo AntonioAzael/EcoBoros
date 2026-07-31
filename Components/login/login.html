@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ECOBOROS - Iniciar Sesión</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="login.css">
+</head>
+<body class="bg-slate-50 font-sans min-h-screen text-slate-800">
+
+    <!-- Header - Mismo estilo que el header de filtros (ECOBOROS) -->
+    <div class="bg-[#1a2b4b] sticky top-0 z-20 shadow-md">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 py-4">
+                <div class="flex items-center">
+                    <img src="../../Public/Imagenes/Logo.png" alt="ECOBOROS Logo" class="h-14 w-auto object-contain drop-shadow-sm" onerror="this.src='https://placehold.co/200x60/1a2b4b/78C043?text=ECOBOROS'">
+                   <div>
+                        <h1 class="text-white text-lg font-bold">ECOBOROS</h1>
+                        <span class="text-[#78C043] text-xs font-medium">Marketplace de Residuos</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-6">
+                    <div class="hidden md:flex items-center gap-4 border-l-2 border-slate-600 pl-4">
+                        <div class="text-right">
+                            <p class="text-sm font-bold text-white">Bienvenido a ECOBOROS</p>
+                            <p class="text-xs text-[#78C043] font-medium flex items-center justify-end gap-1">
+                                <span class="w-2 h-2 rounded-full bg-[#78C043] animate-pulse"></span>
+                                Plataforma de Materiales Reciclables
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contenido Principal - Login -->
+    <div class="min-h-[calc(100vh-80px)] flex items-center justify-center px-4 py-12">
+        <div class="max-w-md w-full animate-fade-in">
+            <!-- Tarjeta de Login -->
+            <div class="bg-white rounded-3xl shadow-xl overflow-hidden border border-slate-100">
+                <!-- Header de la tarjeta -->
+                <div class="bg-gradient-to-r from-[#1a2b4b] to-[#2d4563] px-8 py-6 text-center">
+                    <div class="flex justify-center mb-4">
+                        <img src="../../Public/Imagenes/Logo.png" alt="ECOBOROS" class="h-16 w-auto object-contain" onerror="this.src='https://placehold.co/150x60/ffffff/78C043?text=♻️'">
+                    </div>
+                    <h2 class="text-2xl font-bold text-white">Iniciar Sesión</h2>
+                    <p class="text-slate-300 text-sm mt-2">Ingresa tus credenciales para acceder</p>
+                </div>
+
+                <!-- Formulario -->
+                <div class="p-8">
+                    <!-- Mensaje de error -->
+                    <div id="error-message" class="hidden mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm flex items-center gap-2">
+                        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <span id="error-text">Credenciales incorrectas</span>
+                    </div>
+
+                    <!-- Indicador de rol detectado (opcional) -->
+                    <div id="role-indicator" class="hidden mb-4 p-3 bg-[#f0fdf4] border border-[#78C043] rounded-xl text-[#1a2b4b] text-sm flex items-center gap-2">
+                        <span id="role-indicator-icon">🏭</span>
+                        <span id="role-indicator-text">Accediendo como Empresa</span>
+                    </div>
+
+                    <form id="login-form" onsubmit="handleLogin(event)">
+                        <!-- Campo Email / Usuario -->
+                        <div class="mb-6">
+                            <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+                                Correo Electrónico
+                            </label>
+                            <div class="relative">
+                                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-lg">📧</span>
+                                <input 
+                                    type="email" 
+                                    id="email-input"
+                                    class="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 focus:border-[#78C043] focus:ring-2 focus:ring-[#78C043]/20 outline-none transition-all input-focus-effect"
+                                    placeholder="usuario@ecoboros.com"
+                                    autocomplete="off"
+                                    required
+                                >
+                            </div>
+                        </div>
+
+                        <!-- Campo Contraseña -->
+                        <div class="mb-6">
+                            <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+                                Contraseña
+                            </label>
+                            <div class="relative">
+                                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-lg">🔒</span>
+                                <input 
+                                    type="password" 
+                                    id="password-input"
+                                    class="w-full pl-12 pr-12 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 focus:border-[#78C043] focus:ring-2 focus:ring-[#78C043]/20 outline-none transition-all input-focus-effect"
+                                    placeholder="••••••••"
+                                    required
+                                >
+                                <button type="button" onclick="togglePassword()" class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors">
+                                    <span id="toggle-password-icon">👁️</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Recordar sesión -->
+                        <div class="flex items-center justify-between mb-8">
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" id="remember-checkbox" class="w-4 h-4 rounded border-slate-300 text-[#78C043] focus:ring-[#78C043]/20">
+                                <span class="text-sm text-slate-600">Recordarme</span>
+                            </label>
+                        </div>
+
+                        <!-- Botón Login -->
+                        <button 
+                            type="submit"
+                            id="login-btn"
+                            class="w-full bg-[#78C043] text-white py-4 rounded-xl font-bold shadow-lg shadow-[#78C043]/30 hover:bg-[#66a338] transition-all transform hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2"
+                        >
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
+                            </svg>
+                            Ingresar
+                        </button>
+                    </form>
+
+                    <!-- Credenciales de prueba -->
+                    <div class="mt-8 p-4 bg-slate-50 rounded-xl">
+                        <p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 text-center">📋 Credenciales de prueba</p>
+                        <div class="grid grid-cols-1 gap-2 text-xs">
+                            <div class="flex justify-between items-center p-2 bg-white rounded-lg border border-slate-100 cursor-pointer" onclick="autoFillDemo('empresa')" title="Click para autocompletar">
+                                <div class="flex items-center gap-2">
+                                    <span>🏭</span>
+                                    <span class="font-mono text-slate-600">empresa@ecoboros.com</span>
+                                </div>
+                                <span class="text-slate-400 font-mono">123456</span>
+                            </div>
+                            <div class="flex justify-between items-center p-2 bg-white rounded-lg border border-slate-100 cursor-pointer" onclick="autoFillDemo('admin')" title="Click para autocompletar">
+                                <div class="flex items-center gap-2">
+                                    <span>👑</span>
+                                    <span class="font-mono text-slate-600">admin@ecoboros.com</span>
+                                </div>
+                                <span class="text-slate-400 font-mono">123456</span>
+                            </div>
+                            <div class="flex justify-between items-center p-2 bg-white rounded-lg border border-slate-100 cursor-pointer" onclick="autoFillDemo('calidad')" title="Click para autocompletar">
+                                <div class="flex items-center gap-2">
+                                    <span>✓</span>
+                                    <span class="font-mono text-slate-600">calidad@ecoboros.com</span>
+                                </div>
+                                <span class="text-slate-400 font-mono">123456</span>
+                            </div>
+                        </div>
+                        <p class="text-xs text-slate-400 text-center mt-3">
+                            Haz clic en una credencial para autocompletar
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Información adicional -->
+            <div class="mt-6 text-center text-xs text-slate-400">
+                <p>© 2026 ECOBOROS - Todos los derechos reservados</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="login.js"></script>
+</body>
+</html>
