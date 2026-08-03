@@ -79,7 +79,7 @@ Para levantar todo el entorno de forma automatizada:
    docker compose up --build -d
    ```
 2. Aplica las migraciones de Django:
-
+    
    ```bash
    docker exec -it ecoboros_back python manage.py migrate
    ```
