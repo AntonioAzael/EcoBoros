@@ -28,16 +28,11 @@ CREATE TABLE users (
     user_id SERIAL PRIMARY KEY,
     role_id INT NOT NULL,
     company_name VARCHAR(150) NOT NULL,
-    
-    /* CAMBIO NUEVO: Se añade el RFC para cumplir con la identificación fiscal 
-       formal de las empresas mexicanas en transacciones de tipo B2B. */
     rfc VARCHAR(13) UNIQUE NULL, 
-    
     contact_email VARCHAR(100) NOT NULL,
     contact_phone VARCHAR(20) NOT NULL,
-    
-    /* Lógica: Bandera para activar o desactivar cuentas de forma lógica */
-    is_active BOOLEAN DEFAULT TRUE,
+    password VARCHAR(128) NULL,
+    is_active BOOLEAN DEFAULT TRUE,    /* Lógica: Bandera para activar o desactivar cuentas de forma lógica */
     
     FOREIGN KEY (role_id) REFERENCES roles(role_id)
 );

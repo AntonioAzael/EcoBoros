@@ -9,7 +9,7 @@ const ACCOUNTS_DB = [
         password: "123456",
         role: "empresa",
         redirect: "../../Components/empresa/empresa.html",
-        name: "Empresa Demo S.A.",
+        name: "Empresa Demo EcoBoros S.A.",
         icon: "🏭",
         description: "Empresa Verificada"
     },
@@ -18,7 +18,7 @@ const ACCOUNTS_DB = [
         password: "123456",
         role: "admin",
         redirect: "../../Components/admin/admin.html",
-        name: "Administrador",
+        name: "Administrador EcoBoros",
         icon: "👑",
         description: "Administrador del Sistema"
     },
@@ -27,11 +27,19 @@ const ACCOUNTS_DB = [
         password: "123456",
         role: "calidad",
         redirect: "../../Components/calidad/calidad.html",
-        name: "Control Calidad",
+        name: "Equipo Calidad EcoBoros",
         icon: "✓",
         description: "Control de Calidad"
     }
 ];
+
+const API_BASE_URL = 'http://127.0.0.1:8000';
+const LOGIN_URL = `${API_BASE_URL}/api-ecoboros-v1/auth/login/`;
+const ROLE_ROUTES = {
+    admin: '../../Components/admin/admin.html',
+    calidad: '../../Components/calidad/calidad.html',
+    empresa: '../../Components/empresa/empresa.html'
+};
 
 // ========== FUNCIONES ==========
 
@@ -87,62 +95,60 @@ async function handleLogin(event) {
         return;
     }
     
-    // Buscar la cuenta por email
-    const account = detectAccountByEmail(email);
-    
     // Mostrar estado de carga
     loginBtn.innerHTML = '<div class="spinner"></div> Verificando credenciales...';
     loginBtn.disabled = true;
     loginBtn.classList.add('opacity-70', 'cursor-not-allowed');
-    
-    // Simular un pequeño delay para dar feedback visual
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    // Verificar si la cuenta existe y la contraseña es correcta
-    if (account && account.password === password) {
-        // Credenciales correctas - preparar datos de sesión
+
+    try {
+        const response = await fetch(LOGIN_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ email, password })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            errorText.textContent = errorData.detail || 'Credenciales inválidas';
+            errorDiv.classList.remove('hidden');
+            return;
+        }
+
+        const data = await response.json();
         const sessionData = {
-            email: account.email,
-            name: account.name,
-            role: account.role,
-            icon: account.icon,
-            description: account.description,
+            email: data.email,
+            name: data.name,
+            role: data.role,
+            icon: data.icon,
+            description: data.description,
             loggedIn: true,
             timestamp: new Date().getTime()
         };
-        
-        // Guardar sesión según preferencia
+
         if (rememberMe) {
             localStorage.setItem('ecoboros_user', JSON.stringify(sessionData));
         } else {
             sessionStorage.setItem('ecoboros_user', JSON.stringify(sessionData));
         }
-        
-        // Mostrar mensaje de éxito con el rol detectado
+
         loginBtn.innerHTML = '✅ ¡Acceso concedido! Redirigiendo...';
-        
-        // Redirigir según el rol de la cuenta
         setTimeout(() => {
-            window.location.href = account.redirect;
+            window.location.href = ROLE_ROUTES[data.role] || '../../Components/login/login.html';
         }, 600);
-    } else {
-        // Credenciales incorrectas
-        if (!account) {
-            errorText.textContent = `El correo "${email}" no está registrado en el sistema`;
-        } else {
-            errorText.textContent = 'Contraseña incorrecta';
-        }
+    } catch (error) {
+        errorText.textContent = 'No se pudo conectar al backend. Asegúrate de que la API esté activa.';
         errorDiv.classList.remove('hidden');
-        
-        // Restaurar botón
-        loginBtn.innerHTML = originalBtnText;
-        loginBtn.disabled = false;
-        loginBtn.classList.remove('opacity-70', 'cursor-not-allowed');
-        
-        // Ocultar error después de 3 segundos
-        setTimeout(() => {
-            errorDiv.classList.add('hidden');
-        }, 4000);
+    } finally {
+        if (!errorDiv.classList.contains('hidden')) {
+            loginBtn.innerHTML = originalBtnText;
+            loginBtn.disabled = false;
+            loginBtn.classList.remove('opacity-70', 'cursor-not-allowed');
+            setTimeout(() => {
+                errorDiv.classList.add('hidden');
+            }, 4000);
+        }
     }
 }
 
@@ -181,10 +187,9 @@ function checkExistingSession() {
         try {
             const user = JSON.parse(storedUser);
             if (user.loggedIn === true) {
-                // Buscar la redirección según el rol guardado
-                const account = ACCOUNTS_DB.find(acc => acc.role === user.role);
-                if (account) {
-                    window.location.href = account.redirect;
+                const destination = ROLE_ROUTES[user.role];
+                if (destination) {
+                    window.location.href = destination;
                 }
             }
         } catch(e) {

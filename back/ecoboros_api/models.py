@@ -71,6 +71,7 @@ class Users(models.Model):
     rfc = models.CharField(unique=True, max_length=13, blank=True, null=True)
     contact_email = models.CharField(max_length=100)
     contact_phone = models.CharField(max_length=20)
+    password = models.CharField(max_length=128, blank=True, null=True)
     is_active = models.BooleanField(blank=True, null=True)
 
     class Meta:

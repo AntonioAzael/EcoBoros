@@ -2,88 +2,120 @@
 -- Inserciones idempotentes para los productos simulados del repo EcoBoros
 BEGIN;
 
+ALTER TABLE users ADD COLUMN IF NOT EXISTS password VARCHAR(128);
+
 -- ====== USERS (publishers) ======
-INSERT INTO users (role_id, company_name, rfc, contact_email, contact_phone, is_active)
+INSERT INTO users (role_id, company_name, rfc, contact_email, contact_phone, password, is_active)
 SELECT (SELECT role_id FROM roles WHERE role_name = 'Empresa' LIMIT 1),
        'Otay Industrial Recycling S.A. de C.V.',
        'OIR123456ABC',
        'contacto@otayindustrial.mx',
        '664-000-0001',
+       '123456',
        TRUE
 WHERE NOT EXISTS (SELECT 1 FROM users WHERE company_name = 'Otay Industrial Recycling S.A. de C.V.');
 
-INSERT INTO users (role_id, company_name, rfc, contact_email, contact_phone, is_active)
+INSERT INTO users (role_id, company_name, rfc, contact_email, contact_phone, password, is_active)
 SELECT (SELECT role_id FROM roles WHERE role_name = 'Empresa' LIMIT 1),
        'Alumina El Florido S.A. de C.V.',
        'ALF123456ABC',
        'ventas@aluminioflorido.mx',
        '664-000-0002',
+       '123456',
        TRUE
 WHERE NOT EXISTS (SELECT 1 FROM users WHERE company_name = 'Alumina El Florido S.A. de C.V.');
 
-INSERT INTO users (role_id, company_name, rfc, contact_email, contact_phone, is_active)
+INSERT INTO users (role_id, company_name, rfc, contact_email, contact_phone, password, is_active)
 SELECT (SELECT role_id FROM roles WHERE role_name = 'Empresa' LIMIT 1),
        'Pallets Pacifico S.A. de C.V.',
        'PAC123456ABC',
        'logistica@palletspacifico.mx',
        '664-000-0003',
+       '123456',
        TRUE
 WHERE NOT EXISTS (SELECT 1 FROM users WHERE company_name = 'Pallets Pacifico S.A. de C.V.');
 
-INSERT INTO users (role_id, company_name, rfc, contact_email, contact_phone, is_active)
+INSERT INTO users (role_id, company_name, rfc, contact_email, contact_phone, password, is_active)
 SELECT (SELECT role_id FROM roles WHERE role_name = 'Empresa' LIMIT 1),
        'Cartones La Mesa S.A. de C.V.',
        'CME123456ABC',
        'operaciones@cartoneslamesa.mx',
        '664-000-0004',
+       '123456',
        TRUE
 WHERE NOT EXISTS (SELECT 1 FROM users WHERE company_name = 'Cartones La Mesa S.A. de C.V.');
 
-INSERT INTO users (role_id, company_name, rfc, contact_email, contact_phone, is_active)
+INSERT INTO users (role_id, company_name, rfc, contact_email, contact_phone, password, is_active)
 SELECT (SELECT role_id FROM roles WHERE role_name = 'Empresa' LIMIT 1),
        'Nordika Electronics Scrap S.A. de C.V.',
        'NORD123456ABC',
        'scrap@nordika.mx',
        '664-000-0005',
+       '123456',
        TRUE
 WHERE NOT EXISTS (SELECT 1 FROM users WHERE company_name = 'Nordika Electronics Scrap S.A. de C.V.');
 
-INSERT INTO users (role_id, company_name, rfc, contact_email, contact_phone, is_active)
+INSERT INTO users (role_id, company_name, rfc, contact_email, contact_phone, password, is_active)
 SELECT (SELECT role_id FROM roles WHERE role_name = 'Empresa' LIMIT 1),
        'Zona Centro Papeles S.A. de C.V.',
        'ZCP123456ABC',
        'contacto@zonacentro.mx',
        '664-000-0006',
+       '123456',
        TRUE
 WHERE NOT EXISTS (SELECT 1 FROM users WHERE company_name = 'Zona Centro Papeles S.A. de C.V.');
 
-INSERT INTO users (role_id, company_name, rfc, contact_email, contact_phone, is_active)
+INSERT INTO users (role_id, company_name, rfc, contact_email, contact_phone, password, is_active)
 SELECT (SELECT role_id FROM roles WHERE role_name = 'Empresa' LIMIT 1),
        'Cobre Otay S.A. de C.V.',
        'COB123456ABC',
        'ventas@cobreotay.mx',
        '664-000-0007',
+       '123456',
        TRUE
 WHERE NOT EXISTS (SELECT 1 FROM users WHERE company_name = 'Cobre Otay S.A. de C.V.');
 
-INSERT INTO users (role_id, company_name, rfc, contact_email, contact_phone, is_active)
+INSERT INTO users (role_id, company_name, rfc, contact_email, contact_phone, password, is_active)
 SELECT (SELECT role_id FROM roles WHERE role_name = 'Empresa' LIMIT 1),
        'PET Rosarito Reciclaje S.A. de C.V.',
        'PET123456ABC',
        'contacto@petrosarito.mx',
        '664-000-0008',
+       '123456',
        TRUE
 WHERE NOT EXISTS (SELECT 1 FROM users WHERE company_name = 'PET Rosarito Reciclaje S.A. de C.V.');
 
+-- Cuentas reales de acceso inicial
+INSERT INTO users (role_id, company_name, rfc, contact_email, contact_phone, password, is_active)
+SELECT (SELECT role_id FROM roles WHERE role_name = 'Administrador Total' LIMIT 1),
+       'Administrador EcoBoros',
+       NULL,
+       'admin@ecoboros.com',
+       '664-000-0000',
+       '123456',
+       TRUE
+WHERE NOT EXISTS (SELECT 1 FROM users WHERE contact_email = 'admin@ecoboros.com');
+
+INSERT INTO users (role_id, company_name, rfc, contact_email, contact_phone, password, is_active)
+SELECT (SELECT role_id FROM roles WHERE role_name = 'Empresa' LIMIT 1),
+       'Empresa Demo EcoBoros S.A. de C.V.',
+       'ECO123456ABC',
+       'empresa@ecoboros.com',
+       '664-000-0008',
+       '123456',
+       TRUE
+WHERE NOT EXISTS (SELECT 1 FROM users WHERE contact_email = 'empresa@ecoboros.com');
+
 -- Usuario de calidad (validator)
-INSERT INTO users (role_id, company_name, rfc, contact_email, contact_phone, is_active)
+INSERT INTO users (role_id, company_name, rfc, contact_email, contact_phone, password, is_active)
 SELECT (SELECT role_id FROM roles WHERE role_name = 'Usuario de Calidad' LIMIT 1),
        'Equipo Calidad EcoBoros',
        NULL,
-       'calidad@ecoboros.mx',
+       'calidad@ecoboros.com',
        '664-000-0099',
+       '123456',
        TRUE
-WHERE NOT EXISTS (SELECT 1 FROM users WHERE contact_email = 'calidad@ecoboros.mx');
+WHERE NOT EXISTS (SELECT 1 FROM users WHERE contact_email = 'calidad@ecoboros.com');
 
 -- ====== WASTES (productos) ======
 /*
@@ -105,7 +137,7 @@ Bidones HDPE de alta resistencia; capacidad 220 L; aptos para líquidos industri
   '2023-10-01',
   '2023-10-01',
   (SELECT status_id FROM statuses WHERE status_name = 'Revision' LIMIT 1),
-  (SELECT user_id FROM users WHERE contact_email = 'calidad@ecoboros.mx' LIMIT 1)
+  (SELECT user_id FROM users WHERE contact_email = 'calidad@ecoboros.com' LIMIT 1)
 WHERE NOT EXISTS (
   SELECT 1 FROM wastes w
   WHERE w.publisher_id = (SELECT user_id FROM users WHERE company_name = 'Otay Industrial Recycling S.A. de C.V.' LIMIT 1)
@@ -124,7 +156,7 @@ Aleación 6061-T6; ideal para mecanizado y soldadura de alta precisión.$$,
   '2023-10-05',
   '2023-10-05',
   (SELECT status_id FROM statuses WHERE status_name = 'Revision' LIMIT 1),
-  (SELECT user_id FROM users WHERE contact_email = 'calidad@ecoboros.mx' LIMIT 1)
+  (SELECT user_id FROM users WHERE contact_email = 'calidad@ecoboros.com' LIMIT 1)
 WHERE NOT EXISTS (
   SELECT 1 FROM wastes w WHERE w.publisher_id = (SELECT user_id FROM users WHERE company_name = 'Alumina El Florido S.A. de C.V.' LIMIT 1)
     AND w.technical_description ILIKE '%Recortes de Aluminio 6061%'
@@ -142,7 +174,7 @@ Pallets reutilizados en buen estado, listos para reparación ligera y reciclaje 
   '2023-09-28',
   '2023-09-28',
   (SELECT status_id FROM statuses WHERE status_name = 'Revision' LIMIT 1),
-  (SELECT user_id FROM users WHERE contact_email = 'calidad@ecoboros.mx' LIMIT 1)
+  (SELECT user_id FROM users WHERE contact_email = 'calidad@ecoboros.com' LIMIT 1)
 WHERE NOT EXISTS (
   SELECT 1 FROM wastes w WHERE w.publisher_id = (SELECT user_id FROM users WHERE company_name = 'Pallets Pacifico S.A. de C.V.' LIMIT 1)
     AND w.technical_description ILIKE '%Pallets de Pino (Reparables)%'
@@ -160,7 +192,7 @@ Cartón corrugado reciclado, densidad media, buena resistencia a compresión ver
   '2023-10-10',
   '2023-10-10',
   (SELECT status_id FROM statuses WHERE status_name = 'Revision' LIMIT 1),
-  (SELECT user_id FROM users WHERE contact_email = 'calidad@ecoboros.mx' LIMIT 1)
+  (SELECT user_id FROM users WHERE contact_email = 'calidad@ecoboros.com' LIMIT 1)
 WHERE NOT EXISTS (
   SELECT 1 FROM wastes w WHERE w.publisher_id = (SELECT user_id FROM users WHERE company_name = 'Cartones La Mesa S.A. de C.V.' LIMIT 1)
     AND w.technical_description ILIKE '%Pacas de Cartón Corrugado%'
@@ -178,7 +210,7 @@ Scrap de tarjetas madre para reciclaje de componentes electrónicos y recuperaci
   '2023-10-12',
   '2023-10-12',
   (SELECT status_id FROM statuses WHERE status_name = 'Revision' LIMIT 1),
-  (SELECT user_id FROM users WHERE contact_email = 'calidad@ecoboros.mx' LIMIT 1)
+  (SELECT user_id FROM users WHERE contact_email = 'calidad@ecoboros.com' LIMIT 1)
 WHERE NOT EXISTS (
   SELECT 1 FROM wastes w WHERE w.publisher_id = (SELECT user_id FROM users WHERE company_name = 'Nordika Electronics Scrap S.A. de C.V.' LIMIT 1)
     AND w.technical_description ILIKE '%Tarjetas Madre (Scrap)%'
@@ -196,7 +228,7 @@ Papelería triturada de oficina, mezcla de papel bond y cartulina.$$,
   '2023-09-15',
   '2023-09-15',
   (SELECT status_id FROM statuses WHERE status_name = 'Revision' LIMIT 1),
-  (SELECT user_id FROM users WHERE contact_email = 'calidad@ecoboros.mx' LIMIT 1)
+  (SELECT user_id FROM users WHERE contact_email = 'calidad@ecoboros.com' LIMIT 1)
 WHERE NOT EXISTS (
   SELECT 1 FROM wastes w WHERE w.publisher_id = (SELECT user_id FROM users WHERE company_name = 'Zona Centro Papeles S.A. de C.V.' LIMIT 1)
     AND w.technical_description ILIKE '%Archivo Muerto (Triturado)%'
@@ -214,7 +246,7 @@ Cobre limpio pelado, sin aislamiento, grado comercial de primera.$$,
   '2023-10-15',
   '2023-10-15',
   (SELECT status_id FROM statuses WHERE status_name = 'Revision' LIMIT 1),
-  (SELECT user_id FROM users WHERE contact_email = 'calidad@ecoboros.mx' LIMIT 1)
+  (SELECT user_id FROM users WHERE contact_email = 'calidad@ecoboros.com' LIMIT 1)
 WHERE NOT EXISTS (
   SELECT 1 FROM wastes w WHERE w.publisher_id = (SELECT user_id FROM users WHERE company_name = 'Cobre Otay S.A. de C.V.' LIMIT 1)
     AND w.technical_description ILIKE '%Cobre de Primera (Pelado)%'
@@ -232,7 +264,7 @@ PET transparente de grado alimenticio triturado, limpio y sin etiquetas.$$,
   '2023-10-02',
   '2023-10-02',
   (SELECT status_id FROM statuses WHERE status_name = 'Revision' LIMIT 1),
-  (SELECT user_id FROM users WHERE contact_email = 'calidad@ecoboros.mx' LIMIT 1)
+  (SELECT user_id FROM users WHERE contact_email = 'calidad@ecoboros.com' LIMIT 1)
 WHERE NOT EXISTS (
   SELECT 1 FROM wastes w WHERE w.publisher_id = (SELECT user_id FROM users WHERE company_name = 'PET Rosarito Reciclaje S.A. de C.V.' LIMIT 1)
     AND w.technical_description ILIKE '%Botellas PET Cristal%'
