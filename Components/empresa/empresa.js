@@ -3,53 +3,7 @@
 // ============================================
 
 // ========== DATOS ==========
-const productsDB = [
-    { id: 1, title: "Bidones HDPE Tricapa", category: "Plásticos", location: "Otay Industrial", qty: "850 Pzas", weightKg: 850, price: "$ 15.00 / pza", date: "2023-10-01", userId: "otra_empresa", status: "aprobada", customImage: null, documentation: [
-        { title: "Ficha técnica", text: "Bidones HDPE de alta resistencia; capacidad 220 L; aptos para líquidos industriales no corrosivos." },
-        { title: "Condición", text: "Unidad usada en buen estado, sin deformaciones visibles y con cierre hermético probado." },
-        { title: "Certificado", text: "Disponible certificado de reciclaje y trazabilidad de plástico." }
-    ] },
-    { id: 2, title: "Recortes de Aluminio 6061", category: "Metales", location: "El Florido", qty: "2.5 Ton", weightKg: 2500, price: "$ 28.50 / kg", date: "2023-10-05", userId: "empresa_actual", status: "revision", customImage: "../../Public/Imagenes/aluminio.jpeg", documentation: [
-        { title: "Especificaciones", text: "Aleación 6061-T6; ideal para mecanizado y soldadura de alta precisión." },
-        { title: "Calidad", text: "Material limpio, sin óxido, con pieza de prueba incluida." },
-        { title: "Certificado", text: "Informe de composición química entregable bajo solicitud." }
-    ] },
-    { id: 3, title: "Pallets de Pino (Reparables)", category: "Maderas", location: "Pacifico", qty: "200 Uds", weightKg: 4000, price: "$ 45.00 / ud", date: "2023-09-28", userId: "otra_empresa", status: "aprobada", customImage: "../../Public/Imagenes/madera.png", documentation: [
-        { title: "Condición", text: "Pallets reutilizados en buen estado, listos para reparación ligera y reciclaje interno." },
-        { title: "Material", text: "Pino tratado, sin humedad excesiva, apto para almacenamiento y carga moderada." },
-        { title: "Recomendación", text: "Ideal para uso en bodegas o transporte de piezas ligeras." }
-    ] },
-    { id: 4, title: "Pacas de Cartón Corrugado", category: "Cartón", location: "La Mesa", qty: "5 Ton", weightKg: 5000, price: "$ 3.20 / kg", date: "2023-10-10", userId: "empresa_actual", status: "rechazada", customImage: "../../Public/Imagenes/cartoncorrugado.png", documentation: [
-        { title: "Ficha técnica", text: "Cartón corrugado reciclado, densidad media, buena resistencia a compresión vertical." },
-        { title: "Uso recomendado", text: "Recomendado para empaques, relleno y proyectos de reciclaje industrial." },
-        { title: "Condición", text: "Material limpio, con algunas imperfecciones menores de almacenamiento." }
-    ] },
-    { id: 5, title: "Tarjetas Madre (Scrap)", category: "Electrónicos", location: "Nordika", qty: "500 kg", weightKg: 500, price: "A Tratar", date: "2023-10-12", userId: "empresa_actual", status: "revision", customImage: null, documentation: [
-        { title: "Descripción", text: "Scrap de tarjetas madre para reciclaje de componentes electrónicos y recuperación de metales." },
-        { title: "Inspección", text: "Revisión visual previa; sin garantías de funcionalidad." },
-        { title: "Manejo seguro", text: "Usar equipo de protección y separar elementos tóxicos antes de procesar." }
-    ] },
-    { id: 6, title: "Archivo Muerto (Triturado)", category: "Papel", location: "Zona Centro", qty: "1.2 Ton", weightKg: 1200, price: "$ 2.10 / kg", date: "2023-09-15", userId: "otra_empresa", status: "aprobada", customImage: null, documentation: [
-        { title: "Tipo de material", text: "Papelería triturada de oficina, mezcla de papel bond y cartulina." },
-        { title: "Protección", text: "Libre de datos sensibles y lista para reprocesamiento o compostaje industrial." },
-        { title: "Uso", text: "Ideal para reciclaje de papel o relleno de embalajes." }
-    ] },
-    { id: 7, title: "Cobre de Primera (Pelado)", category: "Metales", location: "Otay", qty: "300 kg", weightKg: 300, price: "$ 140.00 / kg", date: "2023-10-15", userId: "empresa_actual", status: "revision", customImage: null, documentation: [
-        { title: "Calidad", text: "Cobre limpio pelado, sin aislamiento, grado comercial de primera." },
-        { title: "Aplicación", text: "Adecuado para reciclaje metalúrgico y fabricación de componentes eléctricos." },
-        { title: "Certificado", text: "Informe de pureza disponible según solicitud." }
-    ] },
-    { id: 8, title: "Botellas PET ", category: "Plásticos", location: "Parque industrial otay", qty: "1 Ton", weightKg: 1000, price: "$ 8.00 / kg", date: "2023-10-02", userId: "otra_empresa", status: "aprobada", customImage: "../../Public/Imagenes/BotellasPetCristal.png", documentation: [
-        { title: "Material", text: "PET transparente de grado alimenticio triturado, limpio y sin etiquetas." },
-        { title: "Uso", text: "Perfecto para reprocesado y fabricación de fibra o envases reciclados." },
-        { title: "Certificación", text: "Cumple con normas básicas de separación y limpieza para reciclaje." }
-    ] },
-    { id: 9, title: "Perfiles de Aluminio", category: "Metales", location: "Tijuana", qty: "500 kg", weightKg: 500, price: "$ 32.00 / kg", date: "2023-10-20", userId: "otra_empresa", status: "aprobada", customImage: "../../Public/Imagenes/PerfilesAluminio.png", documentation: [
-        { title: "Especificaciones", text: "Perfiles extruidos de aluminio, sección rectangular, superficie limpia." },
-        { title: "Condición", text: "Buen estado estructural, sin corrosión visible." },
-        { title: "Recomendación", text: "Ideal para construcción ligera o procesos de fundición." }
-    ] },
-];
+let allPublications = []; // This will be our cache for all publications from the API
 
 // Compras realizadas por la empresa actual
 let myPurchases = [
@@ -60,7 +14,7 @@ let myPurchases = [
 
 // ========== VARIABLES DE ESTADO ==========
 let activeCategory = "Todos";
-let currentUser = { name: "Empresa Demo S.A.", role: "empresa", id: "empresa_actual" };
+let currentUser = { name: 'Empresa Demo S.A.', role: 'empresa', id: 1, user_id: 1 }; // se actualiza en loadUserData
 let currentPublicationFilter = "all";
 let editingPublicationId = null;
 let matrizMode = false;
@@ -76,6 +30,68 @@ const categoryStyles = {
     "Maderas": { color: "bg-[#795548]", icon: "🪵", hoverGlow: "hover:border-[#795548] hover:shadow-[#795548]/30", btnHover: "group-hover:bg-[#795548] group-hover:border-[#795548] group-hover:text-white" },
     "Electrónicos": { color: "bg-orange-500", icon: "🔌", hoverGlow: "hover:border-orange-500 hover:shadow-orange-500/30", btnHover: "group-hover:bg-orange-500 group-hover:border-orange-500 group-hover:text-white" }
 };
+
+async function fetchAndRenderPublications() {
+    // Asegurar que currentUser.user_id está actualizado antes de filtrar
+    const storedUser = localStorage.getItem('ecoboros_user') || sessionStorage.getItem('ecoboros_user');
+    if (storedUser) {
+        try {
+            const u = JSON.parse(storedUser);
+            currentUser.user_id = u.user_id || u.id || currentUser.user_id;
+            currentUser.id = currentUser.user_id;
+        } catch (e) {}
+    }
+
+    try {
+        const response = await fetch('http://localhost:8000/api-ecoboros-v1/wastes/');
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        allPublications = data; // Cache the data
+        applyFilters(false); // Render initial view
+        // Actualizar "Mis Publicaciones" si la pestaña está activa
+        const myPubPage = document.getElementById('my-publications-page');
+        if (myPubPage && !myPubPage.classList.contains('page-hidden')) {
+            filterMyPublications(currentPublicationFilter);
+        }
+    } catch (error) {
+        console.error("Could not fetch publications:", error);
+        const grid = document.getElementById("products-grid");
+        if (grid) {
+            grid.innerHTML = `<p class="text-center text-red-500 col-span-full">Error al cargar las publicaciones. Verifique que el backend esté funcionando en <strong>http://localhost:8000</strong></p>`;
+        }
+    }
+}
+
+function findPublicationById(id) {
+    // API returns waste_id, frontend was using id
+    return allPublications.find(p => p.waste_id === id);
+}
+
+function getCurrentUserPublications() {
+    // publisher en la API es el user_id (int)
+    return allPublications.filter(p => p.publisher === currentUser.user_id);
+}
+
+function isCurrentUserPublication(publication) {
+    return publication.publisher === currentUser.user_id;
+}
+
+// Keep saveEditedPublication for now, but it should be an API call
+function saveEditedPublication(publication) {
+    const index = allPublications.findIndex(p => p.waste_id === publication.waste_id);
+    if (index !== -1) {
+        // This should be a PUT/PATCH request to the API
+        console.log("Simulating API call to update publication:", publication);
+        allPublications[index] = {...allPublications[index], ...publication};
+        
+        // For now, let's just re-render
+        filterMyPublications(currentPublicationFilter);
+        showToast('Publicación actualizada (simulado).');
+    }
+}
+
 
 // ========== FUNCIONES DE NAVEGACIÓN ==========
 function switchPage(showPageId, hidePageIds) {
@@ -145,8 +161,17 @@ function showMyPurchasesPage() {
 
 // ========== MIS PUBLICACIONES ==========
 function getMyPublications() {
-    return productsDB.filter(p => p.userId === "empresa_actual");
+    return getCurrentUserPublications();
 }
+
+const publicationStatusLabels = {
+    revision: { text: 'En Revisión', class: 'status-revision', badge: '⚙️' },
+    aprobada: { text: 'Aprobada', class: 'status-aprobada', badge: '✅' },
+    rechazada: { text: 'Rechazada', class: 'status-rechazada', badge: '❌' },
+    pendiente: { text: 'Pendiente', class: 'status-pendiente', badge: '⏳' },
+    proceso: { text: 'En Proceso', class: 'status-proceso', badge: '🔄' },
+    completado: { text: 'Completado', class: 'status-completado', badge: '✅' }
+};
 
 function filterMyPublications(status) {
     currentPublicationFilter = status;
@@ -155,7 +180,7 @@ function filterMyPublications(status) {
         filtered = filtered.filter(p => p.status === status);
     }
 
-    ['all', 'revision', 'aprobada', 'rechazada'].forEach(s => {
+    ['all', 'revision', 'aprobada', 'rechazada', 'pendiente', 'proceso', 'completado'].forEach(s => {
         const tab = document.getElementById(`my-tab-${s}`);
         if (tab) {
             if (s === status) {
@@ -183,36 +208,50 @@ function renderMyPublications(publications) {
     noResults.classList.add('hidden');
 
     container.innerHTML = publications.map(pub => {
-        const style = categoryStyles[pub.category] || { color: "bg-gray-500", icon: "♻️", btnHover: "" };
-        const statusClass = pub.status === 'revision' ? 'status-revision' : (pub.status === 'aprobada' ? 'status-aprobada' : 'status-rechazada');
-        const statusText = pub.status === 'revision' ? 'En Revisión' : (pub.status === 'aprobada' ? 'Aceptada' : 'Rechazada');
+        // Usar campos de la API (category_name_display, status_name, waste_id, etc.)
+        const categoryName = pub.category_name_display || pub.category_name || pub.category || 'Varios';
+        const style = categoryStyles[categoryName] || { color: "bg-gray-500", icon: "♻️", btnHover: "" };
+        const statusKey = (pub.status_name || '').toLowerCase().replace(/ /g, '_');
+        const status = publicationStatusLabels[statusKey] || { text: pub.status_name || 'Pendiente', class: 'status-pendiente', badge: '⏳' };
+        const price = pub.unit_price ? `$ ${parseFloat(pub.unit_price).toFixed(2)} / kg` : (pub.price || 'A consultar');
+        const qty = pub.quantity || pub.qty || 'N/A';
+        const date = pub.generation_date || pub.date || '-';
+        const pubId = pub.waste_id || pub.id;
+
+        // Imagen de evidencia si existe
+        let imgHtml;
+        if (pub.first_image_url) {
+            imgHtml = `<img src="${pub.first_image_url}" class="w-full h-full object-cover" onerror="this.style.display='none'">`;
+        } else {
+            imgHtml = `<span class="text-7xl group-hover:scale-110 transition-transform duration-500">${style.icon}</span>`;
+        }
 
         return `
-            <div class="bg-white rounded-3xl border-4 border-transparent shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:-translate-y-2 transition-all duration-300 flex flex-col group">
-                <div class="h-48 bg-slate-50 relative flex items-center justify-center" style="border-bottom-left-radius: 0; border-bottom-right-radius: 0;">
-                    <span class="text-7xl group-hover:scale-110 transition-transform duration-500">${style.icon}</span>
+            <div onclick="window.location.href='publicacion.html?id=${pubId}'" class="bg-white rounded-3xl border-4 border-transparent shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:-translate-y-2 transition-all duration-300 flex flex-col group cursor-pointer">
+                <div class="h-48 bg-slate-50 relative flex items-center justify-center overflow-hidden" style="border-bottom-left-radius: 0; border-bottom-right-radius: 0;">
+                    ${imgHtml}
                     <div class="absolute top-4 left-4 ${style.color} text-white text-[10px] font-black px-3 py-1.5 rounded-full shadow-sm uppercase tracking-wider">
-                        ${pub.category}
+                        ${categoryName}
                     </div>
                     <div class="absolute top-4 right-4">
-                        <span class="status-badge ${statusClass}">${statusText}</span>
+                        <span class="status-badge ${status.class}">${status.badge} ${status.text}</span>
                     </div>
                 </div>
                 <div class="p-6 flex flex-col gap-2 flex-1">
                     <h3 class="font-bold text-[#1a2b4b] text-xl leading-tight">${pub.title}</h3>
                     <p class="text-sm text-slate-400 flex items-center gap-1.5 font-medium">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                        ${pub.location}
+                        ${pub.location || 'Sin ubicación'}
                     </p>
                     <div class="mt-auto pt-5 border-t border-slate-100 flex flex-col gap-3">
                         <div class="flex justify-between items-center">
-                            <span class="text-xs font-bold text-slate-500 bg-slate-100 px-3 py-1.5 rounded-lg">Disp: ${pub.qty}</span>
-                            <span class="text-xs text-slate-400 font-medium">📅 ${pub.date}</span>
+                            <span class="text-xs font-bold text-slate-500 bg-slate-100 px-3 py-1.5 rounded-lg">Disp: ${qty}</span>
+                            <span class="text-xs text-slate-400 font-medium">📅 ${date}</span>
                         </div>
                         <div class="flex justify-between items-center mt-2">
-                            <span class="text-2xl font-black text-[#1a2b4b]">${pub.price}</span>
-                            ${pub.status === 'revision' ? `
-                                <button onclick="openEditModal(${pub.id})" class="text-sm font-bold bg-white text-[#1a2b4b] border-2 border-slate-200 px-5 py-2.5 rounded-xl hover:bg-[#78C043] hover:text-white hover:border-[#78C043] transition-all">
+                            <span class="text-2xl font-black text-[#1a2b4b]">${price}</span>
+                            ${statusKey === 'revision' ? `
+                                <button onclick="event.stopPropagation(); openEditModal(${pubId})" class="text-sm font-bold bg-white text-[#1a2b4b] border-2 border-slate-200 px-5 py-2.5 rounded-xl hover:bg-[#78C043] hover:text-white hover:border-[#78C043] transition-all">
                                     Editar
                                 </button>
                             ` : ''}
@@ -224,8 +263,10 @@ function renderMyPublications(publications) {
     }).join('');
 }
 
+
+
 function openEditModal(id) {
-    const product = productsDB.find(p => p.id === id);
+    const product = findPublicationById(id);
     if (product) {
         editingPublicationId = id;
         document.getElementById('edit-title').value = product.title;
@@ -242,11 +283,15 @@ function closeEditModal() {
 
 function saveEditPublication() {
     if (editingPublicationId) {
-        const product = productsDB.find(p => p.id === editingPublicationId);
+        const product = findPublicationById(editingPublicationId);
         if (product) {
-            product.title = document.getElementById('edit-title').value;
-            product.price = document.getElementById('edit-price').value;
-            product.qty = document.getElementById('edit-qty').value;
+            const updated = {
+                ...product,
+                title: document.getElementById('edit-title').value,
+                price: document.getElementById('edit-price').value,
+                qty: document.getElementById('edit-qty').value
+            };
+            saveEditedPublication(updated);
             showToast('Publicación actualizada correctamente');
             filterMyPublications(currentPublicationFilter);
         }
@@ -310,14 +355,21 @@ function loadUserData() {
     if (storedUser) {
         try {
             const user = JSON.parse(storedUser);
-            currentUser.name = user.name;
-            if (nameDisplay) nameDisplay.textContent = user.name;
-            if (roleDisplay) roleDisplay.textContent = user.description || "Empresa Verificada";
+            // Actualizar currentUser con datos reales del backend
+            currentUser.name = user.name || user.company_name || currentUser.name;
+            currentUser.user_id = user.user_id || user.id || 1;
+            currentUser.id = currentUser.user_id; // compatibilidad
+            currentUser.role = user.role || 'empresa';
+            if (nameDisplay) nameDisplay.textContent = currentUser.name;
+            if (roleDisplay) roleDisplay.textContent = user.description || 'Empresa Verificada';
             if (userAvatar) {
-                const initials = user.name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+                const initials = currentUser.name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
                 userAvatar.textContent = initials;
             }
-        } catch (e) { }
+        } catch (e) { console.error('Error parsing user data:', e); }
+    } else {
+        // Redirigir al login si no hay sesión
+        window.location.href = '../../Components/login/login.html';
     }
 }
 
@@ -376,36 +428,19 @@ function applyFilters(updateBadges = true) {
     const startDate = document.getElementById("dateStartInput").value;
     const endDate = document.getElementById("dateEndInput").value;
 
-    const filtered = productsDB.filter(item => {
-        const matchCat = activeCategory === "Todos" || item.category === activeCategory;
-        const matchText = item.title.toLowerCase().includes(searchText) || item.location.toLowerCase().includes(searchText);
-        const matchWeight = item.weightKg >= minWeight;
+    const filtered = allPublications.filter(item => {
+        const itemCategory = item.category_name_display || item.category_name || '';
+        const matchCat = activeCategory === "Todos" || itemCategory === activeCategory;
+        const matchText = item.title.toLowerCase().includes(searchText) || (item.location && item.location.toLowerCase().includes(searchText));
+        const matchWeight = parseFloat(item.weight_decimal) >= minWeight;
         let matchDate = true;
-        if (startDate) matchDate = matchDate && (item.date >= startDate);
-        if (endDate) matchDate = matchDate && (item.date <= endDate);
+        if (startDate) matchDate = matchDate && (item.generation_date >= startDate);
+        if (endDate) matchDate = matchDate && (item.generation_date <= endDate);
         return matchCat && matchText && matchWeight && matchDate;
     });
 
     renderProducts(filtered);
     if (updateBadges) renderBadges(minWeight, startDate, endDate);
-}
-
-function renderBadges(weight, start, end) {
-    const container = document.getElementById("active-filters-badges");
-    let html = "";
-    if (activeCategory !== "Todos") html += `<span class="bg-[#1a2b4b] text-white px-3 py-1 rounded-lg text-xs font-bold shadow-sm">Cat: ${activeCategory}</span>`;
-    if (weight > 0) html += `<span class="bg-white border border-slate-200 text-slate-700 px-3 py-1 rounded-lg text-xs font-bold shadow-sm">Min: ${weight}kg</span>`;
-    if (start || end) html += `<span class="bg-white border border-slate-200 text-slate-700 px-3 py-1 rounded-lg text-xs font-bold shadow-sm">📅 ${start || '...'} / ${end || '...'}</span>`;
-    container.innerHTML = html;
-}
-
-function resetFilters() {
-    document.getElementById("weightInput").value = "";
-    document.getElementById("dateStartInput").value = "";
-    document.getElementById("dateEndInput").value = "";
-    document.getElementById("searchInput").value = "";
-    setCategory("Todos");
-    applyFilters();
 }
 
 function renderProducts(data) {
@@ -426,25 +461,35 @@ function renderProducts(data) {
     noResults.classList.remove("flex");
 
     grid.innerHTML = data.map((item, index) => {
-        const style = categoryStyles[item.category] || { color: "bg-gray-500", icon: "❓", hoverGlow: "hover:border-gray-500 hover:shadow-gray-500/30", btnHover: "group-hover:bg-gray-500 group-hover:border-gray-500 group-hover:text-white" };
+        // La API devuelve category_name_display para el nombre legible de la categoría
+        const categoryName = item.category_name_display || item.category_name || 'Varios';
+        const style = categoryStyles[categoryName] || { color: 'bg-gray-500', icon: '❓', hoverGlow: 'hover:border-gray-500 hover:shadow-gray-500/30', btnHover: 'group-hover:bg-gray-500 group-hover:border-gray-500 group-hover:text-white' };
         const delay = index * 30;
-        
-        const hasCustomImage = item.customImage && item.customImage.trim() !== "";
-        
-        const imageHtml = hasCustomImage ? `
-            <div class="image-container w-full h-full">
-                <img src="${item.customImage}" alt="${item.title}" class="product-image w-full h-full object-cover" onerror="this.style.display='none'; this.parentElement.innerHTML='<span class=\'text-7xl group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500 opacity-90\'>${style.icon}</span>'">
-            </div>
-        ` : `
-            <span class="text-7xl group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500 opacity-90">${style.icon}</span>
-        `;
+        // status_name viene del backend
+        const statusKey = (item.status_name || '').toLowerCase().replace(/ /g, '_');
+        const status = publicationStatusLabels[statusKey] || { text: item.status_name || 'Pendiente', class: 'status-pendiente', badge: '⏳' };
+
+        // Mostrar primera imagen subida si existe, si no el icono de categoría
+        let imageHtml;
+        if (item.first_image_url) {
+            imageHtml = `<img src="${item.first_image_url}" alt="${item.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onerror="this.style.display='none'; this.parentElement.innerHTML='<span class=\'text-7xl group-hover\:scale-110 transition-transform duration-500 opacity-90\'>${style.icon}</span>';">`;
+        } else {
+            imageHtml = `<span class="text-7xl group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500 opacity-90">${style.icon}</span>`;
+        }
+
+        const location = item.location || 'N/A';
+        const price = item.unit_price ? `$ ${parseFloat(item.unit_price).toFixed(2)} / kg` : 'A consultar';
+        const quantity = item.quantity || 'N/A';
 
         return `
-            <div onclick="window.location.href='publicacion.html?id=${item.id}'" class="bg-white rounded-3xl border-4 border-transparent shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:-translate-y-2 transition-all duration-300 flex flex-col group cursor-pointer animate-card ${style.hoverGlow} product-card relative" style="animation-delay: ${delay}ms">
+            <div onclick="window.location.href='publicacion.html?id=${item.waste_id}'" class="bg-white rounded-3xl border-4 border-transparent shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:-translate-y-2 transition-all duration-300 flex flex-col group cursor-pointer animate-card ${style.hoverGlow} product-card relative" style="animation-delay: ${delay}ms">
                 <div class="h-48 bg-slate-50 relative flex items-center justify-center overflow-hidden" style="border-bottom-left-radius: 0; border-bottom-right-radius: 0;">
                     ${imageHtml}
                     <div class="absolute top-4 left-4 ${style.color} text-white text-[10px] font-black px-3 py-1.5 rounded-full shadow-sm uppercase tracking-wider z-10">
-                        ${item.category}
+                        ${categoryName}
+                    </div>
+                    <div class="absolute top-4 right-4 z-10">
+                        <span class="status-badge ${status.class}">${status.badge} ${status.text}</span>
                     </div>
                 </div>
                 <div class="p-6 flex flex-col gap-2 flex-1">
@@ -453,15 +498,15 @@ function renderProducts(data) {
                     </div>
                     <p class="text-sm text-slate-400 flex items-center gap-1.5 font-medium mt-1">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                        ${item.location}
+                        ${location}
                     </p>
                     <div class="mt-auto pt-5 border-t border-slate-100 flex flex-col gap-3">
                         <div class="flex justify-between items-center">
-                            <span class="text-xs font-bold text-slate-500 bg-slate-100 px-3 py-1.5 rounded-lg">Disp: ${item.qty}</span>
-                            <span class="text-xs text-slate-400 font-medium">📅 ${item.date}</span>
+                            <span class="text-xs font-bold text-slate-500 bg-slate-100 px-3 py-1.5 rounded-lg">Disp: ${quantity}</span>
+                            <span class="text-xs text-slate-400 font-medium">📅 ${item.generation_date}</span>
                         </div>
                         <div class="flex flex-col gap-3 mt-2 sm:flex-row sm:items-center sm:justify-between">
-                            <span class="text-2xl font-black text-[#1a2b4b]">${item.price}</span>
+                            <span class="text-2xl font-black text-[#1a2b4b]">${price}</span>
                             <div class="flex flex-wrap gap-3">
                                 <button class="text-sm font-bold bg-white text-[#1a2b4b] border-2 border-slate-100 px-5 py-2.5 rounded-xl transition-colors ${style.btnHover}">Ver Más</button>
                             </div>
@@ -470,9 +515,27 @@ function renderProducts(data) {
                 </div>
             </div>
         `;
-    }).join("");
+    }).join('');
 
     if (matrizMode) activateMatrizLabels();
+}
+
+function renderBadges(weight, start, end) {
+    const container = document.getElementById("active-filters-badges");
+    let html = "";
+    if (activeCategory !== "Todos") html += `<span class="bg-[#1a2b4b] text-white px-3 py-1 rounded-lg text-xs font-bold shadow-sm">Cat: ${activeCategory}</span>`;
+    if (weight > 0) html += `<span class="bg-white border border-slate-200 text-slate-700 px-3 py-1 rounded-lg text-xs font-bold shadow-sm">Min: ${weight}kg</span>`;
+    if (start || end) html += `<span class="bg-white border border-slate-200 text-slate-700 px-3 py-1 rounded-lg text-xs font-bold shadow-sm">📅 ${start || '...'} / ${end || '...'}</span>`;
+    container.innerHTML = html;
+}
+
+function resetFilters() {
+    document.getElementById("weightInput").value = "";
+    document.getElementById("dateStartInput").value = "";
+    document.getElementById("dateEndInput").value = "";
+    document.getElementById("searchInput").value = "";
+    setCategory("Todos");
+    applyFilters();
 }
 
 // ========== MODO MATRIZ ==========
@@ -664,7 +727,7 @@ document.addEventListener('keydown', (e) => {
 document.addEventListener("DOMContentLoaded", () => {
     loadUserData();
     renderModalCategoryButtons();
-    renderProducts(productsDB);
+    fetchAndRenderPublications(); // Fetch data from API on page load
     const btnMatriz = document.getElementById('matriz-toggle-btn');
     if (btnMatriz) btnMatriz.addEventListener('click', toggleMatrizMode);
     updateMatrizBubble();

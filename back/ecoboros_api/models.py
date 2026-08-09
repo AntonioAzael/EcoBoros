@@ -81,9 +81,9 @@ class Users(models.Model):
 
 class WasteEvidences(models.Model):
     evidence_id = models.AutoField(primary_key=True)
-    waste = models.ForeignKey('Wastes', models.DO_NOTHING)
-    file_path = models.CharField(max_length=255)
-    file_type = models.CharField(max_length=50)
+    waste = models.ForeignKey('Wastes', models.DO_NOTHING, related_name='wasteevidences_set')
+    file_path = models.CharField(max_length=500)
+    file_type = models.CharField(max_length=50)  # 'image', 'pdf', 'document'
 
     class Meta:
         managed = False
@@ -109,8 +109,10 @@ class Wastes(models.Model):
     waste_id = models.AutoField(primary_key=True)
     publisher = models.ForeignKey(Users, models.DO_NOTHING)
     category = models.ForeignKey(Categories, models.DO_NOTHING)
+    title = models.CharField(max_length=255)
     technical_description = models.TextField()
     weight_decimal = models.DecimalField(max_digits=10, decimal_places=2)
+    quantity = models.CharField(max_length=100, blank=True, null=True)
     unit_price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     generation_date = models.DateField()
     availability_date = models.DateField()

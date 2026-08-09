@@ -11,6 +11,57 @@ let gridFocusIndex = 0;
 let matrizMode = false;
 let keySequence = [];
 let lastKeyTime = 0;
+const LOCAL_STORAGE_PUBLICATIONS_KEY = 'ecoboros_publications';
+
+const categoryNameMap = {
+    Plasticos: 'Plásticos',
+    Carton: 'Cartón',
+    Electronicos: 'Electrónicos'
+};
+
+function normalizeCategory(category) {
+    return categoryNameMap[category] || category;
+}
+
+function loadStoredPublications() {
+    try {
+        const stored = localStorage.getItem(LOCAL_STORAGE_PUBLICATIONS_KEY);
+        return stored ? JSON.parse(stored) : [];
+    } catch (e) {
+        return [];
+    }
+}
+
+function saveStoredPublications(publications) {
+    localStorage.setItem(LOCAL_STORAGE_PUBLICATIONS_KEY, JSON.stringify(publications));
+}
+
+function persistPublication(publication) {
+    const stored = loadStoredPublications();
+    const index = stored.findIndex(p => p.id === publication.id);
+    if (index !== -1) {
+        stored[index] = publication;
+    } else {
+        stored.push(publication);
+    }
+    saveStoredPublications(stored);
+}
+
+function getCurrentUser() {
+    const storedUser = localStorage.getItem('ecoboros_user') || sessionStorage.getItem('ecoboros_user');
+    if (!storedUser) return null;
+    try {
+        return JSON.parse(storedUser);
+    } catch (e) {
+        return null;
+    }
+}
+
+function getCurrentUserEmail() {
+    const user = getCurrentUser();
+    if (!user) return 'empresa_actual';
+    return user.email || user.contact_email || 'empresa_actual';
+}
 
 // ========== FUNCIONES GENERALES ==========
 function loadUserData() {
@@ -140,17 +191,17 @@ function updateStepUI() {
 
 // ========== CATEGORÍAS ==========
 function selectCategory(cat) {
-    selectedCategory = cat;
+    selectedCategory = normalizeCategory(cat);
     document.querySelectorAll('.category-card').forEach(card => {
-        const category = card.dataset.category;
+        const category = normalizeCategory(card.dataset.category);
         card.classList.remove('selected');
-        if (category === cat) {
+        if (category === selectedCategory) {
             card.classList.add('selected');
         }
     });
     document.getElementById('btn-next-1').disabled = false;
-    const categoryColor = getCategoryColor(cat);
-    showToast('Categoria: ' + cat, categoryColor);
+    const categoryColor = getCategoryColor(selectedCategory);
+    showToast('Categoria: ' + selectedCategory, categoryColor);
 }
 
 function updateGridFocus() {
@@ -292,7 +343,88 @@ function buildSummary() {
 
 // ========== SUBMIT ==========
 function submitForm() {
-    document.getElementById('success-modal').classList.remove('hidden');
+    const title = document.getElementById('input-titulo').value.trim();
+    const weight = parseFloat(document.getElementById('input-peso').value);
+    const qty = document.getElementById('input-cantidad').value.trim();
+    const genDate = document.getElementById('input-fecha-gen').value;
+    const availabilityDate = document.getElementById('input-fecha-disp').value;
+    const location = document.getElementById('input-ubicacion').value.trim();
+    const price = document.getElementById('input-precio').value.trim();
+    const description = document.getElementById('input-descripcion').value.trim();
+    const category = selectedCategory || 'Otros';
+
+    if (!title || !weight || !genDate || !description) {
+        showToast('Completa todos los campos requeridos (*)', '#dc2626');
+        return;
+    }
+
+    // Obtener usuario actual del localStorage
+    const currentUser = getCurrentUser();
+    if (!currentUser || !currentUser.user_id) {
+        showToast('Sesión no válida. Por favor inicia sesión de nuevo.', '#dc2626');
+        setTimeout(() => { window.location.href = '../../Components/login/login.html'; }, 1500);
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('title', title);
+    formData.append('technical_description', description);
+    formData.append('weight_decimal', weight);
+    formData.append('category_name', category);
+    formData.append('generation_date', genDate);
+    formData.append('availability_date', availabilityDate || genDate);
+    formData.append('publisher_id', currentUser.user_id);
+
+    if (qty) formData.append('quantity', qty);
+
+    // Precio: limpiar caracteres no numéricos
+    if (price) {
+        const parsedPrice = parseFloat(price.replace(/[^0-9.-]+/g, ''));
+        if (!isNaN(parsedPrice)) {
+            formData.append('unit_price', parsedPrice);
+        }
+    }
+
+    // Adjuntar archivos de evidencia (imágenes y documentos)
+    [...uploadedImages, ...uploadedDocs].forEach(file => {
+        formData.append('evidences', file);
+    });
+
+    // Deshabilitar botón durante el envío
+    const submitBtn = document.querySelector('button[onclick="submitForm()"]');
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Registrando...';
+    }
+
+    fetch('http://localhost:8000/api-ecoboros-v1/wastes/', {
+        method: 'POST',
+        body: formData,
+        // No establecer Content-Type: el navegador lo hace automáticamente con boundary para multipart
+    })
+    .then(async response => {
+        const data = await response.json();
+        if (response.status === 201) {
+            document.getElementById('success-modal').classList.remove('hidden');
+            console.log('Residuo registrado:', data);
+        } else {
+            // Mostrar errores del backend
+            const errors = Object.entries(data)
+                .map(([field, msgs]) => `${field}: ${Array.isArray(msgs) ? msgs.join(', ') : msgs}`)
+                .join(' | ');
+            throw new Error(errors || 'Error al registrar el residuo.');
+        }
+    })
+    .catch(error => {
+        showToast(error.message, '#dc2626');
+        console.error('Error al enviar formulario:', error);
+    })
+    .finally(() => {
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Publicar Residuo';
+        }
+    });
 }
 
 function closeSuccessModal() {

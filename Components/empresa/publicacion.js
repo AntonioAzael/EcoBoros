@@ -60,6 +60,37 @@ const categoryStyles = {
     "Electrónicos": { color: "bg-orange-500", icon: "🔌" }
 };
 
+const LOCAL_STORAGE_PUBLICATIONS_KEY = 'ecoboros_publications';
+const API_BASE = 'http://localhost:8000/api-ecoboros-v1';
+
+function loadStoredPublications() {
+    try {
+        const stored = localStorage.getItem(LOCAL_STORAGE_PUBLICATIONS_KEY);
+        return stored ? JSON.parse(stored) : [];
+    } catch (e) {
+        return [];
+    }
+}
+
+function saveStoredPublications(publications) {
+    localStorage.setItem(LOCAL_STORAGE_PUBLICATIONS_KEY, JSON.stringify(publications));
+}
+
+/**
+ * Busca una publicación en los datos hardcodeados + localStorage.
+ * Usado como fallback si la API no responde.
+ */
+function getLocalPublication(productId) {
+    const stored = loadStoredPublications();
+    const combined = [...productsDB];
+    const ids = new Set(combined.map(p => p.id));
+    stored.forEach(pub => {
+        if (!ids.has(pub.id)) combined.push(pub);
+        else { const idx = combined.findIndex(p => p.id === pub.id); if (idx !== -1) combined[idx] = pub; }
+    });
+    return combined.find(p => p.id === productId) || null;
+}
+
 // ========== VARIABLES DE ESTADO ==========
 let matrizMode = false;
 let keySequence = [];
@@ -79,8 +110,157 @@ function loadUserData() {
     }
 }
 
+/**
+ * Renderiza el detalle desde datos de la API (waste object)
+ */
+function renderProductDetailFromAPI(waste) {
+    const categoryName = waste.category_name_display || waste.category_name || 'Varios';
+    const style = categoryStyles[categoryName] || { color: 'bg-gray-500', icon: '❓' };
+    const container = document.getElementById('product-detail');
+
+    // Preparar imagen principal
+    let mainImageHtml;
+    if (waste.first_image_url) {
+        mainImageHtml = `<img src="${waste.first_image_url}" alt="${waste.title}" class="w-full h-full object-cover" onerror="this.style.display='none'; this.parentElement.innerHTML='<span class=\'text-9xl opacity-90\'>${style.icon}</span>';">`;
+    } else {
+        mainImageHtml = `<span class="text-9xl opacity-90">${style.icon}</span>`;
+    }
+
+    // Construir lista de evidencias (imágenes y docs)
+    const evidences = waste.evidence_files || [];
+    const imageEvidences = evidences.filter(e => e.file_type === 'image');
+    const docEvidences = evidences.filter(e => e.file_type !== 'image');
+
+    const thumbnailsHtml = imageEvidences.slice(0, 4).map(ev =>
+        `<div class="w-16 h-16 bg-slate-100 rounded-lg overflow-hidden cursor-pointer hover:ring-2 hover:ring-[#78C043] transition-all">
+            <img src="${ev.file_url}" class="w-full h-full object-cover" onerror="this.style.display='none'">
+        </div>`
+    ).join('');
+
+    const docsHtml = docEvidences.map(ev => {
+        const filename = ev.file_path.split('/').pop();
+        return `<a href="${ev.file_url}" target="_blank" class="flex items-center gap-2 p-3 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors">
+            <span class="text-red-500">&#128196;</span>
+            <span class="text-sm font-medium text-slate-700 truncate">${filename}</span>
+            <span class="ml-auto text-xs text-[#78C043] font-bold">Ver</span>
+        </a>`;
+    }).join('');
+
+    const price = waste.unit_price ? `$ ${parseFloat(waste.unit_price).toFixed(2)} / kg` : 'A consultar';
+    const publishDate = waste.created_at ? waste.created_at.slice(0, 10) : waste.generation_date;
+
+    container.innerHTML = `
+        <div class="animate-fade-in">
+            <div class="flex flex-col lg:flex-row gap-8">
+                <!-- Columna Izquierda: Imagen y Documentos -->
+                <div class="lg:w-1/2">
+                    <!-- Imagen Principal -->
+                    <div class="bg-white rounded-3xl shadow-lg overflow-hidden">
+                        <div class="h-96 bg-slate-50 flex items-center justify-center overflow-hidden">
+                            ${mainImageHtml}
+                        </div>
+                    </div>
+
+                    <!-- Miniaturas de evidencias -->
+                    ${thumbnailsHtml || imageEvidences.length === 0 ? `
+                    <div class="flex gap-2 mt-4">
+                        <div class="w-16 h-16 bg-slate-100 rounded-lg flex items-center justify-center">
+                            <span class="text-2xl">${style.icon}</span>
+                        </div>
+                        ${thumbnailsHtml}
+                    </div>` : `<div class="flex gap-2 mt-4">${thumbnailsHtml}</div>`}
+
+                    <!-- Documentos adjuntos -->
+                    ${docEvidences.length > 0 ? `
+                    <div class="mt-6 bg-white rounded-3xl shadow-lg overflow-hidden border border-slate-200">
+                        <div class="bg-[#1a2b4b] p-4 text-white">
+                            <h3 class="text-lg font-bold">Documentos Adjuntos</h3>
+                            <p class="text-sm opacity-80">${docEvidences.length} archivo(s) disponible(s)</p>
+                        </div>
+                        <div class="p-4 space-y-2">
+                            ${docsHtml}
+                        </div>
+                    </div>` : `
+                    <div class="mt-6 bg-white rounded-3xl shadow-lg overflow-hidden border border-slate-200">
+                        <div class="bg-[#1a2b4b] p-4 text-white">
+                            <h3 class="text-lg font-bold">Documentación Técnica</h3>
+                            <p class="text-sm opacity-80">No hay documentos adjuntos para este residuo.</p>
+                        </div>
+                    </div>`}
+                </div>
+
+                <!-- Columna Derecha: Información del Producto -->
+                <div class="lg:w-1/2 space-y-6">
+                    <!-- Categoría y Fecha -->
+                    <div>
+                        <div class="flex items-center gap-3 mb-4">
+                            <span class="inline-block ${style.color} text-white text-sm font-black px-4 py-2 rounded-full shadow-sm uppercase tracking-wider">
+                                ${categoryName}
+                            </span>
+                            <span class="text-slate-400 text-sm">Publicado el ${publishDate}</span>
+                        </div>
+                        <h1 class="text-4xl font-black text-[#1a2b4b] mb-4">${waste.title}</h1>
+                        ${waste.publisher_name ? `
+                        <div class="flex items-center gap-2 text-slate-600 mb-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-2 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                            <span class="font-medium">${waste.publisher_name}</span>
+                        </div>` : ''}
+                    </div>
+
+                    <!-- Precio -->
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                        <p class="text-slate-500 text-sm font-medium mb-2">Precio</p>
+                        <p class="text-5xl font-black text-[#78C043]">${price}</p>
+                    </div>
+
+                    <!-- Detalles rápidos -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
+                            <p class="text-slate-500 text-sm font-medium">Cantidad Disponible</p>
+                            <p class="text-[#1a2b4b] font-bold text-xl">${waste.quantity || 'N/A'}</p>
+                        </div>
+                        <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
+                            <p class="text-slate-500 text-sm font-medium">Peso Total</p>
+                            <p class="text-[#1a2b4b] font-bold text-xl">${waste.weight_decimal} kg</p>
+                        </div>
+                        <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
+                            <p class="text-slate-500 text-sm font-medium">Fecha Generación</p>
+                            <p class="text-[#1a2b4b] font-bold text-sm">${waste.generation_date}</p>
+                        </div>
+                        <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
+                            <p class="text-slate-500 text-sm font-medium">Disponibilidad</p>
+                            <p class="text-[#1a2b4b] font-bold text-sm">${waste.availability_date}</p>
+                        </div>
+                    </div>
+
+                    <!-- Descripción técnica -->
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                        <h3 class="text-lg font-bold text-[#1a2b4b] mb-3">Descripción Técnica</h3>
+                        <p class="text-slate-600 leading-relaxed">${waste.technical_description}</p>
+                    </div>
+
+                    <!-- Botones de acción -->
+                    <div class="space-y-3">
+                        <button onclick="openContactModal()" class="w-full bg-[#78C043] text-white py-4 rounded-xl font-bold shadow-lg shadow-[#78C043]/30 hover:bg-[#66a338] transition-all flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+                            Contactar Vendedor
+                        </button>
+                        <button class="w-full bg-white text-[#1a2b4b] py-4 rounded-xl font-bold border-2 border-slate-200 hover:border-[#1a2b4b] transition-all flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                            Agregar a Favoritos
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * Fallback: renderiza desde datos hardcodeados o localStorage
+ */
 function renderProductDetail(productId) {
-    const product = productsDB.find(p => p.id === productId);
+    const product = getLocalPublication(productId);
     if (!product) {
         document.getElementById('product-detail').innerHTML = '<p class="text-center text-slate-500">Producto no encontrado.</p>';
         return;
@@ -318,13 +498,45 @@ document.addEventListener('keydown', (e) => {
 });
 
 // ========== INICIALIZACIÓN ==========
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener('DOMContentLoaded', () => {
     const urlParams = new URLSearchParams(window.location.search);
     const productId = parseInt(urlParams.get('id'));
-    if (productId) {
-        renderProductDetail(productId);
-    } else {
-        document.getElementById('product-detail').innerHTML = '<p class="text-center text-slate-500">Producto no encontrado.</p>';
+    const detailEl = document.getElementById('product-detail');
+
+    if (!productId) {
+        if (detailEl) detailEl.innerHTML = '<p class="text-center text-slate-500">Producto no encontrado.</p>';
+        loadUserData();
+        return;
     }
-    loadUserData();
+
+    // Mostrar loading
+    if (detailEl) {
+        detailEl.innerHTML = `
+            <div class="flex items-center justify-center py-20">
+                <div class="text-center">
+                    <div class="w-12 h-12 border-4 border-[#78C043] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                    <p class="text-slate-500 font-medium">Cargando publicación...</p>
+                </div>
+            </div>
+        `;
+    }
+
+    // Intentar cargar desde la API primero
+    fetch(`${API_BASE}/wastes/${productId}/`)
+        .then(async response => {
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            return response.json();
+        })
+        .then(waste => {
+            // Datos cargados desde el backend
+            renderProductDetailFromAPI(waste);
+        })
+        .catch(err => {
+            console.warn('API no disponible, usando datos locales:', err.message);
+            // Fallback a datos hardcodeados o localStorage
+            renderProductDetail(productId);
+        })
+        .finally(() => {
+            loadUserData();
+        });
 });

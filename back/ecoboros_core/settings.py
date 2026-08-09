@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-wsm7j41a590u4%(66(d+(1oo3)re=cjdtf8cggpq6+%z#fnos^
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -126,8 +126,24 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+# Media files: archivos subidos (imágenes, PDFs, evidencias)
+# En Docker se mapea /app/media -> Public/Imagenes del host
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
 REST_FRAMEWORK = {
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
+    'DEFAULT_PARSER_CLASSES': [
+        'rest_framework.parsers.JSONParser',
+        'rest_framework.parsers.FormParser',
+        'rest_framework.parsers.MultiPartParser',
+    ],
 }
 
 CORS_ALLOW_ALL_ORIGINS = True
+
+# Límites de subida de archivos (10 MB para imágenes y PDFs)
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024   # 10 MB
+FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024   # 10 MB

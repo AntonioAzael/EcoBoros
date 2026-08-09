@@ -81,10 +81,12 @@ CREATE TABLE wastes (
     waste_id SERIAL PRIMARY KEY,
     publisher_id INT NOT NULL,
     category_id INT NOT NULL,
+    title VARCHAR(255) NOT NULL,
     technical_description TEXT NOT NULL,
     
     weight_decimal DECIMAL(10,2) NOT NULL, /* Peso total disponible original del lote */
-    
+    quantity VARCHAR(100) NULL,
+
     /* CAMBIO NUEVO: Precio base unitario o por kg/pza, reflejado directamente 
        en las tarjetas visuales del dashboard de la interfaz (ej: $15.00 / pza). */
     unit_price DECIMAL(10,2) NULL,         
