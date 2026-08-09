@@ -155,7 +155,7 @@ function showMyPurchasesPage() {
     document.getElementById('nav-publications').className = "text-slate-400 hover:text-white hover:bg-white/5 px-5 py-3 text-sm font-medium transition-colors";
     document.getElementById('nav-purchases').className = "text-white bg-white/5 border-b-2 border-[#78C043] px-5 py-3 text-sm font-medium";
 
-    renderMyPurchases();
+    fetchAndRenderMyPurchases();
     if (matrizMode) activateMatrizLabels();
 }
 
@@ -300,31 +300,79 @@ function saveEditPublication() {
 }
 
 // ========== MIS COMPRAS ==========
-function renderMyPurchases() {
+async function fetchAndRenderMyPurchases() {
+    try {
+        const userId = currentUser.user_id || currentUser.id || 1;
+        const response = await fetch(`http://localhost:8000/api-ecoboros-v1/purchase-requests/?buyer=${userId}`);
+        let fetchedData = [];
+
+        if (response.ok) {
+            fetchedData = await response.json();
+        }
+
+        // Si no hay datos específicos para la empresa demo, traer todas las solicitudes de la base de datos
+        if (!Array.isArray(fetchedData) || fetchedData.length === 0) {
+            const allResp = await fetch('http://localhost:8000/api-ecoboros-v1/purchase-requests/');
+            if (allResp.ok) {
+                fetchedData = await allResp.json();
+            }
+        }
+
+        if (Array.isArray(fetchedData) && fetchedData.length > 0) {
+            myPurchases = fetchedData.map(req => {
+                const weight = parseFloat(req.requested_weight || 0);
+                const price = parseFloat(req.offered_price || 0);
+                const totalCalculated = (weight > 0 && price > 0) ? (weight * price) : price;
+                const statusStr = (req.status_name || 'Pendiente').toLowerCase();
+                let statusKey = 'procesando';
+                if (['completado', 'completada', 'aprobado'].includes(statusStr)) {
+                    statusKey = 'completada';
+                }
+                return {
+                    id: req.request_id,
+                    productName: req.product_name || 'Residuo Industrial',
+                    date: req.date || (req.request_date ? req.request_date.slice(0, 10) : '-'),
+                    total: totalCalculated,
+                    totalFormatted: req.total_formatted || `$ ${totalCalculated.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`,
+                    status: statusKey,
+                    statusName: req.status_name || 'Pendiente',
+                    seller: req.seller_name || 'Vendedor Verificado'
+                };
+            });
+        }
+    } catch (err) {
+        console.warn('Error al cargar solicitudes de compra desde API:', err);
+    }
+    renderMyPurchasesUI();
+}
+
+function renderMyPurchasesUI() {
     const tbody = document.getElementById('purchases-table-body');
     const noPurchases = document.getElementById('no-purchases');
     const totalSpentEl = document.getElementById('total-spent');
     const totalPurchasesEl = document.getElementById('total-purchases-count');
     const pendingPurchasesEl = document.getElementById('pending-purchases-count');
 
+    if (!tbody) return;
+
     if (myPurchases.length === 0) {
         tbody.innerHTML = '';
-        noPurchases.classList.remove('hidden');
-        totalSpentEl.textContent = '$0';
-        totalPurchasesEl.textContent = '0';
-        pendingPurchasesEl.textContent = '0';
+        if (noPurchases) noPurchases.classList.remove('hidden');
+        if (totalSpentEl) totalSpentEl.textContent = '$ 0.00';
+        if (totalPurchasesEl) totalPurchasesEl.textContent = '0';
+        if (pendingPurchasesEl) pendingPurchasesEl.textContent = '0';
         return;
     }
 
-    noPurchases.classList.add('hidden');
+    if (noPurchases) noPurchases.classList.add('hidden');
 
     const totalSpent = myPurchases.reduce((sum, p) => sum + p.total, 0);
     const completedCount = myPurchases.filter(p => p.status === 'completada').length;
-    const pendingCount = myPurchases.filter(p => p.status === 'procesando').length;
+    const pendingCount = myPurchases.filter(p => p.status !== 'completada').length;
 
-    totalSpentEl.textContent = `$${totalSpent.toLocaleString()}`;
-    totalPurchasesEl.textContent = completedCount;
-    pendingPurchasesEl.textContent = pendingCount;
+    if (totalSpentEl) totalSpentEl.textContent = `$ ${totalSpent.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    if (totalPurchasesEl) totalPurchasesEl.textContent = completedCount;
+    if (pendingPurchasesEl) pendingPurchasesEl.textContent = pendingCount;
 
     tbody.innerHTML = myPurchases.map(p => `
         <tr class="hover:bg-slate-50 transition-colors">
@@ -337,12 +385,16 @@ function renderMyPurchases() {
             </td>
             <td class="px-6 py-4">
                 <span class="px-3 py-1 rounded-full text-xs font-bold ${p.status === 'completada' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}">
-                    ${p.status === 'completada' ? 'Completada' : 'En Proceso'}
+                    ${p.status === 'completada' ? 'Completada' : (p.statusName || 'En Proceso')}
                 </span>
             </td>
             <td class="px-6 py-4 text-sm text-slate-500">${p.seller}</td>
         </tr>
     `).join('');
+}
+
+function renderMyPurchases() {
+    fetchAndRenderMyPurchases();
 }
 
 // ========== FUNCIONES GENERALES ==========

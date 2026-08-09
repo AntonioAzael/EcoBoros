@@ -115,8 +115,9 @@ CREATE TABLE wastes (
 CREATE TABLE waste_evidences (
     evidence_id SERIAL PRIMARY KEY,
     waste_id INT NOT NULL,
-    file_path VARCHAR(255) NOT NULL,
+    file_path VARCHAR(500) NOT NULL,
     file_type VARCHAR(50) NOT NULL,
+    UNIQUE (waste_id, file_path),
     FOREIGN KEY (waste_id) REFERENCES wastes(waste_id)
 );
 
