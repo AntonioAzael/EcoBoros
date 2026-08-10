@@ -578,9 +578,14 @@ async function openRequestDetailsModal(requestId) {
                 </div>
             </div>
 
+            <div>
+                <label class="block text-xs font-bold text-slate-500 mb-1">💬 Comentario / Justificación de la Negociación</label>
+                <textarea id="modal-field-comment" rows="2" ${isCompleted || isProceso ? 'disabled' : ''} placeholder="Ej: Se acordó en llamada vender 30k kg en vez de 50k kg al mismo precio unitario." class="w-full p-2.5 bg-white border border-slate-200 rounded-xl text-xs font-medium outline-none focus:border-[#78C043] disabled:bg-slate-100 disabled:text-slate-500">${req.raw?.negotiation_comment || ''}</textarea>
+            </div>
+
             ${isPendiente ? `
                 <button onclick="saveRequestVariables(${req.id})" class="w-full bg-[#1a2b4b] text-white py-2.5 rounded-xl font-bold text-xs hover:bg-[#2d4563] transition-colors">
-                    💾 Guardar Cambios en Campos Variables
+                    💾 Guardar Ajustes de Negociación (Mantiene en Pendiente)
                 </button>
             ` : ''}
         </div>
@@ -668,6 +673,7 @@ async function saveRequestVariables(requestId) {
     const qty = document.getElementById('modal-field-qty').value;
     const weight = parseFloat(document.getElementById('modal-field-weight').value) || 0;
     const price = parseFloat(document.getElementById('modal-field-price').value) || 0;
+    const comment = document.getElementById('modal-field-comment')?.value.trim() || '';
 
     try {
         const res = await fetch(`http://localhost:8000/api-ecoboros-v1/purchase-requests/${requestId}/`, {
@@ -676,7 +682,8 @@ async function saveRequestVariables(requestId) {
             body: JSON.stringify({
                 quantity: qty,
                 requested_weight: weight,
-                offered_price: price
+                offered_price: price,
+                negotiation_comment: comment
             })
         });
 
@@ -685,7 +692,7 @@ async function saveRequestVariables(requestId) {
             throw new Error(errData.status || errData.detail || 'Error al guardar');
         }
 
-        alert('✅ Campos variables actualizados correctamente.');
+        alert('✅ Ajustes de negociación y comentario guardados. Permanece en estatus Pendiente hasta la auditoría de Calidad.');
         await fetchAndRenderMyPurchases();
         openRequestDetailsModal(requestId);
     } catch(err) {

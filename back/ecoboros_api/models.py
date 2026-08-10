@@ -37,6 +37,7 @@ class PurchaseRequests(models.Model):
     requested_weight = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     offered_price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     quantity = models.CharField(max_length=100, blank=True, null=True)
+    negotiation_comment = models.TextField(blank=True, null=True)
     quality_validator = models.ForeignKey('Users', models.DO_NOTHING, related_name='purchaserequests_quality_validator_set', blank=True, null=True)
     seller_payment_confirmed = models.BooleanField(default=False, blank=True, null=True)
     platform_fee_confirmed = models.BooleanField(default=False, blank=True, null=True)

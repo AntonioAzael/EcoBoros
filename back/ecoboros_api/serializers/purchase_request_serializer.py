@@ -24,6 +24,7 @@ class PurchaseRequestSerializer(serializers.ModelSerializer):
             'requested_weight',
             'offered_price',
             'quantity',
+            'negotiation_comment',
             'status',
             'quality_validator',
             'quality_validator_name',
@@ -70,9 +71,7 @@ class PurchaseRequestSerializer(serializers.ModelSerializer):
 
     def get_quality_validator_name(self, obj):
         try:
-            return obj.quality_validator.company_name if obj.quality_validator else (
-                obj.waste.quality_validator.company_name if (obj.waste and obj.waste.quality_validator) else None
-            )
+            return obj.quality_validator.company_name if obj.quality_validator else None
         except Exception:
             return None
 

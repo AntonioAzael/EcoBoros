@@ -139,6 +139,7 @@ CREATE TABLE purchase_requests (
        de contra-ofertas de precio propuesto por el comprador. */
     offered_price DECIMAL(10,2) NULL,        
     quantity VARCHAR(100) NULL,
+    negotiation_comment TEXT NULL,
     quality_validator_id INT NULL,
     seller_payment_confirmed BOOLEAN DEFAULT FALSE,
     platform_fee_confirmed BOOLEAN DEFAULT FALSE,

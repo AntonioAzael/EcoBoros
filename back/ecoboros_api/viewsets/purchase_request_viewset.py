@@ -12,10 +12,17 @@ class PurchaseRequestViewSet(viewsets.ModelViewSet):
         buyer_id = self.request.query_params.get('buyer')
         publisher_id = self.request.query_params.get('publisher')
         status_id = self.request.query_params.get('status')
+        quality_validator_id = self.request.query_params.get('quality_validator')
+        unassigned_validator = self.request.query_params.get('unassigned_validator')
+
         if buyer_id:
             queryset = queryset.filter(buyer_id=buyer_id)
         if publisher_id:
             queryset = queryset.filter(waste__publisher_id=publisher_id)
         if status_id:
             queryset = queryset.filter(status_id=status_id)
+        if quality_validator_id:
+            queryset = queryset.filter(quality_validator_id=quality_validator_id)
+        if unassigned_validator == 'true':
+            queryset = queryset.filter(quality_validator__isnull=True)
         return queryset

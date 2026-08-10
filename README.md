@@ -1,6 +1,11 @@
-# ECOBOROS - Generación de PDFs de Documentación
+# 🌿 ECOBOROS - Sistema de Comercialización de Residuos Industriales
 
-Este proyecto contiene un script Python para generar PDFs de documentación técnica de los productos y mostrarlos en la página `Publicacion.html`.
+> [!NOTE]
+> 📖 Para una guía detallada del flujo del software, roles de Empresa y Calidad, arquitectura y reglas de negocio, consulta [README_FLUJO_PROYECTO.md](file:///C:/Users/bauti/OneDrive/Documentos/classroom/8B/EcoBoros/README_FLUJO_PROYECTO.md).
+
+---
+
+## 🛠️ Generación de PDFs de Documentación
 
 ## Requisitos
 

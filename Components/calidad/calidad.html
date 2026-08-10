@@ -116,18 +116,22 @@
             <!-- Tabs de Estado -->
             <div class="bg-white rounded-2xl shadow-sm border border-slate-100 mb-6">
                 <div class="flex border-b border-slate-100 overflow-x-auto">
-                    <button onclick="switchTab('pending')" id="tab-pending" class="px-6 py-4 text-sm font-bold transition-all relative tab-active whitespace-nowrap">
-                        Pendientes
-                        <span id="pending-badge" class="ml-2 bg-amber-100 text-amber-700 text-xs px-2 py-0.5 rounded-full hidden"></span>
+                    <button onclick="switchTab('pending-unassigned')" id="tab-pending-unassigned" class="px-6 py-4 text-sm font-bold transition-all relative tab-active whitespace-nowrap">
+                        📥 Pendientes Generales (Sin Asignar)
+                        <span id="unassigned-badge" class="ml-2 bg-amber-100 text-amber-700 text-xs px-2 py-0.5 rounded-full hidden"></span>
+                    </button>
+                    <button onclick="switchTab('my-assigned')" id="tab-my-assigned" class="px-6 py-4 text-sm font-bold transition-all tab-inactive whitespace-nowrap">
+                        📋 Mis Asignaciones (En Seguimiento)
+                        <span id="assigned-badge" class="ml-2 bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full hidden"></span>
                     </button>
                     <button onclick="switchTab('review')" id="tab-review" class="px-6 py-4 text-sm font-bold transition-all tab-inactive whitespace-nowrap">
-                        En Revisión
+                        🔄 En Proceso (Desglose 2.5%)
                     </button>
                     <button onclick="switchTab('approved')" id="tab-approved" class="px-6 py-4 text-sm font-bold transition-all tab-inactive whitespace-nowrap">
-                        Aprobados
+                        ✅ Completados
                     </button>
                     <button onclick="switchTab('rejected')" id="tab-rejected" class="px-6 py-4 text-sm font-bold transition-all tab-inactive whitespace-nowrap">
-                        Rechazados
+                        ❌ Rechazados
                     </button>
                 </div>
             </div>

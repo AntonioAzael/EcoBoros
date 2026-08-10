@@ -8,8 +8,14 @@ const API_BASE = 'http://localhost:8000/api-ecoboros-v1';
 let publications = [];
 let reportsHistory = [];
 
+let currentQualityUser = {
+    user_id: 4,
+    name: 'Inspector Carlos Mendoza (Calidad A)',
+    email: 'calidad@ecoboros.com'
+};
+
 // ========== VARIABLES DE ESTADO ==========
-let currentTab = "pending";
+let currentTab = "pending-unassigned";
 let currentPublication = null;
 let searchTerm = "";
 let currentSection = "publications";
@@ -32,13 +38,17 @@ function loadUserData() {
     if (storedUser) {
         try {
             const user = JSON.parse(storedUser);
-            document.getElementById('user-name-display').textContent = user.name || 'Control de Calidad';
+            currentQualityUser.user_id = user.user_id || 4;
+            currentQualityUser.name = user.name || 'Inspector Carlos Mendoza (Calidad A)';
+            currentQualityUser.email = user.email || 'calidad@ecoboros.com';
+
+            document.getElementById('user-name-display').textContent = currentQualityUser.name;
             const avatar = document.getElementById('user-avatar');
-            avatar.textContent = (user.name || 'CC').split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+            avatar.textContent = currentQualityUser.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
             document.getElementById('user-role-display').textContent = 'Control de Calidad';
         } catch(e) {}
     } else {
-        document.getElementById('user-name-display').textContent = 'Inspector de Calidad';
+        document.getElementById('user-name-display').textContent = currentQualityUser.name;
     }
 }
 
@@ -103,7 +113,9 @@ async function fetchQualityData() {
                 buyerCompany: req.buyer_name || 'Empresa Compradora',
                 companyEmail: 'contacto@ecoboros.com',
                 description: `Petición de compra entre ${req.buyer_name} y ${req.seller_name}.`,
+                negotiationComment: req.negotiation_comment || 'Sin comentarios adicionales por parte de las empresas.',
                 customImage: null,
+                qualityValidatorId: req.quality_validator,
                 qualityValidatorName: req.quality_validator_name,
                 platformFeeFormatted: req.platform_fee_formatted || `$ ${(total * 0.025).toFixed(2)}`,
                 sellerPayoutFormatted: req.seller_payout_formatted || `$ ${(total * 0.975).toFixed(2)}`,
@@ -138,7 +150,10 @@ async function fetchQualityData() {
                 company: w.publisher_name || 'Empresa Publicadora',
                 companyEmail: 'contacto@empresa.com',
                 description: w.technical_description,
+                negotiationComment: 'Publicación directa en revisión previa.',
                 customImage: w.first_image_url,
+                qualityValidatorId: null,
+                qualityValidatorName: null,
                 comments: []
             });
         });
@@ -176,19 +191,31 @@ function switchSection(section) {
 
 // ========== ESTADÍSTICAS ==========
 function updateCounters() {
-    document.getElementById('pending-count').textContent = publications.filter(p => p.status === 'pending').length;
+    const unassignedCount = publications.filter(p => p.status === 'pending' && !p.qualityValidatorId).length;
+    const assignedCount = publications.filter(p => p.status === 'pending' && p.qualityValidatorId === currentQualityUser.user_id).length;
+
+    document.getElementById('pending-count').textContent = unassignedCount;
     document.getElementById('review-count').textContent = publications.filter(p => p.status === 'review').length;
     document.getElementById('approved-count').textContent = publications.filter(p => p.status === 'approved').length;
     document.getElementById('rejected-count').textContent = publications.filter(p => p.status === 'rejected').length;
     
-    const pendingBadge = document.getElementById('pending-badge');
-    const pendingCount = publications.filter(p => p.status === 'pending').length;
-    if (pendingBadge) {
-        if (pendingCount > 0) {
-            pendingBadge.textContent = pendingCount;
-            pendingBadge.classList.remove('hidden');
+    const unassignedBadge = document.getElementById('unassigned-badge');
+    if (unassignedBadge) {
+        if (unassignedCount > 0) {
+            unassignedBadge.textContent = unassignedCount;
+            unassignedBadge.classList.remove('hidden');
         } else {
-            pendingBadge.classList.add('hidden');
+            unassignedBadge.classList.add('hidden');
+        }
+    }
+
+    const assignedBadge = document.getElementById('assigned-badge');
+    if (assignedBadge) {
+        if (assignedCount > 0) {
+            assignedBadge.textContent = assignedCount;
+            assignedBadge.classList.remove('hidden');
+        } else {
+            assignedBadge.classList.add('hidden');
         }
     }
 }
@@ -202,7 +229,7 @@ function filterPublications() {
 function switchTab(tab) {
     currentTab = tab;
     
-    const tabs = ['pending', 'review', 'approved', 'rejected'];
+    const tabs = ['pending-unassigned', 'my-assigned', 'review', 'approved', 'rejected'];
     tabs.forEach(t => {
         const btn = document.getElementById(`tab-${t}`);
         if (btn) {
@@ -221,7 +248,15 @@ function switchTab(tab) {
 
 // ========== RENDER PUBLICACIONES ==========
 function renderPublications() {
-    let filtered = publications.filter(p => p.status === currentTab);
+    let filtered = [];
+
+    if (currentTab === 'pending-unassigned') {
+        filtered = publications.filter(p => p.status === 'pending' && !p.qualityValidatorId);
+    } else if (currentTab === 'my-assigned') {
+        filtered = publications.filter(p => p.status === 'pending' && (p.qualityValidatorId === currentQualityUser.user_id || !p.isRequest));
+    } else {
+        filtered = publications.filter(p => p.status === currentTab);
+    }
     
     if (searchTerm) {
         filtered = filtered.filter(p => 
@@ -250,7 +285,11 @@ function renderPublications() {
         let statusClass = '', statusText = '', statusIcon = '';
         
         switch(pub.status) {
-            case 'pending': statusClass = 'status-pending'; statusText = 'Pendiente'; statusIcon = '⏳'; break;
+            case 'pending': 
+                statusClass = pub.qualityValidatorId ? 'bg-blue-100 text-blue-800' : 'status-pending'; 
+                statusText = pub.qualityValidatorId ? `Asignado (${pub.qualityValidatorName || 'Calidad'})` : 'Sin Asignar'; 
+                statusIcon = pub.qualityValidatorId ? '📋' : '📥'; 
+                break;
             case 'review': statusClass = 'status-review'; statusText = 'En Proceso'; statusIcon = '🔄'; break;
             case 'approved': statusClass = 'status-approved'; statusText = 'Completado'; statusIcon = '✅'; break;
             case 'rejected': statusClass = 'status-rejected'; statusText = 'Rechazado'; statusIcon = '❌'; break;
@@ -281,21 +320,64 @@ function renderPublications() {
                     </p>
                     <p class="text-slate-600 text-sm line-clamp-2 mt-1">${pub.description}</p>
                     <div class="mt-auto pt-5 border-t border-slate-100 flex flex-col gap-3">
-                        <div class="flex justify-between items-center">
-                            <span class="text-xs font-bold text-slate-500 bg-slate-100 px-3 py-1.5 rounded-lg">📦 ${pub.qty}</span>
-                            <span class="text-xs text-slate-400 font-medium">🏢 ${pub.company}</span>
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="font-bold text-slate-500 bg-slate-100 px-3 py-1.5 rounded-lg">📦 ${pub.qty}</span>
+                            <span class="text-slate-400 font-medium">🏢 ${pub.company}</span>
                         </div>
                         <div class="flex justify-between items-center mt-2">
                             <span class="text-2xl font-black text-[#1a2b4b]">${pub.price}</span>
-                            <button class="text-sm font-bold bg-[#1a2b4b] text-white px-5 py-2.5 rounded-xl transition-colors hover:bg-[#2d4563]">
-                                Validar Calidad
-                            </button>
+                            ${currentTab === 'pending-unassigned' ? `
+                                <button onclick="event.stopPropagation(); assignToMe(${pub.id})" class="text-xs font-bold bg-[#78C043] text-white px-4 py-2.5 rounded-xl transition-all hover:bg-[#66a338] shadow-md flex items-center gap-1">
+                                    <span>📌</span> Asignarme
+                                </button>
+                            ` : `
+                                <button class="text-xs font-bold bg-[#1a2b4b] text-white px-5 py-2.5 rounded-xl transition-colors hover:bg-[#2d4563]">
+                                    Auditar y Validar
+                                </button>
+                            `}
                         </div>
                     </div>
                 </div>
             </div>
         `;
     }).join('');
+}
+
+// ========== ASIGNAR USUARIO DE CALIDAD A SOLICITUD ==========
+async function assignToMe(id) {
+    const pub = publications.find(p => p.id === id);
+    if (!pub) return;
+
+    if (pub.isRequest && pub.request_id) {
+        try {
+            const res = await fetch(`${API_BASE}/purchase-requests/${pub.request_id}/`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    quality_validator: currentQualityUser.user_id
+                })
+            });
+
+            if (!res.ok) {
+                const errData = await res.json();
+                throw new Error(errData.status || errData.detail || 'Error al asignarse');
+            }
+
+            showNotification(`📌 Solicitud asignada a ${currentQualityUser.name}`, 'success');
+            await fetchQualityData();
+            switchTab('my-assigned');
+            return;
+        } catch(err) {
+            alert('Error al asignarse solicitud: ' + err.message);
+            return;
+        }
+    }
+
+    pub.qualityValidatorId = currentQualityUser.user_id;
+    pub.qualityValidatorName = currentQualityUser.name;
+    showNotification(`📌 Publicación asignada a ${currentQualityUser.name}`, 'success');
+    updateCounters();
+    switchTab('my-assigned');
 }
 
 // ========== MODAL DE REVISIÓN Y VALIDACIÓN DE CALIDAD ==========
@@ -307,7 +389,8 @@ function openReviewModal(id) {
     const modalContent = document.getElementById('modal-content');
     const style = categoryStyles[currentPublication.category] || { color: "bg-gray-500", icon: "❓" };
     
-    const isPending = currentPublication.status === 'pending';
+    const isUnassigned = currentPublication.status === 'pending' && !currentPublication.qualityValidatorId;
+    const isMyAssigned = currentPublication.status === 'pending' && currentPublication.qualityValidatorId === currentQualityUser.user_id;
     const isReview = currentPublication.status === 'review'; // En Proceso
     const isApprovedOrRejected = currentPublication.status === 'approved' || currentPublication.status === 'rejected';
     const hasCustomImage = currentPublication.customImage && currentPublication.customImage.trim() !== "";
@@ -329,19 +412,27 @@ function openReviewModal(id) {
                     <div><span class="text-slate-400 block">Vendedor</span><p class="font-bold text-slate-700">${currentPublication.company}</p></div>
                     <div><span class="text-slate-400 block">Comprador</span><p class="font-bold text-slate-700">${currentPublication.buyerCompany || 'Empresa A'}</p></div>
                     <div><span class="text-slate-400 block">Fecha Registrada</span><p class="font-bold text-slate-700">${currentPublication.date}</p></div>
-                    <div><span class="text-slate-400 block">Estado Actual</span><p class="font-bold text-[#78C043]">${currentPublication.rawStatusName}</p></div>
+                    <div><span class="text-slate-400 block">Inspector Asignado</span><p class="font-bold text-[#78C043]">${currentPublication.qualityValidatorName || 'Sin Asignar'}</p></div>
                 </div>
+            </div>
+
+            <!-- Comentario de Negociación Registrado por las Empresas -->
+            <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 space-y-1 text-amber-900 text-xs">
+                <div class="font-bold text-amber-800 flex items-center gap-2">
+                    <span>💬</span> Comentario / Acuerdos de Negociación entre Empresas:
+                </div>
+                <p class="italic text-amber-700">${currentPublication.negotiationComment}</p>
             </div>
 
             <!-- Campos Variables Editables por Calidad en Estatus Pendiente -->
             <div class="border border-slate-200 rounded-2xl p-5 space-y-3 bg-white">
                 <div class="flex justify-between items-center">
                     <h4 class="font-bold text-[#1a2b4b] text-sm flex items-center gap-2">
-                        <span>📝</span> Validación de Campos Variables (Calidad)
+                        <span>📝</span> Auditoría de Campos Variables (Calidad)
                     </h4>
                     ${isApprovedOrRejected ? '<span class="text-xs bg-slate-100 text-slate-500 font-bold px-2.5 py-1 rounded-md">🔒 Lectura Solamente</span>' : ''}
                 </div>
-                <p class="text-xs text-slate-500">Verifica que ambas empresas estén entregando la cantidad y pago solicitados antes de aprobar la transacción a En Proceso.</p>
+                <p class="text-xs text-slate-500">Revisa la evidencia física/fotográfica o en móvil para re-confirmar los valores antes de autorizar el cambio a En Proceso.</p>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
                     <div>
@@ -386,14 +477,20 @@ function openReviewModal(id) {
 
     html += `
             <div class="border border-slate-100 rounded-xl p-5">
-                <h4 class="font-bold text-[#1a2b4b] mb-3">💬 Comentarios de Auditoría y Dictamen</h4>
-                <textarea id="comment-text" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:border-[#78C043] focus:ring-2 focus:ring-[#78C043]/20 outline-none transition-all" rows="2" placeholder="Escribe tu dictamen o nota de verificación de calidad..."></textarea>
+                <h4 class="font-bold text-[#1a2b4b] mb-3">💬 Dictamen Final de Auditoría de Calidad</h4>
+                <textarea id="comment-text" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:border-[#78C043] focus:ring-2 focus:ring-[#78C043]/20 outline-none transition-all" rows="2" placeholder="Escribe tu dictamen o nota de verificación auditada..."></textarea>
             </div>
             
             <div class="flex flex-wrap gap-3 justify-end border-t border-slate-100 pt-5">
-                ${isPending ? `
+                ${isUnassigned ? `
+                    <button onclick="assignToMe(${currentPublication.id})" class="px-6 py-3 bg-[#78C043] text-white rounded-xl font-bold hover:bg-[#66a338] transition-all text-sm flex items-center gap-2 shadow-md">
+                        <span>📌</span> Asignarme para Dar Seguimiento
+                    </button>
+                    <button onclick="closeModal()" class="px-5 py-3 bg-slate-200 text-slate-700 rounded-xl font-bold hover:bg-slate-300 transition-all text-sm">Cancelar</button>
+                ` : ''}
+                ${isMyAssigned ? `
                     <button onclick="validateAndMoveToProceso(${currentPublication.id})" class="px-6 py-3 bg-[#78C043] text-white rounded-xl font-bold hover:bg-[#66a338] transition-all text-sm flex items-center gap-2 shadow-md">
-                        <span>✅</span> Validar y Pasar a EN PROCESO
+                        <span>✅</span> Validar Dictamen y Pasar a EN PROCESO
                     </button>
                     <button onclick="closeModal()" class="px-5 py-3 bg-slate-200 text-slate-700 rounded-xl font-bold hover:bg-slate-300 transition-all text-sm">Cancelar</button>
                 ` : ''}
@@ -433,7 +530,7 @@ async function validateAndMoveToProceso(id) {
                     requested_weight: weight,
                     offered_price: price,
                     status: 5, // Proceso
-                    quality_validator: 4 // Usuario de calidad por defecto
+                    quality_validator: currentQualityUser.user_id
                 })
             });
 
@@ -442,8 +539,9 @@ async function validateAndMoveToProceso(id) {
                 throw new Error(errData.status || errData.detail || 'Error al validar');
             }
 
-            showNotification('✅ Transacción verificada por Calidad y cambiada a estatus EN PROCESO', 'success');
+            showNotification(`✅ Dictamen auditado por ${currentQualityUser.name} y cambiado a EN PROCESO`, 'success');
             await fetchQualityData();
+            switchTab('review');
             closeModal();
             return;
         } catch(err) {
@@ -458,9 +556,9 @@ async function validateAndMoveToProceso(id) {
     pub.unitPrice = price;
     pub.status = 'review';
     pub.rawStatusName = 'Proceso';
-    showNotification('✅ Información verificada y movida a EN PROCESO', 'success');
+    showNotification('✅ Información auditada y movida a EN PROCESO', 'success');
     updateCounters();
-    renderPublications();
+    switchTab('review');
     closeModal();
 }
 
