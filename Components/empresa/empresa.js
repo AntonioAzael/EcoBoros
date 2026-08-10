@@ -301,48 +301,56 @@ function saveEditPublication() {
 
 // ========== MIS COMPRAS ==========
 async function fetchAndRenderMyPurchases() {
+    const userId = currentUser.user_id || currentUser.id;
+    if (!userId) {
+        renderMyPurchasesUI();
+        return;
+    }
+
     try {
-        const userId = currentUser.user_id || currentUser.id || 1;
-        const response = await fetch(`http://localhost:8000/api-ecoboros-v1/purchase-requests/?buyer=${userId}`);
-        let fetchedData = [];
+        const response = await fetch(
+            `http://localhost:8000/api-ecoboros-v1/purchase-requests/?buyer=${userId}`
+        );
 
-        if (response.ok) {
-            fetchedData = await response.json();
+        if (!response.ok) {
+            console.warn('Error al obtener compras:', response.status);
+            renderMyPurchasesUI();
+            return;
         }
 
-        // Si no hay datos específicos para la empresa demo, traer todas las solicitudes de la base de datos
-        if (!Array.isArray(fetchedData) || fetchedData.length === 0) {
-            const allResp = await fetch('http://localhost:8000/api-ecoboros-v1/purchase-requests/');
-            if (allResp.ok) {
-                fetchedData = await allResp.json();
-            }
-        }
+        const fetchedData = await response.json();
 
+        // Solo mostrar las compras del usuario actual — sin fallback global
         if (Array.isArray(fetchedData) && fetchedData.length > 0) {
             myPurchases = fetchedData.map(req => {
                 const weight = parseFloat(req.requested_weight || 0);
-                const price = parseFloat(req.offered_price || 0);
+                const price  = parseFloat(req.offered_price  || 0);
                 const totalCalculated = (weight > 0 && price > 0) ? (weight * price) : price;
                 const statusStr = (req.status_name || 'Pendiente').toLowerCase();
-                let statusKey = 'procesando';
-                if (['completado', 'completada', 'aprobado'].includes(statusStr)) {
-                    statusKey = 'completada';
-                }
+                const statusKey = ['completado', 'completada', 'aprobado'].includes(statusStr)
+                    ? 'completada' : statusStr;
+
                 return {
-                    id: req.request_id,
-                    productName: req.product_name || 'Residuo Industrial',
-                    date: req.date || (req.request_date ? req.request_date.slice(0, 10) : '-'),
-                    total: totalCalculated,
-                    totalFormatted: req.total_formatted || `$ ${totalCalculated.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`,
-                    status: statusKey,
+                    id:             req.request_id,
+                    productName:    req.product_name  || 'Residuo Industrial',
+                    date:           req.date          || '-',
+                    total:          totalCalculated,
+                    totalFormatted: req.total_formatted ||
+                        `$ ${totalCalculated.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`,
+                    status:     statusKey,
                     statusName: req.status_name || 'Pendiente',
-                    seller: req.seller_name || 'Vendedor Verificado'
+                    seller:     req.seller_name || 'Vendedor Verificado'
                 };
             });
+        } else {
+            // El usuario no tiene compras — limpiar lista y mostrar estado vacío
+            myPurchases = [];
         }
     } catch (err) {
-        console.warn('Error al cargar solicitudes de compra desde API:', err);
+        console.warn('Error al cargar solicitudes de compra:', err);
+        myPurchases = [];
     }
+
     renderMyPurchasesUI();
 }
 
@@ -517,9 +525,6 @@ function renderProducts(data) {
         const categoryName = item.category_name_display || item.category_name || 'Varios';
         const style = categoryStyles[categoryName] || { color: 'bg-gray-500', icon: '❓', hoverGlow: 'hover:border-gray-500 hover:shadow-gray-500/30', btnHover: 'group-hover:bg-gray-500 group-hover:border-gray-500 group-hover:text-white' };
         const delay = index * 30;
-        // status_name viene del backend
-        const statusKey = (item.status_name || '').toLowerCase().replace(/ /g, '_');
-        const status = publicationStatusLabels[statusKey] || { text: item.status_name || 'Pendiente', class: 'status-pendiente', badge: '⏳' };
 
         // Mostrar primera imagen subida si existe, si no el icono de categoría
         let imageHtml;
@@ -539,9 +544,6 @@ function renderProducts(data) {
                     ${imageHtml}
                     <div class="absolute top-4 left-4 ${style.color} text-white text-[10px] font-black px-3 py-1.5 rounded-full shadow-sm uppercase tracking-wider z-10">
                         ${categoryName}
-                    </div>
-                    <div class="absolute top-4 right-4 z-10">
-                        <span class="status-badge ${status.class}">${status.badge} ${status.text}</span>
                     </div>
                 </div>
                 <div class="p-6 flex flex-col gap-2 flex-1">
