@@ -114,6 +114,7 @@ function loadUserData() {
  * Renderiza el detalle desde datos de la API (waste object)
  */
 function renderProductDetailFromAPI(waste) {
+    currentWasteData = waste;
     const categoryName = waste.category_name_display || waste.category_name || 'Varios';
     const style = categoryStyles[categoryName] || { color: 'bg-gray-500', icon: '❓' };
     const container = document.getElementById('product-detail');
@@ -398,12 +399,70 @@ function renderProductDetail(productId) {
     `;
 }
 
+let currentWasteData = null;
+
 function openContactModal() {
+    if (currentWasteData) {
+        document.getElementById('req-quantity').value = currentWasteData.quantity || '';
+        document.getElementById('req-weight').value = currentWasteData.weight_decimal || '';
+        document.getElementById('req-price').value = currentWasteData.unit_price || '';
+        if (currentWasteData.publisher_name) {
+            document.getElementById('modal-seller-company').textContent = currentWasteData.publisher_name;
+        }
+    }
     document.getElementById('contact-modal').classList.remove('hidden');
 }
 
 function closeContactModal() {
     document.getElementById('contact-modal').classList.add('hidden');
+}
+
+async function submitPurchaseRequest() {
+    if (!currentWasteData) {
+        alert('No se pudo identificar la publicación.');
+        return;
+    }
+
+    const storedUser = localStorage.getItem('ecoboros_user') || sessionStorage.getItem('ecoboros_user');
+    let buyerId = 16; // Fallback Empresa Demo
+    if (storedUser) {
+        try {
+            const u = JSON.parse(storedUser);
+            buyerId = u.user_id || u.id || 16;
+        } catch(e) {}
+    }
+
+    const quantityVal = document.getElementById('req-quantity').value;
+    const weightVal = parseFloat(document.getElementById('req-weight').value) || 0;
+    const priceVal = parseFloat(document.getElementById('req-price').value) || 0;
+
+    const payload = {
+        waste: currentWasteData.waste_id,
+        buyer: buyerId,
+        requested_weight: weightVal,
+        offered_price: priceVal,
+        quantity: quantityVal,
+        status: 4 // Pendiente
+    };
+
+    try {
+        const res = await fetch(`${API_BASE}/purchase-requests/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+            throw new Error(`HTTP ${res.status}`);
+        }
+
+        const data = await res.json();
+        alert(`¡Petición de compra creada exitosamente!\nSolicitud #${data.request_id} en estatus PENDIENTE.\nSe procederá al acuerdo entre empresas y validación de calidad.`);
+        closeContactModal();
+    } catch (err) {
+        console.error("Error al crear la petición de compra:", err);
+        alert('Error al enviar la petición de compra. Verifique la conexión con la API.');
+    }
 }
 
 document.addEventListener('click', function(event) {

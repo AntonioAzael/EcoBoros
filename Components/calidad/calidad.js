@@ -2,17 +2,10 @@
 // CALIDAD.JS - Control de Calidad ECOBOROS
 // ============================================
 
-// ========== DATOS ==========
-let publications = [
-    { id: 1, title: "Bidones HDPE Tricapa", category: "Plásticos", location: "Otay Industrial", qty: "850 Pzas", weightKg: 850, price: "$ 15.00 / pza", date: "2023-10-01", status: "pending", company: "Reciclados del Norte", companyEmail: "contacto@recicladosnorte.com", description: "Bidones industriales de HDPE de alta densidad, limpios y listos para reciclaje. Material de primera calidad.", images: ["🛢️"], customImage: null, submittedBy: "empresa@ecoboros.com", submittedDate: "2024-03-15", comments: [] },
-    { id: 2, title: "Recortes de Aluminio 6061", category: "Metales", location: "El Florido", qty: "2.5 Ton", weightKg: 2500, price: "$ 28.50 / kg", date: "2023-10-05", status: "review", company: "Aluminios del Pacífico", companyEmail: "ventas@aluminios.com", description: "Recortes de aluminio grado 6061, libres de impurezas. Ideal para fundición.", images: ["🔩"], customImage: "../../Public/Imagenes/aluminio.jpeg", submittedBy: "empresa@ecoboros.com", submittedDate: "2024-03-14", comments: [{ user: "Control Calidad", text: "Verificar pureza del material", date: "2024-03-14", type: "pending" }] },
-    { id: 3, title: "Pallets de Pino (Reparables)", category: "Maderas", location: "Pacifico", qty: "200 Uds", weightKg: 4000, price: "$ 45.00 / ud", date: "2023-09-28", status: "approved", company: "Maderas del Norte", companyEmail: "info@maderasnorte.com", description: "Pallets de pino en buen estado, reparables. Ideal para logística.", images: ["🪵"], customImage: "../../Public/Imagenes/madera.png", submittedBy: "empresa@ecoboros.com", submittedDate: "2024-03-10", comments: [{ user: "Control Calidad", text: "Material aprobado - Cumple con estándares", date: "2024-03-12", type: "approved" }] },
-    { id: 4, title: "Pacas de Cartón Corrugado", category: "Cartón", location: "La Mesa", qty: "5 Ton", weightKg: 5000, price: "$ 3.20 / kg", date: "2023-10-10", status: "rejected", company: "Cartones del Valle", companyEmail: "ventas@cartonesvalle.com", description: "Cartón corrugado mezclado con impurezas.", images: ["📦"], customImage: "../../Public/Imagenes/cartoncorrugado.png", submittedBy: "empresa@ecoboros.com", submittedDate: "2024-03-05", comments: [{ user: "Control Calidad", text: "Rechazado - Contiene materiales no reciclables mezclados", date: "2024-03-07", type: "rejected" }] },
-    { id: 5, title: "Cobre de Primera (Pelado)", category: "Metales", location: "Otay", qty: "300 kg", weightKg: 300, price: "$ 140.00 / kg", date: "2023-10-15", status: "pending", company: "Metales del Norte", companyEmail: "compras@metalesnorte.com", description: "Cobre de primera calidad, 99.9% pureza. Material pelado y listo.", images: ["🔩"], customImage: null, submittedBy: "empresa@ecoboros.com", submittedDate: "2024-03-16", comments: [] },
-    { id: 6, title: "Botellas PET Cristal", category: "Plásticos", location: "Rosarito", qty: "1 Ton", weightKg: 1000, price: "$ 8.00 / kg", date: "2023-10-02", status: "review", company: "Plásticos Reciclados", companyEmail: "info@plasticos.com", description: "Botellas PET cristal, limpias y clasificadas.", images: ["🛢️"], customImage: "../../Public/Imagenes/BotellasPetCristal.png", submittedBy: "empresa@ecoboros.com", submittedDate: "2024-03-13", comments: [{ user: "Control Calidad", text: "Solicitar certificado de origen", date: "2024-03-14", type: "pending" }] },
-    { id: 7, title: "Perfiles de Aluminio", category: "Metales", location: "Tijuana", qty: "500 kg", weightKg: 500, price: "$ 32.00 / kg", date: "2023-10-20", status: "pending", company: "Aluminios del Pacífico", companyEmail: "ventas@aluminios.com", description: "Perfiles extruidos de aluminio, sección rectangular, superficie limpia.", images: ["🔩"], customImage: "../../Public/Imagenes/PerfilesAluminio.png", submittedBy: "empresa@ecoboros.com", submittedDate: "2024-03-17", comments: [] }
-];
+const API_BASE = 'http://localhost:8000/api-ecoboros-v1';
 
+// ========== DATOS DE RESPALDO / CACHE ==========
+let publications = [];
 let reportsHistory = [];
 
 // ========== VARIABLES DE ESTADO ==========
@@ -37,16 +30,15 @@ const categoryStyles = {
 function loadUserData() {
     const storedUser = localStorage.getItem('ecoboros_user') || sessionStorage.getItem('ecoboros_user');
     if (storedUser) {
-        const user = JSON.parse(storedUser);
-        if (user.role !== 'calidad') {
-            window.location.href = '../../Components/empresa/empresa.html';
-        }
-        document.getElementById('user-name-display').textContent = user.name;
-        const avatar = document.getElementById('user-avatar');
-        avatar.textContent = user.name.split(' ').map(n => n[0]).join('').substring(0, 2);
-        document.getElementById('user-role-display').textContent = 'Control de Calidad';
+        try {
+            const user = JSON.parse(storedUser);
+            document.getElementById('user-name-display').textContent = user.name || 'Control de Calidad';
+            const avatar = document.getElementById('user-avatar');
+            avatar.textContent = (user.name || 'CC').split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+            document.getElementById('user-role-display').textContent = 'Control de Calidad';
+        } catch(e) {}
     } else {
-        window.location.href = '../../Components/login/login.html';
+        document.getElementById('user-name-display').textContent = 'Inspector de Calidad';
     }
 }
 
@@ -67,6 +59,99 @@ function showNotification(message, type) {
     }, 3000);
 }
 
+// ========== OBTENER DATOS DE LA API ==========
+async function fetchQualityData() {
+    try {
+        const [wastesRes, requestsRes] = await Promise.all([
+            fetch(`${API_BASE}/wastes/`),
+            fetch(`${API_BASE}/purchase-requests/`)
+        ]);
+
+        const wastesData = wastesRes.ok ? await wastesRes.json() : [];
+        const requestsData = requestsRes.ok ? await requestsRes.json() : [];
+
+        let items = [];
+
+        // Convertir Purchase Requests en ítems para el panel de Calidad
+        requestsData.forEach(req => {
+            const statusStr = (req.status_name || 'Pendiente').toLowerCase();
+            let statusKey = 'pending';
+            if (['proceso', 'en proceso', '5'].includes(statusStr)) statusKey = 'review';
+            else if (['completado', 'completada', '6'].includes(statusStr)) statusKey = 'approved';
+            else if (['rechazado', 'rechazada', '3'].includes(statusStr)) statusKey = 'rejected';
+
+            const weight = parseFloat(req.requested_weight || 0);
+            const price = parseFloat(req.offered_price || 0);
+            const total = req.total_amount || (weight * price);
+
+            items.push({
+                id: req.request_id,
+                isRequest: true,
+                request_id: req.request_id,
+                waste_id: req.waste,
+                title: req.product_name || 'Residuo Industrial',
+                category: 'Cartón',
+                location: 'Tijuana / En Operación',
+                qty: req.quantity || `${weight} kg`,
+                weightKg: weight,
+                price: req.total_formatted || `$ ${total.toFixed(2)}`,
+                unitPrice: price,
+                date: req.date || '2026-08-10',
+                status: statusKey,
+                rawStatusName: req.status_name || 'Pendiente',
+                company: req.seller_name || 'Empresa Vendedora',
+                buyerCompany: req.buyer_name || 'Empresa Compradora',
+                companyEmail: 'contacto@ecoboros.com',
+                description: `Petición de compra entre ${req.buyer_name} y ${req.seller_name}.`,
+                customImage: null,
+                qualityValidatorName: req.quality_validator_name,
+                platformFeeFormatted: req.platform_fee_formatted || `$ ${(total * 0.025).toFixed(2)}`,
+                sellerPayoutFormatted: req.seller_payout_formatted || `$ ${(total * 0.975).toFixed(2)}`,
+                sellerPaymentConfirmed: !!req.seller_payment_confirmed,
+                platformFeeConfirmed: !!req.platform_fee_confirmed,
+                comments: []
+            });
+        });
+
+        // Convertir Wastes directos si no están en solicitudes
+        wastesData.forEach(w => {
+            const statusStr = (w.status_name || 'Pendiente').toLowerCase();
+            let statusKey = 'pending';
+            if (['aprobado', 'aprobada', '2'].includes(statusStr)) statusKey = 'approved';
+            else if (['rechazado', 'rechazada', '3'].includes(statusStr)) statusKey = 'rejected';
+            else if (['revision', 'review', '1'].includes(statusStr)) statusKey = 'review';
+
+            items.push({
+                id: 1000 + w.waste_id,
+                isRequest: false,
+                waste_id: w.waste_id,
+                title: w.title,
+                category: w.category_name_display || 'Varios',
+                location: 'Otay Industrial',
+                qty: w.quantity || `${w.weight_decimal} kg`,
+                weightKg: parseFloat(w.weight_decimal),
+                price: w.unit_price ? `$ ${w.unit_price} / kg` : 'A consultar',
+                unitPrice: parseFloat(w.unit_price || 0),
+                date: w.generation_date || '2026-08-10',
+                status: statusKey,
+                rawStatusName: w.status_name || 'Pendiente',
+                company: w.publisher_name || 'Empresa Publicadora',
+                companyEmail: 'contacto@empresa.com',
+                description: w.technical_description,
+                customImage: w.first_image_url,
+                comments: []
+            });
+        });
+
+        publications = items;
+    } catch(e) {
+        console.warn("Error al obtener datos de API en calidad:", e);
+    }
+
+    updateCounters();
+    renderPublications();
+}
+
 // ========== NAVEGACIÓN ==========
 function switchSection(section) {
     currentSection = section;
@@ -77,16 +162,14 @@ function switchSection(section) {
     const navs = ['publications', 'reports'];
     navs.forEach(nav => {
         const btn = document.getElementById(`nav-${nav}`);
-        if (nav === section) {
-            btn.classList.add('active');
-        } else {
-            btn.classList.remove('active');
+        if (btn) {
+            if (nav === section) btn.classList.add('active');
+            else btn.classList.remove('active');
         }
     });
     
     if (section === 'publications') {
-        updateCounters();
-        renderPublications();
+        fetchQualityData();
     }
     if (matrizMode) activateMatrizLabels();
 }
@@ -100,11 +183,13 @@ function updateCounters() {
     
     const pendingBadge = document.getElementById('pending-badge');
     const pendingCount = publications.filter(p => p.status === 'pending').length;
-    if (pendingCount > 0) {
-        pendingBadge.textContent = pendingCount;
-        pendingBadge.classList.remove('hidden');
-    } else {
-        pendingBadge.classList.add('hidden');
+    if (pendingBadge) {
+        if (pendingCount > 0) {
+            pendingBadge.textContent = pendingCount;
+            pendingBadge.classList.remove('hidden');
+        } else {
+            pendingBadge.classList.add('hidden');
+        }
     }
 }
 
@@ -120,12 +205,14 @@ function switchTab(tab) {
     const tabs = ['pending', 'review', 'approved', 'rejected'];
     tabs.forEach(t => {
         const btn = document.getElementById(`tab-${t}`);
-        if (t === tab) {
-            btn.classList.remove('tab-inactive');
-            btn.classList.add('tab-active');
-        } else {
-            btn.classList.remove('tab-active');
-            btn.classList.add('tab-inactive');
+        if (btn) {
+            if (t === tab) {
+                btn.classList.remove('tab-inactive');
+                btn.classList.add('tab-active');
+            } else {
+                btn.classList.remove('tab-active');
+                btn.classList.add('tab-inactive');
+            }
         }
     });
     
@@ -148,13 +235,15 @@ function renderPublications() {
     const grid = document.getElementById('publications-grid');
     const noResults = document.getElementById('no-results');
     
+    if (!grid) return;
+
     if (filtered.length === 0) {
         grid.innerHTML = '';
-        noResults.classList.remove('hidden');
+        if (noResults) noResults.classList.remove('hidden');
         return;
     }
     
-    noResults.classList.add('hidden');
+    if (noResults) noResults.classList.add('hidden');
     
     grid.innerHTML = filtered.map((pub, index) => {
         const style = categoryStyles[pub.category] || { color: "bg-gray-500", icon: "❓", hoverGlow: "hover:border-gray-500" };
@@ -162,8 +251,8 @@ function renderPublications() {
         
         switch(pub.status) {
             case 'pending': statusClass = 'status-pending'; statusText = 'Pendiente'; statusIcon = '⏳'; break;
-            case 'review': statusClass = 'status-review'; statusText = 'En Revisión'; statusIcon = '🔍'; break;
-            case 'approved': statusClass = 'status-approved'; statusText = 'Aprobado'; statusIcon = '✅'; break;
+            case 'review': statusClass = 'status-review'; statusText = 'En Proceso'; statusIcon = '🔄'; break;
+            case 'approved': statusClass = 'status-approved'; statusText = 'Completado'; statusIcon = '✅'; break;
             case 'rejected': statusClass = 'status-rejected'; statusText = 'Rechazado'; statusIcon = '❌'; break;
         }
         
@@ -198,8 +287,8 @@ function renderPublications() {
                         </div>
                         <div class="flex justify-between items-center mt-2">
                             <span class="text-2xl font-black text-[#1a2b4b]">${pub.price}</span>
-                            <button class="text-sm font-bold bg-white text-[#1a2b4b] border-2 border-slate-100 px-5 py-2.5 rounded-xl transition-colors hover:bg-[#1a2b4b] hover:text-white hover:border-[#1a2b4b]">
-                                Revisar
+                            <button class="text-sm font-bold bg-[#1a2b4b] text-white px-5 py-2.5 rounded-xl transition-colors hover:bg-[#2d4563]">
+                                Validar Calidad
                             </button>
                         </div>
                     </div>
@@ -209,21 +298,23 @@ function renderPublications() {
     }).join('');
 }
 
-// ========== MODAL DE REVISIÓN ==========
+// ========== MODAL DE REVISIÓN Y VALIDACIÓN DE CALIDAD ==========
 function openReviewModal(id) {
     currentPublication = publications.find(p => p.id === id);
+    if (!currentPublication) return;
+
     const modal = document.getElementById('review-modal');
     const modalContent = document.getElementById('modal-content');
     const style = categoryStyles[currentPublication.category] || { color: "bg-gray-500", icon: "❓" };
     
     const isPending = currentPublication.status === 'pending';
-    const isReview = currentPublication.status === 'review';
+    const isReview = currentPublication.status === 'review'; // En Proceso
     const isApprovedOrRejected = currentPublication.status === 'approved' || currentPublication.status === 'rejected';
     const hasCustomImage = currentPublication.customImage && currentPublication.customImage.trim() !== "";
     
-    modalContent.innerHTML = `
+    let html = `
         <div class="space-y-6">
-            <div class="bg-slate-50 rounded-xl p-5">
+            <div class="bg-slate-50 rounded-2xl p-5 border border-slate-200">
                 <div class="flex items-center gap-3 mb-4">
                     ${hasCustomImage ? 
                         `<img src="${currentPublication.customImage}" class="w-16 h-16 rounded-lg object-cover" onerror="this.style.display='none'">` : 
@@ -231,84 +322,186 @@ function openReviewModal(id) {
                     }
                     <div>
                         <h3 class="text-2xl font-bold text-[#1a2b4b]">${currentPublication.title}</h3>
-                        <p class="text-slate-500">${currentPublication.category} • ${currentPublication.location}</p>
+                        <p class="text-slate-500 text-sm">${currentPublication.category} • ${currentPublication.location}</p>
                     </div>
                 </div>
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-                    <div><span class="text-slate-500 text-xs">Empresa</span><p class="font-medium">${currentPublication.company}</p></div>
-                    <div><span class="text-slate-500 text-xs">Contacto</span><p class="font-medium">${currentPublication.companyEmail}</p></div>
-                    <div><span class="text-slate-500 text-xs">Cantidad</span><p class="font-medium">${currentPublication.qty}</p></div>
-                    <div><span class="text-slate-500 text-xs">Peso Total</span><p class="font-medium">${currentPublication.weightKg} kg</p></div>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 text-xs">
+                    <div><span class="text-slate-400 block">Vendedor</span><p class="font-bold text-slate-700">${currentPublication.company}</p></div>
+                    <div><span class="text-slate-400 block">Comprador</span><p class="font-bold text-slate-700">${currentPublication.buyerCompany || 'Empresa A'}</p></div>
+                    <div><span class="text-slate-400 block">Fecha Registrada</span><p class="font-bold text-slate-700">${currentPublication.date}</p></div>
+                    <div><span class="text-slate-400 block">Estado Actual</span><p class="font-bold text-[#78C043]">${currentPublication.rawStatusName}</p></div>
                 </div>
             </div>
-            
-            <div class="border border-slate-100 rounded-xl p-5">
-                <h4 class="font-bold text-[#1a2b4b] mb-2">📝 Descripción del Material</h4>
-                <p class="text-slate-600">${currentPublication.description}</p>
-            </div>
-            
-            <div class="border border-slate-100 rounded-xl p-5">
-                <h4 class="font-bold text-[#1a2b4b] mb-3">💬 Retroalimentación</h4>
-                <div id="comments-list" class="space-y-3 mb-4 max-h-48 overflow-y-auto">
-                    ${currentPublication.comments.length > 0 ? currentPublication.comments.map(comment => `
-                        <div class="comment-card p-3 bg-slate-50 rounded-xl">
-                            <div class="flex justify-between items-start">
-                                <span class="font-medium text-sm text-[#1a2b4b]">${comment.user}</span>
-                                <span class="text-xs text-slate-400">${comment.date}</span>
-                            </div>
-                            <p class="text-slate-600 text-sm mt-1">${comment.text}</p>
-                        </div>
-                    `).join('') : '<p class="text-slate-400 text-sm">Sin comentarios aún</p>'}
+
+            <!-- Campos Variables Editables por Calidad en Estatus Pendiente -->
+            <div class="border border-slate-200 rounded-2xl p-5 space-y-3 bg-white">
+                <div class="flex justify-between items-center">
+                    <h4 class="font-bold text-[#1a2b4b] text-sm flex items-center gap-2">
+                        <span>📝</span> Validación de Campos Variables (Calidad)
+                    </h4>
+                    ${isApprovedOrRejected ? '<span class="text-xs bg-slate-100 text-slate-500 font-bold px-2.5 py-1 rounded-md">🔒 Lectura Solamente</span>' : ''}
                 </div>
-                <textarea id="comment-text" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:border-[#78C043] focus:ring-2 focus:ring-[#78C043]/20 outline-none transition-all" rows="2" placeholder="Escribe tu retroalimentación..."></textarea>
+                <p class="text-xs text-slate-500">Verifica que ambas empresas estén entregando la cantidad y pago solicitados antes de aprobar la transacción a En Proceso.</p>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">Cantidad Verificada</label>
+                        <input type="text" id="quality-qty" value="${currentPublication.qty}" ${isApprovedOrRejected ? 'disabled' : ''} class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold outline-none focus:border-[#78C043] disabled:opacity-60">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">Peso Total (KG)</label>
+                        <input type="number" id="quality-weight" value="${currentPublication.weightKg}" ${isApprovedOrRejected ? 'disabled' : ''} class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold outline-none focus:border-[#78C043] disabled:opacity-60">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">Precio Unitario ($)</label>
+                        <input type="number" step="0.01" id="quality-price" value="${currentPublication.unitPrice || 0}" ${isApprovedOrRejected ? 'disabled' : ''} class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold outline-none focus:border-[#78C043] disabled:opacity-60">
+                    </div>
+                </div>
+            </div>
+    `;
+
+    if (isReview || isApprovedOrRejected) {
+        html += `
+            <div class="bg-gradient-to-br from-[#1a2b4b] to-[#2d4563] text-white rounded-2xl p-5 space-y-3">
+                <h4 class="font-bold text-[#78C043] text-sm flex items-center gap-2">
+                    <span>📊</span> Desglose de Ganancias (Comisión Intermediario 2.5%)
+                </h4>
+                <div class="grid grid-cols-3 gap-3 text-xs pt-1">
+                    <div class="bg-white/10 p-2.5 rounded-xl">
+                        <span class="opacity-75 block text-[10px]">Total Operación</span>
+                        <span class="font-black text-base">${currentPublication.price}</span>
+                    </div>
+                    <div class="bg-white/10 p-2.5 rounded-xl">
+                        <span class="opacity-75 block text-[10px]">Comisión Software (2.5%)</span>
+                        <span class="font-black text-base text-[#78C043]">${currentPublication.platformFeeFormatted || '$ 0.00'}</span>
+                    </div>
+                    <div class="bg-white/10 p-2.5 rounded-xl">
+                        <span class="opacity-75 block text-[10px]">Ganancia Vendedor (97.5%)</span>
+                        <span class="font-black text-base text-white">${currentPublication.sellerPayoutFormatted || '$ 0.00'}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    html += `
+            <div class="border border-slate-100 rounded-xl p-5">
+                <h4 class="font-bold text-[#1a2b4b] mb-3">💬 Comentarios de Auditoría y Dictamen</h4>
+                <textarea id="comment-text" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:border-[#78C043] focus:ring-2 focus:ring-[#78C043]/20 outline-none transition-all" rows="2" placeholder="Escribe tu dictamen o nota de verificación de calidad..."></textarea>
             </div>
             
             <div class="flex flex-wrap gap-3 justify-end border-t border-slate-100 pt-5">
                 ${isPending ? `
-                    <button onclick="addCommentAndAction(${currentPublication.id}, 'review')" class="px-6 py-3 bg-blue-500 text-white rounded-xl font-bold hover:bg-blue-600 transition-all">🔍 Marcar en Revisión</button>
-                    <button onclick="closeModal()" class="px-6 py-3 bg-slate-200 text-slate-700 rounded-xl font-bold hover:bg-slate-300 transition-all">Cancelar</button>
+                    <button onclick="validateAndMoveToProceso(${currentPublication.id})" class="px-6 py-3 bg-[#78C043] text-white rounded-xl font-bold hover:bg-[#66a338] transition-all text-sm flex items-center gap-2 shadow-md">
+                        <span>✅</span> Validar y Pasar a EN PROCESO
+                    </button>
+                    <button onclick="closeModal()" class="px-5 py-3 bg-slate-200 text-slate-700 rounded-xl font-bold hover:bg-slate-300 transition-all text-sm">Cancelar</button>
                 ` : ''}
                 ${isReview ? `
-                    <button onclick="addCommentAndAction(${currentPublication.id}, 'approved')" class="px-6 py-3 bg-[#78C043] text-white rounded-xl font-bold hover:bg-[#66a338] transition-all">✅ Aprobar Publicación</button>
-                    <button onclick="addCommentAndAction(${currentPublication.id}, 'rejected')" class="px-6 py-3 bg-red-500 text-white rounded-xl font-bold hover:bg-red-600 transition-all">❌ Rechazar Publicación</button>
-                    <button onclick="closeModal()" class="px-6 py-3 bg-slate-200 text-slate-700 rounded-xl font-bold hover:bg-slate-300 transition-all">Cancelar</button>
+                    <button onclick="addCommentAndAction(${currentPublication.id}, 'approved')" class="px-6 py-3 bg-green-600 text-white rounded-xl font-bold hover:bg-green-700 transition-all text-sm">🔒 Marcar COMPLETADO</button>
+                    <button onclick="addCommentAndAction(${currentPublication.id}, 'rejected')" class="px-6 py-3 bg-red-500 text-white rounded-xl font-bold hover:bg-red-600 transition-all text-sm">❌ Rechazar Operación</button>
+                    <button onclick="closeModal()" class="px-5 py-3 bg-slate-200 text-slate-700 rounded-xl font-bold hover:bg-slate-300 transition-all text-sm">Cerrar</button>
                 ` : ''}
                 ${isApprovedOrRejected ? `
-                    <button onclick="closeModal()" class="px-6 py-3 bg-slate-200 text-slate-700 rounded-xl font-bold hover:bg-slate-300 transition-all">Cerrar</button>
+                    <button onclick="closeModal()" class="px-6 py-3 bg-slate-200 text-slate-700 rounded-xl font-bold hover:bg-slate-300 transition-all text-sm">Cerrar</button>
                 ` : ''}
             </div>
         </div>
     `;
     
+    modalContent.innerHTML = html;
     modal.classList.remove('hidden');
     document.body.classList.add('overflow-hidden');
 }
 
-function addCommentAndAction(id, action) {
-    const commentText = document.getElementById('comment-text')?.value.trim();
-    const publication = publications.find(p => p.id === id);
-    let statusText = '';
-    
-    switch(action) {
-        case 'approved': statusText = 'aprobada'; break;
-        case 'rejected': statusText = 'rechazada'; break;
-        case 'review': statusText = 'en revisión'; break;
+async function validateAndMoveToProceso(id) {
+    const pub = publications.find(p => p.id === id);
+    if (!pub) return;
+
+    const qty = document.getElementById('quality-qty').value;
+    const weight = parseFloat(document.getElementById('quality-weight').value) || 0;
+    const price = parseFloat(document.getElementById('quality-price').value) || 0;
+    const comment = document.getElementById('comment-text')?.value.trim();
+
+    if (pub.isRequest && pub.request_id) {
+        try {
+            const res = await fetch(`${API_BASE}/purchase-requests/${pub.request_id}/`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    quantity: qty,
+                    requested_weight: weight,
+                    offered_price: price,
+                    status: 5, // Proceso
+                    quality_validator: 4 // Usuario de calidad por defecto
+                })
+            });
+
+            if (!res.ok) {
+                const errData = await res.json();
+                throw new Error(errData.status || errData.detail || 'Error al validar');
+            }
+
+            showNotification('✅ Transacción verificada por Calidad y cambiada a estatus EN PROCESO', 'success');
+            await fetchQualityData();
+            closeModal();
+            return;
+        } catch(err) {
+            alert('Error al validar solicitud en API: ' + err.message);
+            return;
+        }
     }
-    
-    if (commentText) {
-        publication.comments.push({
-            user: 'Control Calidad',
-            text: commentText,
-            date: new Date().toISOString().split('T')[0],
-            type: action
-        });
+
+    // Fallback simulado
+    pub.qty = qty;
+    pub.weightKg = weight;
+    pub.unitPrice = price;
+    pub.status = 'review';
+    pub.rawStatusName = 'Proceso';
+    showNotification('✅ Información verificada y movida a EN PROCESO', 'success');
+    updateCounters();
+    renderPublications();
+    closeModal();
+}
+
+async function addCommentAndAction(id, action) {
+    const pub = publications.find(p => p.id === id);
+    if (!pub) return;
+
+    let targetStatus = 6; // Completado
+    if (action === 'rejected') targetStatus = 3;
+
+    if (pub.isRequest && pub.request_id) {
+        try {
+            const res = await fetch(`${API_BASE}/purchase-requests/${pub.request_id}/`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    status: targetStatus,
+                    seller_payment_confirmed: targetStatus === 6,
+                    platform_fee_confirmed: targetStatus === 6
+                })
+            });
+
+            if (!res.ok) {
+                const errData = await res.json();
+                throw new Error(errData.status || errData.detail || 'Error al actualizar estatus');
+            }
+
+            showNotification(`📋 Estatus actualizado a ${targetStatus === 6 ? 'COMPLETADO' : 'RECHAZADO'}`, 'success');
+            await fetchQualityData();
+            closeModal();
+            return;
+        } catch(err) {
+            alert('Error al actualizar en API: ' + err.message);
+            return;
+        }
     }
+
+    if (action === 'approved') pub.status = 'approved';
+    else if (action === 'rejected') pub.status = 'rejected';
     
-    if (action === 'review' && publication.status === 'pending') publication.status = 'review';
-    else if (action === 'approved') publication.status = 'approved';
-    else if (action === 'rejected') publication.status = 'rejected';
-    
-    showNotification(`📋 Publicación ${statusText} correctamente`, 'success');
+    showNotification(`📋 Registro actualizado correctamente`, 'success');
     updateCounters();
     renderPublications();
     closeModal();
@@ -316,7 +509,7 @@ function addCommentAndAction(id, action) {
 
 function closeModal() {
     const modal = document.getElementById('review-modal');
-    modal.classList.add('hidden');
+    if (modal) modal.classList.add('hidden');
     document.body.classList.remove('overflow-hidden');
 }
 
@@ -343,20 +536,18 @@ function submitErrorReport(event) {
     reportsHistory.unshift(newReport);
     
     const historyDiv = document.getElementById('reports-history');
-    if(reportsHistory.length === 0) {
-        historyDiv.innerHTML = '<p class="text-slate-400 text-center py-8">No hay reportes enviados en esta sesión</p>';
-    } else {
+    if(historyDiv) {
         historyDiv.innerHTML = reportsHistory.map(r => `
-            <div class="bg-slate-50 p-4 rounded-xl border border-slate-100 hover:bg-slate-100 transition-all">
+            <div class="bg-slate-50 p-4 rounded-xl border border-slate-100 hover:bg-slate-100 transition-all text-xs">
                 <div class="flex justify-between items-start mb-2">
                     <span class="text-xs font-bold text-slate-400">${r.date}</span>
                     <span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">${r.status}</span>
                 </div>
-                <p class="font-medium text-sm mb-1">
+                <p class="font-medium mb-1">
                     ${r.type === 'publicacion' ? '📦 Error en publicación' : (r.type === 'documento' ? '📄 Documento inválido' : (r.type === 'tecnico' ? '⚙️ Problema técnico' : '📝 Otro'))}
                 </p>
-                <p class="text-sm text-slate-600">${r.description}</p>
-                ${r.publication !== 'No especificada' ? `<p class="text-xs text-slate-400 mt-2">📌 Publicación: ${r.publication}</p>` : ''}
+                <p class="text-slate-600">${r.description}</p>
+                ${r.publication !== 'No especificada' ? `<p class="text-slate-400 mt-2">📌 Publicación: ${r.publication}</p>` : ''}
             </div>
         `).join('');
     }
@@ -467,7 +658,6 @@ document.addEventListener('keydown', (e) => {
 // ========== INICIALIZACIÓN ==========
 document.addEventListener('DOMContentLoaded', () => {
     loadUserData();
-    updateCounters();
-    renderPublications();
+    fetchQualityData();
     switchSection('publications');
 });

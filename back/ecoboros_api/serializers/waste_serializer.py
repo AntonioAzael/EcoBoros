@@ -66,7 +66,15 @@ class WasteSerializer(serializers.ModelSerializer):
             'evidence_files',
             'first_image_url',
         ]
-        read_only_fields = ['publisher', 'category', 'status', 'quality_validator', 'created_at']
+        read_only_fields = ['publisher', 'category', 'created_at']
+
+    def update(self, instance, validated_data):
+        current_status_id = instance.status.status_id if instance.status else None
+        if current_status_id == 6 or (instance.status and instance.status.status_name.lower() == 'completado'):
+            raise serializers.ValidationError(
+                {"status": "La publicación ya está en estado Completado y no se puede modificar."}
+            )
+        return super().update(instance, validated_data)
 
     def get_category_name_display(self, obj):
         try:

@@ -164,11 +164,45 @@ function getMyPublications() {
     return getCurrentUserPublications();
 }
 
+function getPublicationStatusKey(p) {
+    if (!p) return 'pendiente';
+
+    // 1. Si status es un ID numérico (API Django statuses: 1:Revision, 2:Aprobado, 3:Rechazado, 4:Pendiente, 5:Proceso, 6:Completado)
+    if (typeof p.status === 'number') {
+        const idMap = {
+            1: 'revision',
+            2: 'aprobada',
+            3: 'rechazada',
+            4: 'pendiente',
+            5: 'proceso',
+            6: 'completado'
+        };
+        if (idMap[p.status]) return idMap[p.status];
+    }
+
+    // 2. Normalizar según el texto de status_name o status
+    const raw = String(p.status_name || p.status || '').toLowerCase().trim().replace(/ /g, '_');
+
+    if (['aprobada', 'aprobado', 'approved', '2'].includes(raw)) return 'aprobada';
+    if (['revision', 'en_revisión', 'en_revision', 'review', '1'].includes(raw)) return 'revision';
+    if (['rechazada', 'rechazado', 'rejected', '3'].includes(raw)) return 'rechazada';
+    if (['pendiente', 'pending', '4'].includes(raw)) return 'pendiente';
+    if (['proceso', 'en_proceso', '5'].includes(raw)) return 'proceso';
+    if (['completado', 'completada', 'completed', '6'].includes(raw)) return 'completado';
+
+    return raw || 'pendiente';
+}
+
 const publicationStatusLabels = {
     revision: { text: 'En Revisión', class: 'status-revision', badge: '⚙️' },
     aprobada: { text: 'Aprobada', class: 'status-aprobada', badge: '✅' },
+    aprobado: { text: 'Aprobada', class: 'status-aprobada', badge: '✅' },
+    approved: { text: 'Aprobada', class: 'status-aprobada', badge: '✅' },
     rechazada: { text: 'Rechazada', class: 'status-rechazada', badge: '❌' },
+    rechazado: { text: 'Rechazada', class: 'status-rechazada', badge: '❌' },
+    rejected: { text: 'Rechazada', class: 'status-rechazada', badge: '❌' },
     pendiente: { text: 'Pendiente', class: 'status-pendiente', badge: '⏳' },
+    pending: { text: 'Pendiente', class: 'status-pendiente', badge: '⏳' },
     proceso: { text: 'En Proceso', class: 'status-proceso', badge: '🔄' },
     completado: { text: 'Completado', class: 'status-completado', badge: '✅' }
 };
@@ -177,7 +211,7 @@ function filterMyPublications(status) {
     currentPublicationFilter = status;
     let filtered = getMyPublications();
     if (status !== 'all') {
-        filtered = filtered.filter(p => p.status === status);
+        filtered = filtered.filter(p => getPublicationStatusKey(p) === status);
     }
 
     ['all', 'revision', 'aprobada', 'rechazada', 'pendiente', 'proceso', 'completado'].forEach(s => {
@@ -211,7 +245,7 @@ function renderMyPublications(publications) {
         // Usar campos de la API (category_name_display, status_name, waste_id, etc.)
         const categoryName = pub.category_name_display || pub.category_name || pub.category || 'Varios';
         const style = categoryStyles[categoryName] || { color: "bg-gray-500", icon: "♻️", btnHover: "" };
-        const statusKey = (pub.status_name || '').toLowerCase().replace(/ /g, '_');
+        const statusKey = getPublicationStatusKey(pub);
         const status = publicationStatusLabels[statusKey] || { text: pub.status_name || 'Pendiente', class: 'status-pendiente', badge: '⏳' };
         const price = pub.unit_price ? `$ ${parseFloat(pub.unit_price).toFixed(2)} / kg` : (pub.price || 'A consultar');
         const qty = pub.quantity || pub.qty || 'N/A';
@@ -300,6 +334,7 @@ function saveEditPublication() {
 }
 
 // ========== MIS COMPRAS ==========
+// ========== MIS COMPRAS Y GESTIÓN DE NEGOCIACIÓN/PAGOS ==========
 async function fetchAndRenderMyPurchases() {
     const userId = currentUser.user_id || currentUser.id;
     if (!userId) {
@@ -320,30 +355,40 @@ async function fetchAndRenderMyPurchases() {
 
         const fetchedData = await response.json();
 
-        // Solo mostrar las compras del usuario actual — sin fallback global
-        if (Array.isArray(fetchedData) && fetchedData.length > 0) {
+        if (Array.isArray(fetchedData)) {
             myPurchases = fetchedData.map(req => {
                 const weight = parseFloat(req.requested_weight || 0);
                 const price  = parseFloat(req.offered_price  || 0);
-                const totalCalculated = (weight > 0 && price > 0) ? (weight * price) : price;
-                const statusStr = (req.status_name || 'Pendiente').toLowerCase();
-                const statusKey = ['completado', 'completada', 'aprobado'].includes(statusStr)
-                    ? 'completada' : statusStr;
+                const totalCalculated = req.total_amount || ((weight > 0 && price > 0) ? (weight * price) : price);
+                const statusStr = (req.status_name || 'Pendiente').toLowerCase().trim();
+                
+                let statusKey = 'pendiente';
+                if (['completado', 'completada', '6'].includes(statusStr)) statusKey = 'completado';
+                else if (['proceso', 'en proceso', '5'].includes(statusStr)) statusKey = 'proceso';
+                else if (['pendiente', '4'].includes(statusStr)) statusKey = 'pendiente';
 
                 return {
-                    id:             req.request_id,
-                    productName:    req.product_name  || 'Residuo Industrial',
-                    date:           req.date          || '-',
-                    total:          totalCalculated,
-                    totalFormatted: req.total_formatted ||
-                        `$ ${totalCalculated.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`,
-                    status:     statusKey,
+                    id: req.request_id,
+                    request_id: req.request_id,
+                    productName: req.product_name || 'Residuo Industrial',
+                    date: req.date || '-',
+                    total: totalCalculated,
+                    totalFormatted: req.total_formatted || `$ ${totalCalculated.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`,
+                    platformFeeFormatted: req.platform_fee_formatted || `$ ${(totalCalculated * 0.025).toLocaleString('es-MX', { minimumFractionDigits: 2 })}`,
+                    sellerPayoutFormatted: req.seller_payout_formatted || `$ ${(totalCalculated * 0.975).toLocaleString('es-MX', { minimumFractionDigits: 2 })}`,
+                    status: statusKey,
                     statusName: req.status_name || 'Pendiente',
-                    seller:     req.seller_name || 'Vendedor Verificado'
+                    seller: req.seller_name || 'Vendedor Verificado',
+                    quantity: req.quantity || 'N/A',
+                    weight: req.requested_weight || 0,
+                    price: req.offered_price || 0,
+                    qualityValidatorName: req.quality_validator_name || 'Equipo Calidad EcoBoros',
+                    sellerPaymentConfirmed: !!req.seller_payment_confirmed,
+                    platformFeeConfirmed: !!req.platform_fee_confirmed,
+                    raw: req
                 };
             });
         } else {
-            // El usuario no tiene compras — limpiar lista y mostrar estado vacío
             myPurchases = [];
         }
     } catch (err) {
@@ -375,30 +420,336 @@ function renderMyPurchasesUI() {
     if (noPurchases) noPurchases.classList.add('hidden');
 
     const totalSpent = myPurchases.reduce((sum, p) => sum + p.total, 0);
-    const completedCount = myPurchases.filter(p => p.status === 'completada').length;
-    const pendingCount = myPurchases.filter(p => p.status !== 'completada').length;
+    const completedCount = myPurchases.filter(p => p.status === 'completado').length;
+    const pendingCount = myPurchases.filter(p => p.status !== 'completado').length;
 
     if (totalSpentEl) totalSpentEl.textContent = `$ ${totalSpent.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     if (totalPurchasesEl) totalPurchasesEl.textContent = completedCount;
     if (pendingPurchasesEl) pendingPurchasesEl.textContent = pendingCount;
 
-    tbody.innerHTML = myPurchases.map(p => `
-        <tr class="hover:bg-slate-50 transition-colors">
-            <td class="px-6 py-4">
-                <p class="font-semibold text-slate-800">${p.productName}</p>
-            </td>
-            <td class="px-6 py-4 text-sm text-slate-600">${p.date}</td>
-            <td class="px-6 py-4">
-                <span class="font-bold text-[#1a2b4b]">${p.totalFormatted}</span>
-            </td>
-            <td class="px-6 py-4">
-                <span class="px-3 py-1 rounded-full text-xs font-bold ${p.status === 'completada' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}">
-                    ${p.status === 'completada' ? 'Completada' : (p.statusName || 'En Proceso')}
+    tbody.innerHTML = myPurchases.map(p => {
+        let badgeClass = 'bg-yellow-100 text-yellow-800';
+        if (p.status === 'completado') badgeClass = 'bg-green-100 text-green-800';
+        else if (p.status === 'proceso') badgeClass = 'bg-blue-100 text-blue-800';
+
+        return `
+            <tr class="hover:bg-slate-50 transition-colors">
+                <td class="px-6 py-4">
+                    <p class="font-semibold text-slate-800">${p.productName}</p>
+                    <p class="text-xs text-slate-400">Cant: ${p.quantity}</p>
+                </td>
+                <td class="px-6 py-4 text-sm text-slate-600">${p.date}</td>
+                <td class="px-6 py-4">
+                    <span class="font-bold text-[#1a2b4b]">${p.totalFormatted}</span>
+                </td>
+                <td class="px-6 py-4">
+                    <span class="px-3 py-1 rounded-full text-xs font-bold ${badgeClass}">
+                        ${p.statusName}
+                    </span>
+                </td>
+                <td class="px-6 py-4 text-sm text-slate-500">${p.seller}</td>
+                <td class="px-6 py-4">
+                    <button onclick="openRequestDetailsModal(${p.id})" class="bg-[#1a2b4b] text-white text-xs font-bold px-3 py-1.5 rounded-lg hover:bg-[#2d4563] transition-colors">
+                        Ver / Gestionar
+                    </button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+async function openRequestDetailsModal(requestId) {
+    let req = myPurchases.find(p => p.id === requestId);
+    
+    // Intentar obtener los datos frescos directamente de la API
+    try {
+        const res = await fetch(`http://localhost:8000/api-ecoboros-v1/purchase-requests/${requestId}/`);
+        if (res.ok) {
+            const apiReq = await res.json();
+            const weight = parseFloat(apiReq.requested_weight || 0);
+            const price = parseFloat(apiReq.offered_price || 0);
+            const totalCalculated = apiReq.total_amount || ((weight > 0 && price > 0) ? (weight * price) : price);
+            const statusStr = (apiReq.status_name || 'Pendiente').toLowerCase().trim();
+            
+            let statusKey = 'pendiente';
+            if (['completado', 'completada', '6'].includes(statusStr)) statusKey = 'completado';
+            else if (['proceso', 'en proceso', '5'].includes(statusStr)) statusKey = 'proceso';
+            else if (['pendiente', '4'].includes(statusStr)) statusKey = 'pendiente';
+
+            req = {
+                id: apiReq.request_id,
+                request_id: apiReq.request_id,
+                productName: apiReq.product_name || 'Residuo Industrial',
+                date: apiReq.date || '-',
+                total: totalCalculated,
+                totalFormatted: apiReq.total_formatted || `$ ${totalCalculated.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`,
+                platformFeeFormatted: apiReq.platform_fee_formatted || `$ ${(totalCalculated * 0.025).toLocaleString('es-MX', { minimumFractionDigits: 2 })}`,
+                sellerPayoutFormatted: apiReq.seller_payout_formatted || `$ ${(totalCalculated * 0.975).toLocaleString('es-MX', { minimumFractionDigits: 2 })}`,
+                status: statusKey,
+                statusName: apiReq.status_name || 'Pendiente',
+                seller: apiReq.seller_name || 'Vendedor Verificado',
+                buyer: apiReq.buyer_name || 'Comprador Verificado',
+                quantity: apiReq.quantity || 'N/A',
+                weight: apiReq.requested_weight || 0,
+                price: apiReq.offered_price || 0,
+                qualityValidatorName: apiReq.quality_validator_name || 'Equipo Calidad EcoBoros',
+                sellerPaymentConfirmed: !!apiReq.seller_payment_confirmed,
+                platformFeeConfirmed: !!apiReq.platform_fee_confirmed,
+                raw: apiReq
+            };
+        }
+    } catch(e) {
+        console.warn("Usando cache local para modal:", e);
+    }
+
+    if (!req) return;
+
+    document.getElementById('modal-req-id').textContent = `#${req.id}`;
+    const modalBody = document.getElementById('request-modal-body');
+    const isCompleted = req.status === 'completado';
+    const isProceso = req.status === 'proceso';
+    const isPendiente = req.status === 'pendiente';
+
+    let html = `
+        <div class="border-b border-slate-100 pb-4">
+            <div class="flex justify-between items-start">
+                <div>
+                    <h3 class="text-xl font-bold text-[#1a2b4b]">${req.productName}</h3>
+                    <p class="text-xs text-slate-500 mt-0.5">Vendedor: <strong>${req.seller}</strong> | Comprador: <strong>${req.buyer || 'Usted'}</strong></p>
+                </div>
+                <span class="px-3 py-1.5 rounded-full text-xs font-bold ${
+                    isCompleted ? 'bg-green-100 text-green-800 border border-green-200' : 
+                    (isProceso ? 'bg-blue-100 text-blue-800 border border-blue-200' : 'bg-yellow-100 text-yellow-800 border border-yellow-200')
+                }">
+                    ${isCompleted ? '🔒 COMPLETADO' : (isProceso ? '🔄 EN PROCESO' : '⏳ PENDIENTE')}
                 </span>
-            </td>
-            <td class="px-6 py-4 text-sm text-slate-500">${p.seller}</td>
-        </tr>
-    `).join('');
+            </div>
+        </div>
+    `;
+
+    if (isCompleted) {
+        html += `
+            <div class="bg-green-50 border border-green-200 rounded-2xl p-4 text-green-900 text-sm">
+                <div class="flex items-center gap-2 font-bold text-green-800 mb-1">
+                    <span>🔒</span> Transacción Finalizada y Completada
+                </div>
+                <p class="text-xs text-green-700">Esta publicación/compra ha sido confirmada por ambas partes y por el software intermediario. <strong>No se permiten modificaciones.</strong></p>
+            </div>
+        `;
+    } else if (isProceso) {
+        html += `
+            <div class="bg-blue-50 border border-blue-200 rounded-2xl p-4 text-blue-900 text-sm">
+                <div class="flex items-center gap-2 font-bold text-blue-800 mb-1">
+                    <span>✅</span> Validado por Calidad (${req.qualityValidatorName})
+                </div>
+                <p class="text-xs text-blue-700">El usuario de calidad ha verificado el acuerdo y la cantidad real vendida. Procede con la confirmación de pagos simulados.</p>
+            </div>
+        `;
+    } else {
+        html += `
+            <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-amber-900 text-sm">
+                <div class="flex items-center gap-2 font-bold text-amber-800 mb-1">
+                    <span>⏳</span> En Acuerdo Extermino y Pendiente de Calidad
+                </div>
+                <p class="text-xs text-amber-700">Las empresas acuerdan cantidades finales por externo. Puedes editar los campos variables (cantidad, peso, precio) antes de que el Usuario de Calidad valide la solicitud.</p>
+            </div>
+        `;
+    }
+
+    // Campos variables (Editables solo si Pendiente)
+    html += `
+        <div class="bg-slate-50 rounded-2xl p-5 border border-slate-200 space-y-4">
+            <h4 class="font-bold text-[#1a2b4b] text-sm flex items-center gap-2">
+                <span>📝</span> Campos Variables de la Compra
+            </h4>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-1">Cantidad / Lote</label>
+                    <input type="text" id="modal-field-qty" value="${req.quantity}" ${isCompleted || isProceso ? 'disabled' : ''} class="w-full p-2.5 bg-white border border-slate-200 rounded-xl text-sm font-semibold outline-none focus:border-[#78C043] disabled:bg-slate-100 disabled:text-slate-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-1">Peso Total (KG)</label>
+                    <input type="number" id="modal-field-weight" value="${req.weight}" ${isCompleted || isProceso ? 'disabled' : ''} class="w-full p-2.5 bg-white border border-slate-200 rounded-xl text-sm font-semibold outline-none focus:border-[#78C043] disabled:bg-slate-100 disabled:text-slate-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-1">Precio Unitario ($)</label>
+                    <input type="number" step="0.01" id="modal-field-price" value="${req.price}" ${isCompleted || isProceso ? 'disabled' : ''} class="w-full p-2.5 bg-white border border-slate-200 rounded-xl text-sm font-semibold outline-none focus:border-[#78C043] disabled:bg-slate-100 disabled:text-slate-500">
+                </div>
+            </div>
+
+            ${isPendiente ? `
+                <button onclick="saveRequestVariables(${req.id})" class="w-full bg-[#1a2b4b] text-white py-2.5 rounded-xl font-bold text-xs hover:bg-[#2d4563] transition-colors">
+                    💾 Guardar Cambios en Campos Variables
+                </button>
+            ` : ''}
+        </div>
+    `;
+
+    // Desglose de Ganancias y Comisión 2.5% (Visible en Proceso y Completado)
+    if (isProceso || isCompleted) {
+        html += `
+            <div class="bg-gradient-to-br from-[#1a2b4b] to-[#2d4563] text-white rounded-2xl p-5 shadow-lg space-y-3">
+                <h4 class="font-bold text-[#78C043] text-sm uppercase tracking-wider flex items-center gap-2">
+                    <span>📊</span> Desglose de Operación y Ganancias
+                </h4>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
+                    <div class="bg-white/10 p-3 rounded-xl">
+                        <span class="text-[11px] opacity-75 block">Total de la Compra</span>
+                        <span class="text-xl font-black">${req.totalFormatted}</span>
+                    </div>
+                    <div class="bg-white/10 p-3 rounded-xl">
+                        <span class="text-[11px] opacity-75 block">Comisión Intermediario (2.5%)</span>
+                        <span class="text-xl font-black text-[#78C043]">${req.platformFeeFormatted}</span>
+                        <span class="text-[9px] opacity-70 block mt-0.5">(Para mantenimiento y calidad)</span>
+                    </div>
+                    <div class="bg-white/10 p-3 rounded-xl">
+                        <span class="text-[11px] opacity-75 block">Ganancia Neta Vendedor (97.5%)</span>
+                        <span class="text-xl font-black text-white">${req.sellerPayoutFormatted}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // Confirmaciones de Pago Simulado (Visible en Proceso)
+    if (isProceso) {
+        html += `
+            <div class="border border-slate-200 rounded-2xl p-5 space-y-4">
+                <h4 class="font-bold text-[#1a2b4b] text-sm flex items-center gap-2">
+                    <span>💳</span> Confirmación de Pagos (Simulación de Proyecto)
+                </h4>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 flex justify-between items-center">
+                        <div>
+                            <span class="text-xs font-bold text-slate-700 block">Pago Vendedor (97.5%)</span>
+                            <span class="text-xs ${req.sellerPaymentConfirmed ? 'text-green-600 font-bold' : 'text-slate-400'}">
+                                ${req.sellerPaymentConfirmed ? '✅ Reflejado' : '⏳ Pendiente'}
+                            </span>
+                        </div>
+                        <button onclick="toggleSimulatedPayment(${req.id}, 'seller')" class="text-xs font-bold ${req.sellerPaymentConfirmed ? 'bg-slate-200 text-slate-600' : 'bg-green-600 text-white'} px-3 py-1.5 rounded-lg hover:opacity-90 transition-all">
+                            ${req.sellerPaymentConfirmed ? 'Desmarcar' : 'Confirmar Pago'}
+                        </button>
+                    </div>
+
+                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 flex justify-between items-center">
+                        <div>
+                            <span class="text-xs font-bold text-slate-700 block">Comisión Software (2.5%)</span>
+                            <span class="text-xs ${req.platformFeeConfirmed ? 'text-green-600 font-bold' : 'text-slate-400'}">
+                                ${req.platformFeeConfirmed ? '✅ Reflejado' : '⏳ Pendiente'}
+                            </span>
+                        </div>
+                        <button onclick="toggleSimulatedPayment(${req.id}, 'platform')" class="text-xs font-bold ${req.platformFeeConfirmed ? 'bg-slate-200 text-slate-600' : 'bg-green-600 text-white'} px-3 py-1.5 rounded-lg hover:opacity-90 transition-all">
+                            ${req.platformFeeConfirmed ? 'Desmarcar' : 'Confirmar Cobro'}
+                        </button>
+                    </div>
+                </div>
+
+                <div class="pt-2">
+                    <button onclick="transitionToCompleted(${req.id})" class="w-full bg-[#78C043] text-white py-3 rounded-xl font-bold shadow-lg hover:bg-[#66a338] transition-all flex items-center justify-center gap-2 text-sm">
+                        <span>✅</span> Confirmar Pagos y Pasar a COMPLETADO
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+
+    modalBody.innerHTML = html;
+    document.getElementById('request-details-modal').classList.remove('hidden');
+}
+
+function closeRequestDetailsModal() {
+    document.getElementById('request-details-modal').classList.add('hidden');
+}
+
+async function saveRequestVariables(requestId) {
+    const qty = document.getElementById('modal-field-qty').value;
+    const weight = parseFloat(document.getElementById('modal-field-weight').value) || 0;
+    const price = parseFloat(document.getElementById('modal-field-price').value) || 0;
+
+    try {
+        const res = await fetch(`http://localhost:8000/api-ecoboros-v1/purchase-requests/${requestId}/`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                quantity: qty,
+                requested_weight: weight,
+                offered_price: price
+            })
+        });
+
+        if (!res.ok) {
+            const errData = await res.json();
+            throw new Error(errData.status || errData.detail || 'Error al guardar');
+        }
+
+        alert('✅ Campos variables actualizados correctamente.');
+        await fetchAndRenderMyPurchases();
+        openRequestDetailsModal(requestId);
+    } catch(err) {
+        alert('Error al guardar: ' + err.message);
+    }
+}
+
+async function toggleSimulatedPayment(requestId, paymentType) {
+    const req = myPurchases.find(p => p.id === requestId);
+    if (!req) return;
+
+    const payload = {};
+    if (paymentType === 'seller') {
+        payload.seller_payment_confirmed = !req.sellerPaymentConfirmed;
+    } else if (paymentType === 'platform') {
+        payload.platform_fee_confirmed = !req.platformFeeConfirmed;
+    }
+
+    try {
+        const res = await fetch(`http://localhost:8000/api-ecoboros-v1/purchase-requests/${requestId}/`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+            const errData = await res.json();
+            throw new Error(errData.status || errData.detail || 'Error al actualizar pago');
+        }
+
+        await fetchAndRenderMyPurchases();
+        openRequestDetailsModal(requestId);
+    } catch(err) {
+        alert('Error al actualizar pago simulado: ' + err.message);
+    }
+}
+
+async function transitionToCompleted(requestId) {
+    if (!confirm('¿Deseas confirmar los pagos y pasar esta compra a estatus COMPLETADO? Una vez completada, NO se podrán realizar más cambios.')) {
+        return;
+    }
+
+    try {
+        const res = await fetch(`http://localhost:8000/api-ecoboros-v1/purchase-requests/${requestId}/`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                status: 6, // Completado
+                seller_payment_confirmed: true,
+                platform_fee_confirmed: true
+            })
+        });
+
+        if (!res.ok) {
+            const errData = await res.json();
+            throw new Error(errData.status || errData.detail || 'Error al finalizar');
+        }
+
+        alert('🎉 Transacción finalizada. Estatus actualizado a COMPLETADO. La compra ha quedado registrada sin posibilidad de cambios.');
+        await fetchAndRenderMyPurchases();
+        openRequestDetailsModal(requestId);
+    } catch(err) {
+        alert('Error al completar la transacción: ' + err.message);
+    }
 }
 
 function renderMyPurchases() {

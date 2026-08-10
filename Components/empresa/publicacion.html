@@ -89,24 +89,53 @@
     <button onclick="toggleCommands()" title="Atajos y Modo Matriz" class="fixed bottom-6 right-6 z-40 w-12 h-12 rounded-full bg-[#1a2b4b] text-white shadow-xl flex items-center justify-center text-lg font-bold hover:bg-[#172438] transition-all">⌨</button>
 
     <div id="contact-modal" class="hidden fixed inset-0 z-[999999] flex items-center justify-center bg-slate-900/50 transition-all p-4">
-        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md animate-fade-in overflow-hidden">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg animate-fade-in overflow-hidden">
             <div class="bg-[#1a2b4b] p-5 flex justify-between items-center">
-                <h2 class="text-white text-xl font-bold">Informacion de Contacto</h2>
+                <h2 class="text-white text-xl font-bold">Contactar Vendedor y Solicitar Compra</h2>
                 <button onclick="closeContactModal()" class="text-white/70 hover:text-white text-2xl">&times;</button>
             </div>
-            <div class="p-6 space-y-6">
-                <div class="flex items-center gap-4 border-b border-slate-100 pb-4">
-                    <div class="w-16 h-16 rounded-full bg-slate-100 border-2 border-[#78C043] flex items-center justify-center text-2xl">🏢</div>
-                    <div><h3 class="font-bold text-[#1a2b4b] text-lg">Industrial Recicla S.A.</h3><p class="text-sm text-[#78C043] font-medium">Vendedor Verificado</p></div>
+            <div class="p-6 space-y-4">
+                <div class="flex items-center gap-4 border-b border-slate-100 pb-3">
+                    <div class="w-12 h-12 rounded-full bg-slate-100 border-2 border-[#78C043] flex items-center justify-center text-xl">🏢</div>
+                    <div>
+                        <h3 class="font-bold text-[#1a2b4b] text-base" id="modal-seller-company">Vendedor Verificado</h3>
+                        <p class="text-xs text-[#78C043] font-medium">Información de Contacto Directo</p>
+                    </div>
                 </div>
-                <div class="space-y-4">
-                    <div class="flex items-center gap-3 text-slate-600"><svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg><span class="font-medium">+52 (664) 123-4567</span></div>
-                    <div class="flex items-center gap-3 text-slate-600"><svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg><span class="font-medium">contacto@industrialrecicla.com</span></div>
-                    <div class="flex items-center gap-3 text-slate-600"><svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg><span class="font-medium">Parque Industrial Florido, Tijuana</span></div>
+                <div class="grid grid-cols-2 gap-2 text-xs text-slate-600 bg-slate-50 p-3 rounded-xl">
+                    <div>📞 <span id="modal-seller-phone">+52 (664) 123-4567</span></div>
+                    <div>✉️ <span id="modal-seller-email">contacto@empresa.com</span></div>
                 </div>
-                <div class="pt-4 flex gap-3">
-                    <a href="mailto:contacto@industrialrecicla.com" class="flex-1 bg-[#1a2b4b] text-white text-center py-3 rounded-xl font-bold hover:bg-[#2d4563] transition-colors">Enviar Correo</a>
-                    <a href="tel:+526641234567" class="flex-1 bg-white text-[#1a2b4b] border-2 border-slate-200 text-center py-3 rounded-xl font-bold hover:border-[#1a2b4b] transition-colors">Llamar</a>
+
+                <div class="border-t border-slate-100 pt-3">
+                    <h4 class="font-bold text-[#1a2b4b] text-sm mb-2">Crear Petición de Compra (Estatus Pendiente)</h4>
+                    <p class="text-xs text-slate-500 mb-3">La petición se enviará al vendedor y pasará a estatus <strong>Pendiente</strong> para la negociación y validación de calidad.</p>
+                    
+                    <div class="space-y-3">
+                        <div>
+                            <label class="text-xs font-bold text-slate-600 block mb-1">Cantidad / Lote Solicitado</label>
+                            <input type="text" id="req-quantity" placeholder="Ej: 30k kg, 300 Pzas" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-[#78C043]">
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="text-xs font-bold text-slate-600 block mb-1">Peso (KG)</label>
+                                <input type="number" id="req-weight" placeholder="Ej: 30000" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-[#78C043]">
+                            </div>
+                            <div>
+                                <label class="text-xs font-bold text-slate-600 block mb-1">Precio Unitario ($)</label>
+                                <input type="number" step="0.01" id="req-price" placeholder="Ej: 3.20" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-[#78C043]">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-2 flex gap-3">
+                    <button onclick="submitPurchaseRequest()" class="flex-1 bg-[#78C043] text-white py-3 rounded-xl font-bold hover:bg-[#66a338] transition-colors text-sm shadow-md">
+                        📩 Enviar Petición (Pendiente)
+                    </button>
+                    <button onclick="closeContactModal()" class="px-4 bg-slate-200 text-slate-700 rounded-xl font-bold hover:bg-slate-300 text-sm">
+                        Cancelar
+                    </button>
                 </div>
             </div>
         </div>

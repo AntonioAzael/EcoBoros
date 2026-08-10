@@ -138,6 +138,10 @@ CREATE TABLE purchase_requests (
     /* CAMBIO NUEVO: Soporte directo en base de datos para habilitar el motor 
        de contra-ofertas de precio propuesto por el comprador. */
     offered_price DECIMAL(10,2) NULL,        
+    quantity VARCHAR(100) NULL,
+    quality_validator_id INT NULL,
+    seller_payment_confirmed BOOLEAN DEFAULT FALSE,
+    platform_fee_confirmed BOOLEAN DEFAULT FALSE,
     
     status_id INT DEFAULT 4,
     request_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -145,6 +149,7 @@ CREATE TABLE purchase_requests (
     
     FOREIGN KEY (waste_id) REFERENCES wastes(waste_id),
     FOREIGN KEY (buyer_id) REFERENCES users(user_id),
+    FOREIGN KEY (quality_validator_id) REFERENCES users(user_id),
     FOREIGN KEY (status_id) REFERENCES statuses(status_id)
 );
 

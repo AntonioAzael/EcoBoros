@@ -285,13 +285,25 @@ def run_psql(sql: str) -> tuple[int, str, str]:
     return result.returncode, result.stdout.decode('utf-8', errors='replace'), result.stderr.decode('utf-8', errors='replace')
 
 
+def step0_reset():
+    print('\n[0/4] Limpiando tablas y reseteando secuencias...')
+    reset_sql = ROOT_DIR / 'db' / 'reset_and_seed.sql'
+    if not reset_sql.exists():
+        print('  [WARN] reset_and_seed.sql no encontrado, omitiendo reset.')
+        return
+    code, out, err = run_psql(reset_sql.read_text(encoding='utf-8'))
+    if code == 0:
+        print('  [OK] Reset completado. IDs reiniciados desde 1.')
+    else:
+        print(f'  [ERROR] Reset fallido:\n{err[:400]}')
+
+
 def step2_sql():
     print('\n[2/4] Ejecutando insert.sql...')
     insert_sql = ROOT_DIR / 'db' / 'insert.sql'
     code, out, err = run_psql(insert_sql.read_text(encoding='utf-8'))
     if code == 0:
         print('  [OK] insert.sql ejecutado OK')
-        # Mostrar resumen de filas insertadas
         for line in out.strip().split('\n'):
             if line.strip() and not line.startswith('psql') and 'INSERT' in line:
                 print(f'    {line.strip()}')
@@ -426,6 +438,7 @@ ON CONFLICT DO NOTHING;
 # MAIN
 # ---------------------------------------------------------------------------
 if __name__ == '__main__':
+    step0_reset()      # Limpia tablas y resetea secuencias (IDs desde 1)
     step1_pdfs()
     step2_sql()
     title_map = get_waste_title_map()
@@ -438,4 +451,3 @@ if __name__ == '__main__':
 
     print('\n[OK] Seeding completo.')
     print('   Si los cambios no aparecen en la web, reinicia: docker restart ecoboros-back-1')
-
