@@ -190,14 +190,16 @@ function switchSection(section) {
 }
 
 // ========== ESTADÍSTICAS ==========
+// ========== ESTADÍSTICAS ==========
 function updateCounters() {
-    const unassignedCount = publications.filter(p => p.status === 'pending' && !p.qualityValidatorId).length;
-    const assignedCount = publications.filter(p => p.status === 'pending' && p.qualityValidatorId === currentQualityUser.user_id).length;
+    const myId = Number(currentQualityUser.user_id);
+    const unassignedCount = publications.filter(p => p.status === 'pending' && (!p.qualityValidatorId || p.qualityValidatorId === null)).length;
+    const assignedCount = publications.filter(p => p.status === 'pending' && Number(p.qualityValidatorId) === myId).length;
 
     document.getElementById('pending-count').textContent = unassignedCount;
-    document.getElementById('review-count').textContent = publications.filter(p => p.status === 'review').length;
-    document.getElementById('approved-count').textContent = publications.filter(p => p.status === 'approved').length;
-    document.getElementById('rejected-count').textContent = publications.filter(p => p.status === 'rejected').length;
+    document.getElementById('review-count').textContent = publications.filter(p => p.status === 'review' && Number(p.qualityValidatorId) === myId).length;
+    document.getElementById('approved-count').textContent = publications.filter(p => p.status === 'approved' && Number(p.qualityValidatorId) === myId).length;
+    document.getElementById('rejected-count').textContent = publications.filter(p => p.status === 'rejected' && Number(p.qualityValidatorId) === myId).length;
     
     const unassignedBadge = document.getElementById('unassigned-badge');
     if (unassignedBadge) {
@@ -249,11 +251,18 @@ function switchTab(tab) {
 // ========== RENDER PUBLICACIONES ==========
 function renderPublications() {
     let filtered = [];
+    const myId = Number(currentQualityUser.user_id);
 
     if (currentTab === 'pending-unassigned') {
-        filtered = publications.filter(p => p.status === 'pending' && !p.qualityValidatorId);
+        filtered = publications.filter(p => p.status === 'pending' && (!p.qualityValidatorId || p.qualityValidatorId === null));
     } else if (currentTab === 'my-assigned') {
-        filtered = publications.filter(p => p.status === 'pending' && (p.qualityValidatorId === currentQualityUser.user_id || !p.isRequest));
+        filtered = publications.filter(p => p.status === 'pending' && Number(p.qualityValidatorId) === myId);
+    } else if (currentTab === 'review') {
+        filtered = publications.filter(p => p.status === 'review' && Number(p.qualityValidatorId) === myId);
+    } else if (currentTab === 'approved') {
+        filtered = publications.filter(p => p.status === 'approved' && Number(p.qualityValidatorId) === myId);
+    } else if (currentTab === 'rejected') {
+        filtered = publications.filter(p => p.status === 'rejected' && Number(p.qualityValidatorId) === myId);
     } else {
         filtered = publications.filter(p => p.status === currentTab);
     }
@@ -282,18 +291,6 @@ function renderPublications() {
     
     grid.innerHTML = filtered.map((pub, index) => {
         const style = categoryStyles[pub.category] || { color: "bg-gray-500", icon: "❓", hoverGlow: "hover:border-gray-500" };
-        let statusClass = '', statusText = '', statusIcon = '';
-        
-        switch(pub.status) {
-            case 'pending': 
-                statusClass = pub.qualityValidatorId ? 'bg-blue-100 text-blue-800' : 'status-pending'; 
-                statusText = pub.qualityValidatorId ? `Asignado (${pub.qualityValidatorName || 'Calidad'})` : 'Sin Asignar'; 
-                statusIcon = pub.qualityValidatorId ? '📋' : '📥'; 
-                break;
-            case 'review': statusClass = 'status-review'; statusText = 'En Proceso'; statusIcon = '🔄'; break;
-            case 'approved': statusClass = 'status-approved'; statusText = 'Completado'; statusIcon = '✅'; break;
-            case 'rejected': statusClass = 'status-rejected'; statusText = 'Rechazado'; statusIcon = '❌'; break;
-        }
         
         const hasCustomImage = pub.customImage && pub.customImage.trim() !== "";
         const imageHtml = hasCustomImage ? 
@@ -307,10 +304,12 @@ function renderPublications() {
                     <div class="absolute top-4 left-4 ${style.color} text-white text-[10px] font-black px-3 py-1.5 rounded-full shadow-sm uppercase tracking-wider z-10">
                         ${pub.category}
                     </div>
-                    <div class="absolute top-4 right-4 ${statusClass.split(' ')[0]} text-xs font-bold px-3 py-1.5 rounded-full shadow-sm flex items-center gap-1 z-10">
-                        <span>${statusIcon}</span>
-                        <span>${statusText}</span>
-                    </div>
+                    ${currentTab === 'pending-unassigned' ? `
+                        <div class="absolute top-4 right-4 status-pending text-xs font-bold px-3 py-1.5 rounded-full shadow-sm flex items-center gap-1 z-10">
+                            <span>📥</span>
+                            <span>Sin Asignar</span>
+                        </div>
+                    ` : ''}
                 </div>
                 <div class="p-6 flex flex-col gap-2 flex-1">
                     <h3 class="font-bold text-[#1a2b4b] text-xl leading-tight line-clamp-2">${pub.title}</h3>
@@ -345,7 +344,7 @@ function renderPublications() {
 
 // ========== ASIGNAR USUARIO DE CALIDAD A SOLICITUD ==========
 async function assignToMe(id) {
-    const pub = publications.find(p => p.id === id);
+    const pub = publications.find(p => Number(p.id) === Number(id));
     if (!pub) return;
 
     if (pub.isRequest && pub.request_id) {
@@ -366,6 +365,7 @@ async function assignToMe(id) {
             showNotification(`📌 Solicitud asignada a ${currentQualityUser.name}`, 'success');
             await fetchQualityData();
             switchTab('my-assigned');
+            closeModal();
             return;
         } catch(err) {
             alert('Error al asignarse solicitud: ' + err.message);
@@ -378,6 +378,7 @@ async function assignToMe(id) {
     showNotification(`📌 Publicación asignada a ${currentQualityUser.name}`, 'success');
     updateCounters();
     switchTab('my-assigned');
+    closeModal();
 }
 
 // ========== MODAL DE REVISIÓN Y VALIDACIÓN DE CALIDAD ==========

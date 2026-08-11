@@ -65,30 +65,48 @@ async function fetchAndRenderPublications() {
 }
 
 function findPublicationById(id) {
-    // API returns waste_id, frontend was using id
-    return allPublications.find(p => p.waste_id === id);
+    const numId = Number(id);
+    return allPublications.find(p => Number(p.waste_id) === numId || Number(p.id) === numId);
 }
 
 function getCurrentUserPublications() {
     // publisher en la API es el user_id (int)
-    return allPublications.filter(p => p.publisher === currentUser.user_id);
+    return allPublications.filter(p => Number(p.publisher) === Number(currentUser.user_id));
 }
 
 function isCurrentUserPublication(publication) {
-    return publication.publisher === currentUser.user_id;
+    return Number(publication.publisher) === Number(currentUser.user_id);
 }
 
-// Keep saveEditedPublication for now, but it should be an API call
-function saveEditedPublication(publication) {
-    const index = allPublications.findIndex(p => p.waste_id === publication.waste_id);
-    if (index !== -1) {
-        // This should be a PUT/PATCH request to the API
-        console.log("Simulating API call to update publication:", publication);
-        allPublications[index] = {...allPublications[index], ...publication};
-        
-        // For now, let's just re-render
-        filterMyPublications(currentPublicationFilter);
-        showToast('Publicación actualizada (simulado).');
+async function saveEditedPublication(publication) {
+    const pubId = publication.waste_id || publication.id;
+    try {
+        const res = await fetch(`http://localhost:8000/api-ecoboros-v1/wastes/${pubId}/`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                title: publication.title,
+                unit_price: parseFloat(publication.price) || 0,
+                quantity: publication.qty,
+                weight_decimal: parseFloat(publication.weight) || 0,
+                technical_description: publication.description || ''
+            })
+        });
+
+        if (res.ok) {
+            const updated = await res.json();
+            const index = allPublications.findIndex(p => Number(p.waste_id) === Number(pubId) || Number(p.id) === Number(pubId));
+            if (index !== -1) {
+                allPublications[index] = { ...allPublications[index], ...updated };
+            }
+            showToast('✅ Publicación actualizada correctamente.');
+            filterMyPublications(currentPublicationFilter);
+        } else {
+            alert('Error al guardar la publicación.');
+        }
+    } catch(e) {
+        console.error('Error al actualizar publicación:', e);
+        alert('Error de comunicación con el servidor.');
     }
 }
 
@@ -261,7 +279,7 @@ function renderMyPublications(publications) {
         }
 
         return `
-            <div onclick="window.location.href='publicacion.html?id=${pubId}'" class="bg-white rounded-3xl border-4 border-transparent shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:-translate-y-2 transition-all duration-300 flex flex-col group cursor-pointer">
+            <div onclick="handleMyPublicationCardClick(${pubId}, '${statusKey}')" class="bg-white rounded-3xl border-4 border-transparent shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:-translate-y-2 transition-all duration-300 flex flex-col group cursor-pointer">
                 <div class="h-48 bg-slate-50 relative flex items-center justify-center overflow-hidden" style="border-bottom-left-radius: 0; border-bottom-right-radius: 0;">
                     ${imgHtml}
                     <div class="absolute top-4 left-4 ${style.color} text-white text-[10px] font-black px-3 py-1.5 rounded-full shadow-sm uppercase tracking-wider">
@@ -284,11 +302,9 @@ function renderMyPublications(publications) {
                         </div>
                         <div class="flex justify-between items-center mt-2">
                             <span class="text-2xl font-black text-[#1a2b4b]">${price}</span>
-                            ${statusKey === 'revision' ? `
-                                <button onclick="event.stopPropagation(); openEditModal(${pubId})" class="text-sm font-bold bg-white text-[#1a2b4b] border-2 border-slate-200 px-5 py-2.5 rounded-xl hover:bg-[#78C043] hover:text-white hover:border-[#78C043] transition-all">
-                                    Editar
-                                </button>
-                            ` : ''}
+                            <button onclick="event.stopPropagation(); handleMyPublicationCardClick(${pubId}, '${statusKey}')" class="text-sm font-bold bg-[#1a2b4b] text-white border-2 border-slate-200 px-5 py-2.5 rounded-xl hover:bg-[#78C043] transition-all">
+                                ${statusKey === 'revision' ? 'Editar' : 'Gestionar'}
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -297,15 +313,65 @@ function renderMyPublications(publications) {
     }).join('');
 }
 
+async function handleMyPublicationCardClick(pubId, statusKey) {
+    const numPubId = Number(pubId);
+    
+    // Si la publicación está aprobada, abrir directamente la página de visualización completa
+    if (['aprobada', 'aprobado', 'approved'].includes(statusKey)) {
+        window.location.href = `publicacion.html?id=${numPubId}`;
+        return;
+    }
 
+    if (statusKey === 'revision') {
+        const pub = findPublicationById(numPubId);
+        if (pub && isCurrentUserPublication(pub)) {
+            openEditModal(numPubId);
+            return;
+        }
+        window.location.href = `publicacion.html?id=${numPubId}`;
+        return;
+    }
+
+    try {
+        const userId = currentUser.user_id || currentUser.id;
+        const [buyerRes, sellerRes] = await Promise.all([
+            fetch(`http://localhost:8000/api-ecoboros-v1/purchase-requests/?buyer=${userId}`),
+            fetch(`http://localhost:8000/api-ecoboros-v1/purchase-requests/?publisher=${userId}`)
+        ]);
+        const buyerData = buyerRes.ok ? await buyerRes.json() : [];
+        const sellerData = sellerRes.ok ? await sellerRes.json() : [];
+        const allReqs = [...buyerData, ...sellerData];
+
+        const matchingReq = allReqs.find(r => Number(r.waste) === numPubId || Number(r.waste_id) === numPubId);
+        if (matchingReq) {
+            openRequestDetailsModal(matchingReq.request_id);
+            return;
+        }
+    } catch(e) {
+        console.warn('Error al consultar solicitudes asociadas:', e);
+    }
+
+    const pub = findPublicationById(numPubId);
+    if (pub && isCurrentUserPublication(pub)) {
+        openEditModal(numPubId);
+    } else {
+        window.location.href = `publicacion.html?id=${numPubId}`;
+    }
+}
 
 function openEditModal(id) {
     const product = findPublicationById(id);
     if (product) {
-        editingPublicationId = id;
-        document.getElementById('edit-title').value = product.title;
-        document.getElementById('edit-price').value = product.price;
-        document.getElementById('edit-qty').value = product.qty;
+        editingPublicationId = product.waste_id || product.id;
+        document.getElementById('edit-title').value = product.title || '';
+        document.getElementById('edit-price').value = product.unit_price || product.price || '';
+        document.getElementById('edit-qty').value = product.quantity || product.qty || '';
+        if (document.getElementById('edit-weight')) {
+            document.getElementById('edit-weight').value = product.weight_decimal || product.weightKg || '';
+        }
+        if (document.getElementById('edit-description')) {
+            document.getElementById('edit-description').value = product.technical_description || product.description || '';
+        }
         document.getElementById('edit-publication-modal').classList.remove('hidden');
     }
 }
@@ -315,7 +381,7 @@ function closeEditModal() {
     editingPublicationId = null;
 }
 
-function saveEditPublication() {
+async function saveEditPublication() {
     if (editingPublicationId) {
         const product = findPublicationById(editingPublicationId);
         if (product) {
@@ -323,11 +389,11 @@ function saveEditPublication() {
                 ...product,
                 title: document.getElementById('edit-title').value,
                 price: document.getElementById('edit-price').value,
-                qty: document.getElementById('edit-qty').value
+                qty: document.getElementById('edit-qty').value,
+                weight: document.getElementById('edit-weight')?.value || 0,
+                description: document.getElementById('edit-description')?.value || ''
             };
-            saveEditedPublication(updated);
-            showToast('Publicación actualizada correctamente');
-            filterMyPublications(currentPublicationFilter);
+            await saveEditedPublication(updated);
         }
     }
     closeEditModal();
@@ -343,17 +409,18 @@ async function fetchAndRenderMyPurchases() {
     }
 
     try {
-        const response = await fetch(
-            `http://localhost:8000/api-ecoboros-v1/purchase-requests/?buyer=${userId}`
-        );
+        const [buyerRes, sellerRes] = await Promise.all([
+            fetch(`http://localhost:8000/api-ecoboros-v1/purchase-requests/?buyer=${userId}`),
+            fetch(`http://localhost:8000/api-ecoboros-v1/purchase-requests/?publisher=${userId}`)
+        ]);
 
-        if (!response.ok) {
-            console.warn('Error al obtener compras:', response.status);
-            renderMyPurchasesUI();
-            return;
-        }
+        const buyerData = buyerRes.ok ? await buyerRes.json() : [];
+        const sellerData = sellerRes.ok ? await sellerRes.json() : [];
 
-        const fetchedData = await response.json();
+        // Combinar evitando duplicados por request_id
+        const reqMap = new Map();
+        [...buyerData, ...sellerData].forEach(r => reqMap.set(r.request_id, r));
+        const fetchedData = Array.from(reqMap.values());
 
         if (Array.isArray(fetchedData)) {
             myPurchases = fetchedData.map(req => {

@@ -240,20 +240,45 @@ function renderProductDetailFromAPI(waste) {
                         <p class="text-slate-600 leading-relaxed">${waste.technical_description}</p>
                     </div>
 
-                    <!-- Botones de acción -->
-                    <div class="space-y-3">
-                        <button onclick="openContactModal()" class="w-full bg-[#78C043] text-white py-4 rounded-xl font-bold shadow-lg shadow-[#78C043]/30 hover:bg-[#66a338] transition-all flex items-center justify-center gap-2">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
-                            Contactar Vendedor
-                        </button>
-                        <button class="w-full bg-white text-[#1a2b4b] py-4 rounded-xl font-bold border-2 border-slate-200 hover:border-[#1a2b4b] transition-all flex items-center justify-center gap-2">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
-                            Agregar a Favoritos
-                        </button>
-                    </div>
+                    <!-- Botones de acción según el rol (Dueño Vendedor vs Cliente Comprador) -->
+                    ${(() => {
+                        const storedUser = localStorage.getItem('ecoboros_user') || sessionStorage.getItem('ecoboros_user');
+                        let currentUserId = null;
+                        if (storedUser) {
+                            try { const u = JSON.parse(storedUser); currentUserId = u.user_id || u.id; } catch(e) {}
+                        }
+                        const isOwner = currentUserId && waste.publisher_id === currentUserId;
+
+                        if (isOwner) {
+                            return `
+                                <div class="bg-blue-50 border border-blue-200 p-5 rounded-2xl space-y-3">
+                                    <div class="flex items-center gap-2 font-bold text-[#1a2b4b] text-sm">
+                                        <span>🏭</span> Esta es tu publicación de residuo industrial
+                                    </div>
+                                    <p class="text-xs text-slate-600">Para revisar peticiones de compra en estado Pendiente, negociar cantidades vendidas con compradores o editar tu publicación, dirígete a tu panel principal.</p>
+                                    <a href="empresa.html" class="w-full bg-[#1a2b4b] text-white py-3.5 rounded-xl font-bold transition-all flex items-center justify-center gap-2 text-sm shadow-md hover:bg-[#2d4563]">
+                                        <span>⚙️</span> Ir a Gestionar Mis Publicaciones en Empresa.html
+                                    </a>
+                                </div>
+                            `;
+                        }
+
+                        return `
+                            <div class="space-y-3">
+                                <button onclick="openContactModal()" class="w-full bg-[#78C043] text-white py-4 rounded-xl font-bold shadow-lg shadow-[#78C043]/30 hover:bg-[#66a338] transition-all flex items-center justify-center gap-2">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+                                    Contactar Vendedor / Solicitar Compra
+                                </button>
+                                <button class="w-full bg-white text-[#1a2b4b] py-4 rounded-xl font-bold border-2 border-slate-200 hover:border-[#1a2b4b] transition-all flex items-center justify-center gap-2">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                                    Agregar a Favoritos
+                                </button>
+                            </div>
+                        `;
+                    })()}
                 </div>
             </div>
-        </div>
+        </div>`;
     `;
 }
 
