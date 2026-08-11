@@ -87,25 +87,29 @@ async function fetchQualityData() {
             const statusStr = (req.status_name || 'Pendiente').toLowerCase();
             let statusKey = 'pending';
             if (['proceso', 'en proceso', '5'].includes(statusStr)) statusKey = 'review';
-            else if (['completado', 'completada', '6'].includes(statusStr)) statusKey = 'approved';
+            else if (['completado', 'completada', '6'].includes(statusStr)) statusKey = 'completed-requests';
             else if (['rechazado', 'rechazada', '3'].includes(statusStr)) statusKey = 'rejected';
 
             const weight = parseFloat(req.requested_weight || 0);
             const price = parseFloat(req.offered_price || 0);
             const total = req.total_amount || (weight * price);
 
+            const origWaste = wastesData.find(w => Number(w.waste_id) === Number(req.waste) || Number(w.id) === Number(req.waste));
+
             items.push({
                 id: req.request_id,
                 isRequest: true,
                 request_id: req.request_id,
                 waste_id: req.waste,
-                title: req.product_name || 'Residuo Industrial',
-                category: 'Cartón',
+                title: req.product_name || origWaste?.title || 'Residuo Industrial',
+                category: origWaste?.category_name_display || 'Cartón',
                 location: 'Tijuana / En Operación',
                 qty: req.quantity || `${weight} kg`,
                 weightKg: weight,
                 price: req.total_formatted || `$ ${total.toFixed(2)}`,
                 unitPrice: price,
+                originalUnitPrice: origWaste ? parseFloat(origWaste.unit_price || 0) : null,
+                originalWeightKg: origWaste ? parseFloat(origWaste.weight_decimal || 0) : null,
                 date: req.date || '2026-08-10',
                 status: statusKey,
                 rawStatusName: req.status_name || 'Pendiente',
@@ -114,7 +118,7 @@ async function fetchQualityData() {
                 companyEmail: 'contacto@ecoboros.com',
                 description: `Petición de compra entre ${req.buyer_name} y ${req.seller_name}.`,
                 negotiationComment: req.negotiation_comment || 'Sin comentarios adicionales por parte de las empresas.',
-                customImage: null,
+                customImage: origWaste?.first_image_url || null,
                 qualityValidatorId: req.quality_validator,
                 qualityValidatorName: req.quality_validator_name,
                 platformFeeFormatted: req.platform_fee_formatted || `$ ${(total * 0.025).toFixed(2)}`,
@@ -129,9 +133,9 @@ async function fetchQualityData() {
         wastesData.forEach(w => {
             const statusStr = (w.status_name || 'Pendiente').toLowerCase();
             let statusKey = 'pending';
-            if (['aprobado', 'aprobada', '2'].includes(statusStr)) statusKey = 'approved';
+            if (['aprobado', 'aprobada', '2'].includes(statusStr)) statusKey = 'approved-publications';
             else if (['rechazado', 'rechazada', '3'].includes(statusStr)) statusKey = 'rejected';
-            else if (['revision', 'review', '1'].includes(statusStr)) statusKey = 'review';
+            else if (['revision', 'review', '1'].includes(statusStr)) statusKey = 'review-publications';
 
             items.push({
                 id: 1000 + w.waste_id,
@@ -167,6 +171,9 @@ async function fetchQualityData() {
     renderPublications();
 }
 
+let currentPage = 1;
+const itemsPerPage = 9;
+
 // ========== NAVEGACIÓN ==========
 function switchSection(section) {
     currentSection = section;
@@ -193,13 +200,26 @@ function switchSection(section) {
 // ========== ESTADÍSTICAS ==========
 function updateCounters() {
     const myId = Number(currentQualityUser.user_id);
+    
+    // 1. Revisión (General)
+    const reviewPublicationsCount = publications.filter(p => p.status === 'review-publications').length;
+    // 2. Pendientes (General)
     const unassignedCount = publications.filter(p => p.status === 'pending' && (!p.qualityValidatorId || p.qualityValidatorId === null)).length;
+    // 3. Seguimiento (Mis Asignaciones)
     const assignedCount = publications.filter(p => p.status === 'pending' && Number(p.qualityValidatorId) === myId).length;
+    // 4. Aprobados (General)
+    const approvedPublicationsCount = publications.filter(p => p.status === 'approved-publications').length;
+    // 5. Rechazados (General)
+    const rejectedCount = publications.filter(p => p.status === 'rejected').length;
+    // 6. Mis Procesos (En Proceso, míos)
+    const reviewCount = publications.filter(p => p.status === 'review' && Number(p.qualityValidatorId) === myId).length;
 
+    document.getElementById('review-publications-count').textContent = reviewPublicationsCount;
     document.getElementById('pending-count').textContent = unassignedCount;
-    document.getElementById('review-count').textContent = publications.filter(p => p.status === 'review' && Number(p.qualityValidatorId) === myId).length;
-    document.getElementById('approved-count').textContent = publications.filter(p => p.status === 'approved' && Number(p.qualityValidatorId) === myId).length;
-    document.getElementById('rejected-count').textContent = publications.filter(p => p.status === 'rejected' && Number(p.qualityValidatorId) === myId).length;
+    document.getElementById('assigned-count').textContent = assignedCount;
+    document.getElementById('approved-count').textContent = approvedPublicationsCount;
+    document.getElementById('rejected-count').textContent = rejectedCount;
+    document.getElementById('review-count').textContent = reviewCount;
     
     const unassignedBadge = document.getElementById('unassigned-badge');
     if (unassignedBadge) {
@@ -220,18 +240,30 @@ function updateCounters() {
             assignedBadge.classList.add('hidden');
         }
     }
+
+    const reviewPubBadge = document.getElementById('review-publications-badge');
+    if (reviewPubBadge) {
+        if (reviewPublicationsCount > 0) {
+            reviewPubBadge.textContent = reviewPublicationsCount;
+            reviewPubBadge.classList.remove('hidden');
+        } else {
+            reviewPubBadge.classList.add('hidden');
+        }
+    }
 }
 
 // ========== FILTROS ==========
 function filterPublications() {
     searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    currentPage = 1;
     renderPublications();
 }
 
 function switchTab(tab) {
     currentTab = tab;
+    currentPage = 1;
     
-    const tabs = ['pending-unassigned', 'my-assigned', 'review', 'approved', 'rejected'];
+    const tabs = ['pending-unassigned', 'my-assigned', 'review-publications', 'review', 'approved-publications', 'completed-requests', 'rejected'];
     tabs.forEach(t => {
         const btn = document.getElementById(`tab-${t}`);
         if (btn) {
@@ -257,12 +289,16 @@ function renderPublications() {
         filtered = publications.filter(p => p.status === 'pending' && (!p.qualityValidatorId || p.qualityValidatorId === null));
     } else if (currentTab === 'my-assigned') {
         filtered = publications.filter(p => p.status === 'pending' && Number(p.qualityValidatorId) === myId);
+    } else if (currentTab === 'review-publications') {
+        filtered = publications.filter(p => p.status === 'review-publications');
     } else if (currentTab === 'review') {
         filtered = publications.filter(p => p.status === 'review' && Number(p.qualityValidatorId) === myId);
-    } else if (currentTab === 'approved') {
-        filtered = publications.filter(p => p.status === 'approved' && Number(p.qualityValidatorId) === myId);
+    } else if (currentTab === 'approved-publications') {
+        filtered = publications.filter(p => p.status === 'approved-publications');
+    } else if (currentTab === 'completed-requests') {
+        filtered = publications.filter(p => p.status === 'completed-requests' && Number(p.qualityValidatorId) === myId);
     } else if (currentTab === 'rejected') {
-        filtered = publications.filter(p => p.status === 'rejected' && Number(p.qualityValidatorId) === myId);
+        filtered = publications.filter(p => p.status === 'rejected');
     } else {
         filtered = publications.filter(p => p.status === currentTab);
     }
@@ -278,18 +314,27 @@ function renderPublications() {
     
     const grid = document.getElementById('publications-grid');
     const noResults = document.getElementById('no-results');
+    const pagControls = document.getElementById('pagination-controls');
     
     if (!grid) return;
 
     if (filtered.length === 0) {
         grid.innerHTML = '';
         if (noResults) noResults.classList.remove('hidden');
+        if (pagControls) pagControls.classList.add('hidden');
         return;
     }
     
     if (noResults) noResults.classList.add('hidden');
+
+    const totalPages = Math.ceil(filtered.length / itemsPerPage);
+    if (currentPage > totalPages) currentPage = totalPages;
+
+    const start = (currentPage - 1) * itemsPerPage;
+    const end = start + itemsPerPage;
+    const paginatedItems = filtered.slice(start, end);
     
-    grid.innerHTML = filtered.map((pub, index) => {
+    grid.innerHTML = paginatedItems.map((pub, index) => {
         const style = categoryStyles[pub.category] || { color: "bg-gray-500", icon: "❓", hoverGlow: "hover:border-gray-500" };
         
         const hasCustomImage = pub.customImage && pub.customImage.trim() !== "";
@@ -340,6 +385,47 @@ function renderPublications() {
             </div>
         `;
     }).join('');
+
+    renderPaginationControls(filtered.length);
+}
+
+function renderPaginationControls(totalItems) {
+    const pagControls = document.getElementById('pagination-controls');
+    if (!pagControls) return;
+
+    if (totalItems <= itemsPerPage) {
+        pagControls.classList.add('hidden');
+        return;
+    }
+
+    pagControls.classList.remove('hidden');
+    const totalPages = Math.ceil(totalItems / itemsPerPage);
+    
+    let html = '';
+    
+    // Anterior
+    html += `<button onclick="goToPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''} class="px-4 py-2 rounded-xl text-sm font-bold bg-white border border-slate-200 text-slate-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors">Anterior</button>`;
+    
+    // Números (simplificado para mostrar todas las páginas por ahora, asumiendo que no habrá cientos)
+    for(let i = 1; i <= totalPages; i++) {
+        if (i === currentPage) {
+            html += `<button class="w-10 h-10 rounded-xl text-sm font-bold bg-[#1a2b4b] text-white shadow-md">${i}</button>`;
+        } else {
+            html += `<button onclick="goToPage(${i})" class="w-10 h-10 rounded-xl text-sm font-bold bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors">${i}</button>`;
+        }
+    }
+    
+    // Siguiente
+    html += `<button onclick="goToPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''} class="px-4 py-2 rounded-xl text-sm font-bold bg-white border border-slate-200 text-slate-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors">Siguiente</button>`;
+
+    pagControls.innerHTML = html;
+}
+
+function goToPage(page) {
+    currentPage = page;
+    renderPublications();
+    // Scroll hacia arriba
+    window.scrollTo({ top: document.getElementById('publications-section').offsetTop - 50, behavior: 'smooth' });
 }
 
 // ========== ASIGNAR USUARIO DE CALIDAD A SOLICITUD ==========
@@ -393,7 +479,8 @@ function openReviewModal(id) {
     const isUnassigned = currentPublication.status === 'pending' && !currentPublication.qualityValidatorId;
     const isMyAssigned = currentPublication.status === 'pending' && currentPublication.qualityValidatorId === currentQualityUser.user_id;
     const isReview = currentPublication.status === 'review'; // En Proceso
-    const isApprovedOrRejected = currentPublication.status === 'approved' || currentPublication.status === 'rejected';
+    const isReviewPublications = currentPublication.status === 'review-publications'; // Publicaciones directas
+    const isApprovedOrRejected = currentPublication.status === 'approved-publications' || currentPublication.status === 'completed-requests' || currentPublication.status === 'rejected';
     const hasCustomImage = currentPublication.customImage && currentPublication.customImage.trim() !== "";
     
     let html = `
@@ -417,13 +504,53 @@ function openReviewModal(id) {
                 </div>
             </div>
 
-            <!-- Comentario de Negociación Registrado por las Empresas -->
-            <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 space-y-1 text-amber-900 text-xs">
-                <div class="font-bold text-amber-800 flex items-center gap-2">
-                    <span>💬</span> Comentario / Acuerdos de Negociación entre Empresas:
+            <!-- Comparativa: Precio Base Original vs Oferta Acordada / Contra-oferta -->
+            <!-- Análisis de Negociación y Contra-oferta -->
+            ${currentPublication.isRequest ? `
+            <div class="bg-white border border-slate-200 rounded-2xl p-4 space-y-4">
+                <div class="flex justify-between items-start">
+                    <h4 class="font-bold text-[#1a2b4b] text-sm flex items-center gap-2">
+                        <span>💬</span> Análisis de Negociación y Contra-oferta
+                    </h4>
+                    ${(currentPublication.originalUnitPrice && currentPublication.originalUnitPrice.toFixed(2) !== (currentPublication.unitPrice || 0).toFixed(2)) || (currentPublication.originalWeightKg && currentPublication.originalWeightKg !== currentPublication.weightKg) ? `
+                        <span class="bg-amber-100 text-amber-800 font-bold px-3 py-1 rounded-full text-[11px] border border-amber-200">
+                            ⚠️ Se detectaron cambios en la oferta
+                        </span>
+                    ` : `
+                        <span class="bg-green-100 text-green-800 font-bold px-3 py-1 rounded-full text-[11px] border border-green-200">
+                            ✅ Se mantienen valores originales
+                        </span>
+                    `}
                 </div>
-                <p class="italic text-amber-700">${currentPublication.negotiationComment}</p>
+
+                <!-- Comentario de la Empresa -->
+                <div class="bg-slate-50 p-3 rounded-lg border border-slate-200/80">
+                    <p class="text-[10px] text-slate-400 uppercase tracking-wider font-semibold mb-1">Comentario Registrado por Empresa</p>
+                    <p class="text-sm text-slate-600 italic">${currentPublication.negotiationComment}</p>
+                </div>
+
+                <!-- Desglose de Cambios -->
+                <div>
+                    <p class="text-[10px] text-slate-400 uppercase tracking-wider font-semibold mb-2">Desglose de Cambios</p>
+                    <div class="grid grid-cols-[auto_1fr_1fr] gap-x-4 gap-y-2 text-sm items-center">
+                        <!-- Header -->
+                        <div></div>
+                        <div class="font-bold text-slate-500 text-xs">Publicación Original</div>
+                        <div class="font-bold text-blue-700 text-xs">Oferta Acordada</div>
+
+                        <!-- Fila Precio -->
+                        <div class="font-semibold text-slate-600">Precio Unitario</div>
+                        <div class="text-slate-600">${currentPublication.originalUnitPrice ? `$ ${currentPublication.originalUnitPrice.toFixed(2)} / kg` : 'N/A'}</div>
+                        <div class="font-bold text-blue-800 bg-blue-50 px-2 py-1 rounded-md">${currentPublication.unitPrice ? `$ ${currentPublication.unitPrice.toFixed(2)} / kg` : 'N/A'}</div>
+
+                        <!-- Fila Peso -->
+                        <div class="font-semibold text-slate-600">Peso Total</div>
+                        <div class="text-slate-600">${currentPublication.originalWeightKg ? `${currentPublication.originalWeightKg.toLocaleString()} kg` : 'N/A'}</div>
+                        <div class="font-bold text-blue-800 bg-blue-50 px-2 py-1 rounded-md">${currentPublication.weightKg ? `${currentPublication.weightKg.toLocaleString()} kg` : 'N/A'}</div>
+                    </div>
+                </div>
             </div>
+            ` : ''}
 
             <!-- Campos Variables Editables por Calidad en Estatus Pendiente -->
             <div class="border border-slate-200 rounded-2xl p-5 space-y-3 bg-white">
@@ -500,6 +627,11 @@ function openReviewModal(id) {
                     <button onclick="addCommentAndAction(${currentPublication.id}, 'rejected')" class="px-6 py-3 bg-red-500 text-white rounded-xl font-bold hover:bg-red-600 transition-all text-sm">❌ Rechazar Operación</button>
                     <button onclick="closeModal()" class="px-5 py-3 bg-slate-200 text-slate-700 rounded-xl font-bold hover:bg-slate-300 transition-all text-sm">Cerrar</button>
                 ` : ''}
+                ${isReviewPublications ? `
+                    <button onclick="approveOrRejectPublication(${currentPublication.id}, 'approved')" class="px-6 py-3 bg-[#78C043] text-white rounded-xl font-bold hover:bg-[#66a338] transition-all text-sm flex items-center gap-2 shadow-md">✅ Aprobar Publicación</button>
+                    <button onclick="approveOrRejectPublication(${currentPublication.id}, 'rejected')" class="px-6 py-3 bg-red-500 text-white rounded-xl font-bold hover:bg-red-600 transition-all text-sm flex items-center gap-2 shadow-md">❌ Rechazar Publicación</button>
+                    <button onclick="closeModal()" class="px-5 py-3 bg-slate-200 text-slate-700 rounded-xl font-bold hover:bg-slate-300 transition-all text-sm">Cerrar</button>
+                ` : ''}
                 ${isApprovedOrRejected ? `
                     <button onclick="closeModal()" class="px-6 py-3 bg-slate-200 text-slate-700 rounded-xl font-bold hover:bg-slate-300 transition-all text-sm">Cerrar</button>
                 ` : ''}
@@ -563,6 +695,66 @@ async function validateAndMoveToProceso(id) {
     closeModal();
 }
 
+async function approveOrRejectPublication(id, action) {
+    const pub = publications.find(p => p.id === id);
+    if (!pub || pub.isRequest) return;
+
+    let rejectionReason = "Aprobado por calidad";
+    let targetStatus = 2; // Aprobado
+
+    if (action === 'rejected') {
+        targetStatus = 3; // Rechazado
+        rejectionReason = document.getElementById('comment-text')?.value.trim();
+        if (!rejectionReason) {
+            rejectionReason = prompt("Por favor, ingrese el motivo del rechazo para que la empresa pueda corregirlo:");
+            if (!rejectionReason) {
+                alert("Debe proveer un motivo de rechazo.");
+                return;
+            }
+        }
+    }
+
+    try {
+        // 1. PATCH publication
+        const res = await fetch(`${API_BASE}/wastes/${pub.waste_id}/`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                status: targetStatus,
+                quality_validator: currentQualityUser.user_id
+            })
+        });
+
+        if (!res.ok) {
+            const errData = await res.json();
+            throw new Error(errData.status || errData.detail || 'Error al actualizar estatus');
+        }
+
+        // 2. POST to waste-status-logs to store the reason
+        const logRes = await fetch(`${API_BASE}/waste-status-logs/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                waste: pub.waste_id,
+                previous_status: "1",
+                status_changed: targetStatus.toString(),
+                description: rejectionReason,
+                changed_at: new Date().toISOString()
+            })
+        });
+
+        if (!logRes.ok) {
+            console.warn("No se pudo registrar el log de estado de publicación, pero el estado se actualizó.");
+        }
+
+        showNotification(action === 'approved' ? '✅ Publicación aprobada' : '❌ Publicación rechazada', 'success');
+        await fetchQualityData();
+        closeModal();
+    } catch(err) {
+        alert('Error al actualizar en API: ' + err.message);
+    }
+}
+
 async function addCommentAndAction(id, action) {
     const pub = publications.find(p => p.id === id);
     if (!pub) return;
@@ -597,7 +789,7 @@ async function addCommentAndAction(id, action) {
         }
     }
 
-    if (action === 'approved') pub.status = 'approved';
+    if (action === 'approved') pub.status = 'approved-publications';
     else if (action === 'rejected') pub.status = 'rejected';
     
     showNotification(`📋 Registro actualizado correctamente`, 'success');

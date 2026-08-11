@@ -246,7 +246,12 @@ function filterMyPublications(status) {
     renderMyPublications(filtered);
 }
 
-function renderMyPublications(publications) {
+function switchMyPubsTab(tab) {
+    currentMyPubsTab = tab;
+    // ... logic (unchanged)
+}
+
+async function renderMyPublications(publications) {
     const container = document.getElementById('my-publications-grid');
     const noResults = document.getElementById('my-no-publications');
 
@@ -259,7 +264,7 @@ function renderMyPublications(publications) {
     container.classList.remove('hidden');
     noResults.classList.add('hidden');
 
-    container.innerHTML = publications.map(pub => {
+    const htmlPromises = publications.map(async pub => {
         // Usar campos de la API (category_name_display, status_name, waste_id, etc.)
         const categoryName = pub.category_name_display || pub.category_name || pub.category || 'Varios';
         const style = categoryStyles[categoryName] || { color: "bg-gray-500", icon: "♻️", btnHover: "" };
@@ -269,6 +274,33 @@ function renderMyPublications(publications) {
         const qty = pub.quantity || pub.qty || 'N/A';
         const date = pub.generation_date || pub.date || '-';
         const pubId = pub.waste_id || pub.id;
+
+        let rejectionHtml = '';
+        if (statusKey === 'rechazado' || pub.status == 3) {
+            try {
+                const logRes = await fetch(`${API_BASE}/waste-status-logs/?waste=${pubId}`);
+                if (logRes.ok) {
+                    const logs = await logRes.json();
+                    const rejectionLogs = logs.filter(l => l.status_changed === '3');
+                    if (rejectionLogs.length > 0) {
+                        const lastLog = rejectionLogs[rejectionLogs.length - 1];
+                        if (lastLog.description) {
+                            rejectionHtml = `
+                                <div class="mt-3 bg-red-50 border border-red-100 p-3 rounded-xl flex gap-2 items-start">
+                                    <span class="text-red-500 mt-0.5">⚠️</span>
+                                    <div>
+                                        <p class="text-[10px] font-bold text-red-700 uppercase tracking-wider mb-0.5">Motivo de Rechazo (Calidad)</p>
+                                        <p class="text-xs text-red-600 font-medium">${lastLog.description}</p>
+                                    </div>
+                                </div>
+                            `;
+                        }
+                    }
+                }
+            } catch(e) {
+                console.warn('Error fetching rejection reason:', e);
+            }
+        }
 
         // Imagen de evidencia si existe
         let imgHtml;
@@ -295,6 +327,7 @@ function renderMyPublications(publications) {
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                         ${pub.location || 'Sin ubicación'}
                     </p>
+                    ${rejectionHtml}
                     <div class="mt-auto pt-5 border-t border-slate-100 flex flex-col gap-3">
                         <div class="flex justify-between items-center">
                             <span class="text-xs font-bold text-slate-500 bg-slate-100 px-3 py-1.5 rounded-lg">Disp: ${qty}</span>
@@ -303,14 +336,17 @@ function renderMyPublications(publications) {
                         <div class="flex justify-between items-center mt-2">
                             <span class="text-2xl font-black text-[#1a2b4b]">${price}</span>
                             <button onclick="event.stopPropagation(); handleMyPublicationCardClick(${pubId}, '${statusKey}')" class="text-sm font-bold bg-[#1a2b4b] text-white border-2 border-slate-200 px-5 py-2.5 rounded-xl hover:bg-[#78C043] transition-all">
-                                ${statusKey === 'revision' ? 'Editar' : 'Gestionar'}
+                                ${statusKey === 'revision' || statusKey === 'rechazado' ? 'Editar' : 'Gestionar'}
                             </button>
                         </div>
                     </div>
                 </div>
             </div>
         `;
-    }).join('');
+    });
+
+    const htmlArray = await Promise.all(htmlPromises);
+    container.innerHTML = htmlArray.join('');
 }
 
 async function handleMyPublicationCardClick(pubId, statusKey) {
@@ -322,7 +358,7 @@ async function handleMyPublicationCardClick(pubId, statusKey) {
         return;
     }
 
-    if (statusKey === 'revision') {
+    if (statusKey === 'revision' || statusKey === 'rechazado') {
         const pub = findPublicationById(numPubId);
         if (pub && isCurrentUserPublication(pub)) {
             openEditModal(numPubId);
@@ -336,7 +372,7 @@ async function handleMyPublicationCardClick(pubId, statusKey) {
         const userId = currentUser.user_id || currentUser.id;
         const [buyerRes, sellerRes] = await Promise.all([
             fetch(`http://localhost:8000/api-ecoboros-v1/purchase-requests/?buyer=${userId}`),
-            fetch(`http://localhost:8000/api-ecoboros-v1/purchase-requests/?publisher=${userId}`)
+            fetch(`http://localhost:8000/api-ecoboros-v1/purchase-requests/?seller=${userId}`)
         ]);
         const buyerData = buyerRes.ok ? await buyerRes.json() : [];
         const sellerData = sellerRes.ok ? await sellerRes.json() : [];
@@ -363,16 +399,150 @@ function openEditModal(id) {
     const product = findPublicationById(id);
     if (product) {
         editingPublicationId = product.waste_id || product.id;
-        document.getElementById('edit-title').value = product.title || '';
-        document.getElementById('edit-price').value = product.unit_price || product.price || '';
+        
+        const statusKey = getPublicationStatusKey(product);
+        const isPendiente = statusKey === 'pendiente';
+        const isRechazado = statusKey === 'rechazado';
+        
+        const saveBtn = document.querySelector('#edit-publication-modal button[onclick="saveEditPublication()"]');
+        if (saveBtn) {
+            if (isRechazado) {
+                saveBtn.innerHTML = '<span>🚀</span> Guardar y Enviar a Revisión';
+                saveBtn.className = 'px-6 py-3 rounded-xl font-bold transition-all text-sm flex items-center gap-2 shadow-md bg-purple-600 hover:bg-purple-700 text-white';
+            } else {
+                saveBtn.innerHTML = '<span>💾</span> Guardar Cambios';
+                saveBtn.className = 'px-6 py-3 rounded-xl font-bold transition-all text-sm flex items-center gap-2 shadow-md bg-[#78C043] hover:bg-[#66a338] text-white';
+            }
+        }
+
+        const titleInput = document.getElementById('edit-title');
+        const priceInput = document.getElementById('edit-price');
+        const descInput = document.getElementById('edit-description');
+        const commentContainer = document.getElementById('edit-comment-container');
+        const commentInput = document.getElementById('edit-comment');
+
+        titleInput.value = product.title || '';
+        priceInput.value = product.unit_price || product.price || '';
         document.getElementById('edit-qty').value = product.quantity || product.qty || '';
+        
         if (document.getElementById('edit-weight')) {
             document.getElementById('edit-weight').value = product.weight_decimal || product.weightKg || '';
         }
-        if (document.getElementById('edit-description')) {
-            document.getElementById('edit-description').value = product.technical_description || product.description || '';
+        
+        if (descInput) {
+            descInput.value = product.technical_description || product.description || '';
         }
+        
+        if (commentInput) {
+            commentInput.value = product.negotiation_comment || product.comment || '';
+        }
+
+        /* Se aplica bloqueo de campos estaticos si el estado se encuentra en pendiente. */
+        if (isPendiente) {
+            titleInput.disabled = true;
+            titleInput.classList.add('opacity-60', 'cursor-not-allowed', 'bg-slate-100');
+            
+            priceInput.disabled = false;
+            priceInput.classList.remove('opacity-60', 'cursor-not-allowed', 'bg-slate-100');
+            
+            if (descInput) {
+                descInput.disabled = true;
+                descInput.classList.add('opacity-60', 'cursor-not-allowed', 'bg-slate-100');
+            }
+            if (commentContainer) {
+                commentContainer.classList.remove('hidden');
+            }
+        } else {
+            /* Se habilita la edicion completa para estados de revision. */
+            titleInput.disabled = false;
+            titleInput.classList.remove('opacity-60', 'cursor-not-allowed', 'bg-slate-100');
+            
+            priceInput.disabled = false;
+            priceInput.classList.remove('opacity-60', 'cursor-not-allowed', 'bg-slate-100');
+            
+            if (descInput) {
+                descInput.disabled = false;
+                descInput.classList.remove('opacity-60', 'cursor-not-allowed', 'bg-slate-100');
+            }
+            if (commentContainer) {
+                commentContainer.classList.add('hidden');
+            }
+        }
+
         document.getElementById('edit-publication-modal').classList.remove('hidden');
+    }
+}
+
+async function saveEditPublication() {
+    if (editingPublicationId) {
+        const product = findPublicationById(editingPublicationId);
+        if (product) {
+            const statusKey = getPublicationStatusKey(product);
+            const isPendiente = statusKey === 'pendiente';
+            const isRechazado = statusKey === 'rechazado';
+
+            /* Se evalua la insercion de datos originales para proteger la integridad de las variables deshabilitadas en UI. */
+            const updated = {
+                ...product,
+                title: isPendiente ? product.title : document.getElementById('edit-title').value,
+                price: isPendiente ? (product.unit_price || product.price) : document.getElementById('edit-price').value,
+                qty: document.getElementById('edit-qty').value,
+                weight: document.getElementById('edit-weight')?.value || 0,
+                description: isPendiente ? (product.technical_description || product.description) : (document.getElementById('edit-description')?.value || '')
+            };
+
+            if (isPendiente) {
+                updated.negotiation_comment = document.getElementById('edit-comment')?.value || '';
+            }
+
+            // Si estaba rechazado y se está editando, enviarlo de nuevo a revisión (status 1)
+            if (isRechazado) {
+                updated.status = 1;
+                updated.quality_validator = null; // Quitar al validador para que entre a "Sin Asignar" de Calidad
+            }
+
+            await saveEditedPublication(updated);
+        }
+    }
+    closeEditModal();
+}
+
+async function saveEditedPublication(publication) {
+    const pubId = publication.waste_id || publication.id;
+    try {
+        const payload = {
+            title: publication.title,
+            unit_price: parseFloat(publication.price) || 0,
+            quantity: publication.qty,
+            weight_decimal: parseFloat(publication.weight) || 0,
+            technical_description: publication.description || ''
+        };
+        
+        /* Se inyecta la propiedad de comentario de negociacion al cuerpo de la peticion HTTP si existe. */
+        if (publication.negotiation_comment !== undefined) {
+            payload.negotiation_comment = publication.negotiation_comment;
+        }
+
+        const res = await fetch(`http://localhost:8000/api-ecoboros-v1/wastes/${pubId}/`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+            const updated = await res.json();
+            const index = allPublications.findIndex(p => Number(p.waste_id) === Number(pubId) || Number(p.id) === Number(pubId));
+            if (index !== -1) {
+                allPublications[index] = { ...allPublications[index], ...updated };
+            }
+            showToast('Publicacion actualizada correctamente.');
+            filterMyPublications(currentPublicationFilter);
+        } else {
+            alert('Error al guardar la publicacion.');
+        }
+    } catch(e) {
+        console.error('Error al actualizar publicacion:', e);
+        alert('Error de comunicacion con el servidor.');
     }
 }
 
@@ -381,23 +551,7 @@ function closeEditModal() {
     editingPublicationId = null;
 }
 
-async function saveEditPublication() {
-    if (editingPublicationId) {
-        const product = findPublicationById(editingPublicationId);
-        if (product) {
-            const updated = {
-                ...product,
-                title: document.getElementById('edit-title').value,
-                price: document.getElementById('edit-price').value,
-                qty: document.getElementById('edit-qty').value,
-                weight: document.getElementById('edit-weight')?.value || 0,
-                description: document.getElementById('edit-description')?.value || ''
-            };
-            await saveEditedPublication(updated);
-        }
-    }
-    closeEditModal();
-}
+
 
 // ========== MIS COMPRAS ==========
 // ========== MIS COMPRAS Y GESTIÓN DE NEGOCIACIÓN/PAGOS ==========
@@ -409,21 +563,11 @@ async function fetchAndRenderMyPurchases() {
     }
 
     try {
-        const [buyerRes, sellerRes] = await Promise.all([
-            fetch(`http://localhost:8000/api-ecoboros-v1/purchase-requests/?buyer=${userId}`),
-            fetch(`http://localhost:8000/api-ecoboros-v1/purchase-requests/?publisher=${userId}`)
-        ]);
+        const res = await fetch(`http://localhost:8000/api-ecoboros-v1/purchase-requests/?buyer=${userId}`);
+        const buyerData = res.ok ? await res.json() : [];
 
-        const buyerData = buyerRes.ok ? await buyerRes.json() : [];
-        const sellerData = sellerRes.ok ? await sellerRes.json() : [];
-
-        // Combinar evitando duplicados por request_id
-        const reqMap = new Map();
-        [...buyerData, ...sellerData].forEach(r => reqMap.set(r.request_id, r));
-        const fetchedData = Array.from(reqMap.values());
-
-        if (Array.isArray(fetchedData)) {
-            myPurchases = fetchedData.map(req => {
+        if (Array.isArray(buyerData)) {
+            myPurchases = buyerData.map(req => {
                 const weight = parseFloat(req.requested_weight || 0);
                 const price  = parseFloat(req.offered_price  || 0);
                 const totalCalculated = req.total_amount || ((weight > 0 && price > 0) ? (weight * price) : price);
@@ -446,6 +590,7 @@ async function fetchAndRenderMyPurchases() {
                     status: statusKey,
                     statusName: req.status_name || 'Pendiente',
                     seller: req.seller_name || 'Vendedor Verificado',
+                    buyer: req.buyer_name || 'Usted',
                     quantity: req.quantity || 'N/A',
                     weight: req.requested_weight || 0,
                     price: req.offered_price || 0,
@@ -459,7 +604,7 @@ async function fetchAndRenderMyPurchases() {
             myPurchases = [];
         }
     } catch (err) {
-        console.warn('Error al cargar solicitudes de compra:', err);
+        console.warn('Error al cargar compras del usuario:', err);
         myPurchases = [];
     }
 
@@ -516,8 +661,8 @@ function renderMyPurchasesUI() {
                 </td>
                 <td class="px-6 py-4 text-sm text-slate-500">${p.seller}</td>
                 <td class="px-6 py-4">
-                    <button onclick="openRequestDetailsModal(${p.id})" class="bg-[#1a2b4b] text-white text-xs font-bold px-3 py-1.5 rounded-lg hover:bg-[#2d4563] transition-colors">
-                        Ver / Gestionar
+                    <button onclick="openRequestDetailsModal(${p.id})" class="bg-[#1a2b4b] text-white text-xs font-bold px-3.5 py-2 rounded-xl hover:bg-[#2d4563] transition-colors flex items-center gap-1.5 shadow-sm">
+                        <span>👁️</span> Ver Estado
                     </button>
                 </td>
             </tr>
@@ -571,11 +716,18 @@ async function openRequestDetailsModal(requestId) {
 
     if (!req) return;
 
+    const originalPub = req.raw?.waste ? findPublicationById(req.raw.waste) : null;
+    const userId = Number(currentUser.user_id || currentUser.id);
+    const isSeller = (req.raw?.publisher && Number(req.raw.publisher) === userId) ||
+                     (originalPub && isCurrentUserPublication(originalPub)) ||
+                     (req.raw?.seller_id && Number(req.raw.seller_id) === userId);
+
     document.getElementById('modal-req-id').textContent = `#${req.id}`;
     const modalBody = document.getElementById('request-modal-body');
     const isCompleted = req.status === 'completado';
     const isProceso = req.status === 'proceso';
-    const isPendiente = req.status === 'pendiente';
+    const isPendiente = ['pendiente', 'pending'].includes(req.status);
+    const canEdit = isPendiente && isSeller;
 
     let html = `
         <div class="border-b border-slate-100 pb-4">
@@ -583,6 +735,7 @@ async function openRequestDetailsModal(requestId) {
                 <div>
                     <h3 class="text-xl font-bold text-[#1a2b4b]">${req.productName}</h3>
                     <p class="text-xs text-slate-500 mt-0.5">Vendedor: <strong>${req.seller}</strong> | Comprador: <strong>${req.buyer || 'Usted'}</strong></p>
+                    ${!isSeller ? `<p class="text-xs text-[#78C043] font-bold mt-1">📞 Teléfono del Vendedor: ${req.raw?.publisher_phone || req.raw?.seller_phone || 'Consultar con Vendedor / Admin'}</p>` : ''}
                 </div>
                 <span class="px-3 py-1.5 rounded-full text-xs font-bold ${
                     isCompleted ? 'bg-green-100 text-green-800 border border-green-200' : 
@@ -612,45 +765,73 @@ async function openRequestDetailsModal(requestId) {
                 <p class="text-xs text-blue-700">El usuario de calidad ha verificado el acuerdo y la cantidad real vendida. Procede con la confirmación de pagos simulados.</p>
             </div>
         `;
+    } else if (isPendiente && !isSeller) {
+        html += `
+            <div class="bg-blue-50 border border-blue-200 rounded-2xl p-4 text-blue-900 text-sm">
+                <div class="flex items-center gap-2 font-bold text-blue-800 mb-1">
+                    <span>🔒</span> Modo Lectura (Empresa Compradora)
+                </div>
+                <p class="text-xs text-blue-700">Estás consultando esta solicitud desde <strong>Mis Compras</strong>. Si acordaron ajustes por llamada, la <strong>Empresa Vendedora</strong> registrará los cambios de precio/peso y la justificación explicativa en su panel de <em>Mis Publicaciones</em> antes de la auditoría de Calidad.</p>
+            </div>
+        `;
     } else {
         html += `
             <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-amber-900 text-sm">
                 <div class="flex items-center gap-2 font-bold text-amber-800 mb-1">
-                    <span>⏳</span> En Acuerdo Extermino y Pendiente de Calidad
+                    <span>⏳</span> En Acuerdo Externo y Pendiente de Calidad (Empresa Vendedora)
                 </div>
-                <p class="text-xs text-amber-700">Las empresas acuerdan cantidades finales por externo. Puedes editar los campos variables (cantidad, peso, precio) antes de que el Usuario de Calidad valide la solicitud.</p>
+                <p class="text-xs text-amber-700">Como propietario de la publicación, puedes editar los campos variables (cantidad, peso, precio) y registrar el comentario explicativo del acuerdo antes de que Calidad valide la solicitud.</p>
             </div>
         `;
     }
 
-    // Campos variables (Editables solo si Pendiente)
+    if (req.raw?.negotiation_comment) {
+        html += `
+            <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-amber-900 text-xs">
+                <div class="flex items-center gap-2 font-bold text-amber-800 mb-1">
+                    <span>💬</span> Comentario / Acuerdos Registrados en la Negociación:
+                </div>
+                <p class="italic text-amber-800 font-medium">${req.raw.negotiation_comment}</p>
+            </div>
+        `;
+    }
+
+    // Campos variables (Editables solo si es Pendiente Y es la Empresa Vendedora)
     html += `
         <div class="bg-slate-50 rounded-2xl p-5 border border-slate-200 space-y-4">
             <h4 class="font-bold text-[#1a2b4b] text-sm flex items-center gap-2">
-                <span>📝</span> Campos Variables de la Compra
+                <span>📝</span> Campos Variables de la Compra ${canEdit ? '' : '(🔒 Solo Lectura)'}
             </h4>
             
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                     <label class="block text-xs font-bold text-slate-500 mb-1">Cantidad / Lote</label>
-                    <input type="text" id="modal-field-qty" value="${req.quantity}" ${isCompleted || isProceso ? 'disabled' : ''} class="w-full p-2.5 bg-white border border-slate-200 rounded-xl text-sm font-semibold outline-none focus:border-[#78C043] disabled:bg-slate-100 disabled:text-slate-500">
+                    <input type="text" id="modal-field-qty" value="${req.quantity}" ${!canEdit ? 'disabled' : ''} class="w-full p-2.5 bg-white border border-slate-200 rounded-xl text-sm font-semibold outline-none focus:border-[#78C043] disabled:bg-slate-100 disabled:text-slate-500">
+                    ${originalPub && originalPub.quantity ? `<span class="text-xs text-slate-400 mt-1 block">Original: ${originalPub.quantity}</span>` : ''}
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-slate-500 mb-1">Peso Total (KG)</label>
-                    <input type="number" id="modal-field-weight" value="${req.weight}" ${isCompleted || isProceso ? 'disabled' : ''} class="w-full p-2.5 bg-white border border-slate-200 rounded-xl text-sm font-semibold outline-none focus:border-[#78C043] disabled:bg-slate-100 disabled:text-slate-500">
+                    <input type="number" id="modal-field-weight" value="${req.weight}" ${!canEdit ? 'disabled' : ''} class="w-full p-2.5 bg-white border border-slate-200 rounded-xl text-sm font-semibold outline-none focus:border-[#78C043] disabled:bg-slate-100 disabled:text-slate-500">
+                    ${originalPub && originalPub.weight_decimal ? `<span class="text-xs text-slate-400 mt-1 block">Original: ${parseFloat(originalPub.weight_decimal).toLocaleString()} kg</span>` : ''}
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-slate-500 mb-1">Precio Unitario ($)</label>
-                    <input type="number" step="0.01" id="modal-field-price" value="${req.price}" ${isCompleted || isProceso ? 'disabled' : ''} class="w-full p-2.5 bg-white border border-slate-200 rounded-xl text-sm font-semibold outline-none focus:border-[#78C043] disabled:bg-slate-100 disabled:text-slate-500">
+                    <input type="number" step="0.01" id="modal-field-price" value="${req.price}" ${!canEdit ? 'disabled' : ''} class="w-full p-2.5 bg-white border border-slate-200 rounded-xl text-sm font-semibold outline-none focus:border-[#78C043] disabled:bg-slate-100 disabled:text-slate-500">
+                    ${originalPub && originalPub.unit_price ? `<span class="text-xs text-slate-400 mt-1 block">Original: $${parseFloat(originalPub.unit_price).toFixed(2)}</span>` : ''}
                 </div>
             </div>
 
-            <div>
-                <label class="block text-xs font-bold text-slate-500 mb-1">💬 Comentario / Justificación de la Negociación</label>
-                <textarea id="modal-field-comment" rows="2" ${isCompleted || isProceso ? 'disabled' : ''} placeholder="Ej: Se acordó en llamada vender 30k kg en vez de 50k kg al mismo precio unitario." class="w-full p-2.5 bg-white border border-slate-200 rounded-xl text-xs font-medium outline-none focus:border-[#78C043] disabled:bg-slate-100 disabled:text-slate-500">${req.raw?.negotiation_comment || ''}</textarea>
+            <div class="bg-amber-50/70 border border-amber-200 rounded-xl p-3.5 space-y-1.5">
+                <label class="block text-xs font-bold text-amber-900 flex items-center gap-1.5">
+                    <span>💬 Explicación de los Acuerdos Fuera de Plataforma (Para Auditoría de Calidad)</span>
+                </label>
+                <p class="text-[11px] text-amber-800">
+                    Detalla la negociación acordada (ej: contra-oferta de precio, peso ajustado o motivos) para que el Inspector de Calidad pueda auditarlo y autorizar el paso a En Proceso.
+                </p>
+                <textarea id="modal-field-comment" rows="3" ${!canEdit ? 'disabled' : ''} placeholder="Ej: Se acordó por llamada vender únicamente 25k kg en vez de las 50k kg iniciales para mantener inventario en planta." class="w-full mt-1 p-3 bg-white border border-amber-300 rounded-xl text-xs font-medium outline-none focus:border-[#78C043] focus:ring-2 focus:ring-[#78C043]/20 disabled:bg-slate-100 disabled:text-slate-500 text-slate-800 shadow-sm">${req.raw?.negotiation_comment || ''}</textarea>
             </div>
 
-            ${isPendiente ? `
+            ${canEdit ? `
                 <button onclick="saveRequestVariables(${req.id})" class="w-full bg-[#1a2b4b] text-white py-2.5 rounded-xl font-bold text-xs hover:bg-[#2d4563] transition-colors">
                     💾 Guardar Ajustes de Negociación (Mantiene en Pendiente)
                 </button>
@@ -902,12 +1083,24 @@ function setCategory(cat) {
     applyFilters(false);
 }
 
+let currentHomeCatalogPage = 1;
+const homeCatalogItemsPerPage = 6;
+
+function changeHomePage(newPage) {
+    currentHomeCatalogPage = newPage;
+    applyFilters(false);
+    const section = document.getElementById('products-section');
+    if (section) section.scrollIntoView({ behavior: 'smooth' });
+}
+
 function applyFiltersAndClose() {
     applyFilters();
     toggleFilters();
 }
 
 function applyFilters(updateBadges = true) {
+    if (updateBadges) currentHomeCatalogPage = 1;
+
     const searchText = document.getElementById("searchInput").value.toLowerCase();
     const minWeight = parseFloat(document.getElementById("weightInput").value) || 0;
     const startDate = document.getElementById("dateStartInput").value;
@@ -932,26 +1125,46 @@ function renderProducts(data) {
     const grid = document.getElementById("products-grid");
     const modalCountLabel = document.getElementById("modalResultCount");
     const noResults = document.getElementById("no-results");
+    const paginationContainer = document.getElementById("home-pagination-container");
 
-    if(modalCountLabel) modalCountLabel.innerText = data.length;
+    // Filtrar publicaciones aprobadas para el catálogo público de inicio (status 2 = Aprobado, o aprobada)
+    const approvedData = data.filter(item => {
+        const s = String(item.status_name || item.status || '').toLowerCase().trim();
+        return ['aprobado', 'aprobada', 'approved', '2'].includes(s);
+    });
 
-    if (data.length === 0) {
+    const displayData = approvedData.length > 0 ? approvedData : data;
+
+    if (modalCountLabel) modalCountLabel.innerText = displayData.length;
+
+    if (displayData.length === 0) {
         grid.innerHTML = "";
-        noResults.classList.remove("hidden");
-        noResults.classList.add("flex");
+        if (noResults) {
+            noResults.classList.remove("hidden");
+            noResults.classList.add("flex");
+        }
+        if (paginationContainer) paginationContainer.innerHTML = "";
         return;
     }
 
-    noResults.classList.add("hidden");
-    noResults.classList.remove("flex");
+    if (noResults) {
+        noResults.classList.add("hidden");
+        noResults.classList.remove("flex");
+    }
 
-    grid.innerHTML = data.map((item, index) => {
-        // La API devuelve category_name_display para el nombre legible de la categoría
+    // Calcular Paginación (6 por página)
+    const totalPages = Math.ceil(displayData.length / homeCatalogItemsPerPage);
+    if (currentHomeCatalogPage > totalPages) currentHomeCatalogPage = totalPages;
+    if (currentHomeCatalogPage < 1) currentHomeCatalogPage = 1;
+
+    const startIndex = (currentHomeCatalogPage - 1) * homeCatalogItemsPerPage;
+    const paginatedData = displayData.slice(startIndex, startIndex + homeCatalogItemsPerPage);
+
+    grid.innerHTML = paginatedData.map((item, index) => {
         const categoryName = item.category_name_display || item.category_name || 'Varios';
         const style = categoryStyles[categoryName] || { color: 'bg-gray-500', icon: '❓', hoverGlow: 'hover:border-gray-500 hover:shadow-gray-500/30', btnHover: 'group-hover:bg-gray-500 group-hover:border-gray-500 group-hover:text-white' };
         const delay = index * 30;
 
-        // Mostrar primera imagen subida si existe, si no el icono de categoría
         let imageHtml;
         if (item.first_image_url) {
             imageHtml = `<img src="${item.first_image_url}" alt="${item.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onerror="this.style.display='none'; this.parentElement.innerHTML='<span class=\'text-7xl group-hover\:scale-110 transition-transform duration-500 opacity-90\'>${style.icon}</span>';">`;
@@ -962,9 +1175,10 @@ function renderProducts(data) {
         const location = item.location || 'N/A';
         const price = item.unit_price ? `$ ${parseFloat(item.unit_price).toFixed(2)} / kg` : 'A consultar';
         const quantity = item.quantity || 'N/A';
+        const pubId = item.waste_id || item.id;
 
         return `
-            <div onclick="window.location.href='publicacion.html?id=${item.waste_id}'" class="bg-white rounded-3xl border-4 border-transparent shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:-translate-y-2 transition-all duration-300 flex flex-col group cursor-pointer animate-card ${style.hoverGlow} product-card relative" style="animation-delay: ${delay}ms">
+            <div onclick="window.location.href='publicacion.html?id=${pubId}'" class="bg-white rounded-3xl border-4 border-transparent shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:-translate-y-2 transition-all duration-300 flex flex-col group cursor-pointer animate-card ${style.hoverGlow} product-card relative" style="animation-delay: ${delay}ms">
                 <div class="h-48 bg-slate-50 relative flex items-center justify-center overflow-hidden" style="border-bottom-left-radius: 0; border-bottom-right-radius: 0;">
                     ${imageHtml}
                     <div class="absolute top-4 left-4 ${style.color} text-white text-[10px] font-black px-3 py-1.5 rounded-full shadow-sm uppercase tracking-wider z-10">
@@ -987,7 +1201,7 @@ function renderProducts(data) {
                         <div class="flex flex-col gap-3 mt-2 sm:flex-row sm:items-center sm:justify-between">
                             <span class="text-2xl font-black text-[#1a2b4b]">${price}</span>
                             <div class="flex flex-wrap gap-3">
-                                <button class="text-sm font-bold bg-white text-[#1a2b4b] border-2 border-slate-100 px-5 py-2.5 rounded-xl transition-colors ${style.btnHover}">Ver Más</button>
+                                <button onclick="event.stopPropagation(); window.location.href='publicacion.html?id=${pubId}'" class="text-sm font-bold bg-[#1a2b4b] text-white px-5 py-2.5 rounded-xl transition-colors hover:bg-[#78C043]">Ver Más</button>
                             </div>
                         </div>
                     </div>
@@ -995,6 +1209,35 @@ function renderProducts(data) {
             </div>
         `;
     }).join('');
+
+    // Controles de Paginación UI
+    if (paginationContainer) {
+        if (totalPages <= 1) {
+            paginationContainer.innerHTML = '';
+        } else {
+            let pagesHtml = '';
+            for (let i = 1; i <= totalPages; i++) {
+                const isActive = i === currentHomeCatalogPage;
+                pagesHtml += `
+                    <button onclick="changeHomePage(${i})" class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all ${isActive ? 'bg-[#1a2b4b] text-white shadow-md' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}">
+                        ${i}
+                    </button>
+                `;
+            }
+
+            paginationContainer.innerHTML = `
+                <button onclick="changeHomePage(${currentHomeCatalogPage - 1})" ${currentHomeCatalogPage === 1 ? 'disabled' : ''} class="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-200 disabled:opacity-40 disabled:cursor-not-allowed transition-all">
+                    ← Anterior
+                </button>
+                <div class="flex items-center gap-1.5">
+                    ${pagesHtml}
+                </div>
+                <button onclick="changeHomePage(${currentHomeCatalogPage + 1})" ${currentHomeCatalogPage === totalPages ? 'disabled' : ''} class="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-200 disabled:opacity-40 disabled:cursor-not-allowed transition-all">
+                    Siguiente →
+                </button>
+            `;
+        }
+    }
 
     if (matrizMode) activateMatrizLabels();
 }

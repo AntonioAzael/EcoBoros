@@ -279,7 +279,6 @@ function renderProductDetailFromAPI(waste) {
                 </div>
             </div>
         </div>`;
-    `;
 }
 
 /**
@@ -482,7 +481,27 @@ async function submitPurchaseRequest() {
         }
 
         const data = await res.json();
-        alert(`¡Petición de compra creada exitosamente!\nSolicitud #${data.request_id} en estatus PENDIENTE.\nSe procederá al acuerdo entre empresas y validación de calidad.`);
+        
+        // Crear Toast Notification silencioso
+        const toast = document.createElement('div');
+        toast.className = 'fixed bottom-4 right-4 bg-[#78C043] text-white p-4 rounded-xl shadow-lg z-50 transform transition-all duration-500 translate-y-0 opacity-100';
+        toast.innerHTML = `
+            <div class="flex items-center gap-3">
+                <span class="text-2xl">✅</span>
+                <div>
+                    <h4 class="font-bold">¡Petición Creada!</h4>
+                    <p class="text-sm">Solicitud #${data.request_id} en estatus PENDIENTE.</p>
+                    <p class="text-xs opacity-90 mt-1">Para ver los detalles y el número de contacto del vendedor, dirígete a <strong>Mis Compras</strong>.</p>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(toast);
+        
+        setTimeout(() => {
+            toast.classList.add('translate-y-4', 'opacity-0');
+            setTimeout(() => toast.remove(), 500);
+        }, 5000); // 5 segundos
+
         closeContactModal();
     } catch (err) {
         console.error("Error al crear la petición de compra:", err);

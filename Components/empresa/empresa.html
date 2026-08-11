@@ -253,6 +253,9 @@
             <div id="products-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             </div>
 
+            <!-- Contenedor de Paginación -->
+            <div id="home-pagination-container" class="mt-12 flex justify-center items-center gap-3"></div>
+
             <div id="no-results" class="hidden flex-col items-center justify-center py-20 text-center">
                 <div class="bg-white w-24 h-24 rounded-full flex items-center justify-center mb-6 shadow-sm">
                     <span class="text-4xl">🔍</span>
@@ -368,34 +371,34 @@
         class="hidden fixed inset-0 z-[999999] flex items-center justify-center bg-slate-900/50 transition-all overflow-auto p-4">
         <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg animate-card">
             <div class="bg-[#1a2b4b] p-5 flex justify-between items-center">
-                <h2 class="text-white text-xl font-bold">Editar Publicación</h2>
+                <h2 class="text-white text-xl font-bold">Editar Publicacion</h2>
                 <button onclick="closeEditModal()" class="text-white/70 hover:text-white text-2xl">&times;</button>
             </div>
             <div class="p-6 space-y-4">
                 <div>
-                    <label class="text-sm font-bold text-slate-600">Título</label>
-                    <input type="text" id="edit-title"
-                        class="w-full mt-1 p-3 border border-slate-200 rounded-xl bg-slate-50">
+                    <label for="edit-title" class="block text-sm font-medium text-slate-600">Titulo</label>
+                    <input type="text" id="edit-title" class="w-full mt-1 p-3 border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:border-[#78C043]" placeholder="Titulo de la publicacion" />
                 </div>
                 <div>
-                    <label class="text-sm font-bold text-slate-600">Precio</label>
-                    <input type="text" id="edit-price"
-                        class="w-full mt-1 p-3 border border-slate-200 rounded-xl bg-slate-50">
+                    <label for="edit-price" class="block text-sm font-medium text-slate-600">Precio ($/kg)</label>
+                    <input type="number" step="0.01" id="edit-price" class="w-full mt-1 p-3 border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:border-[#78C043]" placeholder="Ej: 12.50" />
                 </div>
                 <div>
-                    <label class="text-sm font-bold text-slate-600">Cantidad</label>
-                    <input type="text" id="edit-qty"
-                        class="w-full mt-1 p-3 border border-slate-200 rounded-xl bg-slate-50">
+                    <label for="edit-qty" class="text-sm font-bold text-slate-600">Cantidad</label>
+                    <input type="number" id="edit-qty" class="w-full mt-1 p-3 border border-slate-200 rounded-xl bg-slate-50" placeholder="Cantidad" />
                 </div>
                 <div>
-                    <label class="text-sm font-bold text-slate-600">Peso Total (kg)</label>
-                    <input type="number" id="edit-weight"
-                        class="w-full mt-1 p-3 border border-slate-200 rounded-xl bg-slate-50">
+                    <label for="edit-weight" class="text-sm font-bold text-slate-600">Peso Total (kg)</label>
+                    <input type="number" id="edit-weight" class="w-full mt-1 p-3 border border-slate-200 rounded-xl bg-slate-50" placeholder="Peso total (kg)" />
                 </div>
                 <div>
-                    <label class="text-sm font-bold text-slate-600">Descripción Técnica</label>
+                    <label class="text-sm font-bold text-slate-600">Descripcion Tecnica</label>
                     <textarea id="edit-description" rows="2"
                         class="w-full mt-1 p-3 border border-slate-200 rounded-xl bg-slate-50"></textarea>
+                </div>
+                <div id="edit-comment-container" class="hidden bg-amber-50 border border-amber-200 p-3 rounded-xl mt-4">
+                    <label class="text-sm font-bold text-amber-900">Comentario para Calidad</label>
+                    <textarea id="edit-comment" rows="2" class="w-full mt-1 p-2 border border-amber-300 rounded-lg bg-white text-sm" placeholder="Justificacion de los ajustes..."></textarea>
                 </div>
                 <div class="flex gap-3 pt-4">
                     <button onclick="saveEditPublication()"
