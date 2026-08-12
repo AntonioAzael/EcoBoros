@@ -128,3 +128,17 @@ class Wastes(models.Model):
     class Meta:
         managed = False
         db_table = 'wastes'
+
+
+class Reports(models.Model):
+    report_id = models.AutoField(primary_key=True)
+    waste = models.ForeignKey('Wastes', models.DO_NOTHING, blank=True, null=True)
+    reported_by = models.ForeignKey('Users', models.DO_NOTHING)
+    type = models.CharField(max_length=50)
+    description = models.TextField()
+    status = models.CharField(max_length=50, default='pending')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        managed = False
+        db_table = 'reports'

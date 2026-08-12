@@ -8,6 +8,7 @@ BEGIN;
 DELETE FROM waste_evidences;
 DELETE FROM waste_status_logs;
 DELETE FROM purchase_requests;
+DELETE FROM reports;
 DELETE FROM wastes;
 DELETE FROM audit_logs;
 DELETE FROM users;
@@ -18,5 +19,6 @@ ALTER SEQUENCE IF EXISTS wastes_waste_id_seq           RESTART WITH 1;
 ALTER SEQUENCE IF EXISTS purchase_requests_request_id_seq RESTART WITH 1;
 ALTER SEQUENCE IF EXISTS waste_evidences_evidence_id_seq  RESTART WITH 1;
 ALTER SEQUENCE IF EXISTS audit_logs_log_id_seq         RESTART WITH 1;
+ALTER SEQUENCE IF EXISTS reports_report_id_seq         RESTART WITH 1;
 
 COMMIT;

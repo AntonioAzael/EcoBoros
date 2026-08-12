@@ -8,6 +8,7 @@ from ecoboros_api.viewsets.waste_evidence_viewset import WasteEvidenceViewSet
 from ecoboros_api.viewsets.purchase_request_viewset import PurchaseRequestViewSet
 from ecoboros_api.viewsets.waste_status_log_viewset import WasteStatusLogViewSet
 from ecoboros_api.viewsets.audit_log_viewset import AuditLogViewSet
+from ecoboros_api.viewsets.report_viewset import ReportViewSet
 
 router = DefaultRouter()
 router.register(r'roles', RoleViewSet, basename='roles')
@@ -19,3 +20,4 @@ router.register(r'waste-evidences', WasteEvidenceViewSet, basename='waste-eviden
 router.register(r'purchase-requests', PurchaseRequestViewSet, basename='purchase-requests')
 router.register(r'waste-status-logs', WasteStatusLogViewSet, basename='waste-status-logs')
 router.register(r'audit-logs', AuditLogViewSet, basename='audit-logs')
+router.register(r'reports', ReportViewSet, basename='reports')

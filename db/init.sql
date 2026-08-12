@@ -188,3 +188,21 @@ CREATE TABLE audit_logs (
     action_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(user_id)
 );
+
+
+/* -------------------------------------------------------------------------- */
+/* TABLA: Reports                                                             */
+/* Lógica: Almacena reportes o conflictos creados por usuarios vinculados     */
+/* a una publicación de residuo en particular o reportes generales.           */
+/* -------------------------------------------------------------------------- */
+CREATE TABLE reports (
+    report_id SERIAL PRIMARY KEY,
+    waste_id INT NULL,
+    reported_by_id INT NOT NULL,
+    type VARCHAR(50) NOT NULL,            /* 'publicacion', 'documento', 'tecnico' */
+    description TEXT NOT NULL,
+    status VARCHAR(50) DEFAULT 'pending', /* 'pending', 'resolved' */
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (waste_id) REFERENCES wastes(waste_id),
+    FOREIGN KEY (reported_by_id) REFERENCES users(user_id)
+);

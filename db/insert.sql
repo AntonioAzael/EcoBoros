@@ -38,6 +38,36 @@ FROM (VALUES
 JOIN roles r ON r.role_name = u.role_name
 ON CONFLICT (contact_email) DO UPDATE SET password = EXCLUDED.password;
 
+-- ==============================================================================
+-- 2. REPORTS (Mock reports for frontend)
+-- ==============================================================================
+INSERT INTO reports (waste_id, reported_by_id, type, description, status)
+SELECT 
+    (SELECT waste_id FROM wastes WHERE title = 'Recortes de Aluminio 6061' LIMIT 1),
+    (SELECT user_id FROM users WHERE contact_email = 'compras@recicladnorte.mx' LIMIT 1),
+    'publicacion',
+    'La publicación muestra un peso incorrecto del material, dice 500kg pero en realidad son 50kg según las fotos adjuntas.',
+    'resolved'
+WHERE EXISTS (SELECT 1 FROM users WHERE contact_email = 'compras@recicladnorte.mx');
+
+INSERT INTO reports (waste_id, reported_by_id, type, description, status)
+SELECT 
+    (SELECT waste_id FROM wastes WHERE title = 'Bidones HDPE Tricapa' LIMIT 1),
+    (SELECT user_id FROM users WHERE contact_email = 'compras@ecoplast.mx' LIMIT 1),
+    'documento',
+    'El certificado de calidad parece estar alterado. La firma no coincide con los registros oficiales.',
+    'pending'
+WHERE EXISTS (SELECT 1 FROM users WHERE contact_email = 'compras@ecoplast.mx');
+
+INSERT INTO reports (waste_id, reported_by_id, type, description, status)
+SELECT 
+    NULL,
+    (SELECT user_id FROM users WHERE contact_email = 'empresa@ecoboros.com' LIMIT 1),
+    'tecnico',
+    'No se pueden cargar imágenes en el formulario de registro de residuos.',
+    'resolved'
+WHERE EXISTS (SELECT 1 FROM users WHERE contact_email = 'empresa@ecoboros.com');
+
 COMMIT;
 
 -- ==============================================================================
