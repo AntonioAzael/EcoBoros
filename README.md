@@ -23,6 +23,39 @@ Todas las cuentas del entorno de desarrollo utilizan la contraseña estándar: *
 
 ---
 
+## 📄 Datos de Prueba Recomendados para Nuevas Publicaciones
+
+Al probar el flujo de creación de residuos (desde la cuenta de una **Empresa Vendedora** en la pestaña de *Subir Residuo*), puedes utilizar los siguientes datos realistas para que el sistema mantenga coherencia en las demostraciones:
+
+### Ejemplo 1: Cartón Industrial
+* **Título**: Cartón Corrugado en Pacas
+* **Descripción Técnica**: Cartón de grado industrial, 100% limpio y seco, libre de ceras o aceites. Empacado y listo para transporte.
+* **Precio Unitario**: `$ 2.50` (MXN / kg)
+* **Peso Disponible**: `5000` (kg)
+* **Categoría**: `Cartones`
+* **Ubicación**: `Tijuana, B.C. (Parque Industrial Pacífico)`
+* **Fotografía**: Sube cualquier imagen de referencia de pacas de cartón (formato JPG/PNG).
+
+### Ejemplo 2: Metales / Maquiladora
+* **Título**: Rebaba y Viruta de Aluminio 6061
+* **Descripción Técnica**: Aluminio puro derivado de cortes CNC. Sin contaminación ferrosa, almacenado en tambos bajo techo.
+* **Precio Unitario**: `$ 28.50` (MXN / kg)
+* **Peso Disponible**: `1500` (kg)
+* **Categoría**: `Metales`
+* **Ubicación**: `Mexicali, B.C. (Corredor Industrial Palaco)`
+* **Fotografía**: Sube cualquier imagen de tambos con rebaba metálica.
+
+### Ejemplo 3: Plásticos PET
+* **Título**: PET Triturado Lavado
+* **Descripción Técnica**: Plástico PET triturado en hojuelas, lavado en caliente, color cristal transparente. Especial para inyección.
+* **Precio Unitario**: `$ 14.00` (MXN / kg)
+* **Peso Disponible**: `2500` (kg)
+* **Categoría**: `Plasticos`
+* **Ubicación**: `Tecate, B.C.`
+* **Fotografía**: Sube una foto de hojuelas de plástico o costales tipo súper-sacos.
+
+---
+
 ## 🚀 Proceso de Configuración e Inicialización por Primera Vez
 
 Sigue estos pasos en orden para levantar el sistema en un entorno nuevo:
