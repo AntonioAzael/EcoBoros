@@ -112,12 +112,28 @@ class WasteSerializer(serializers.ModelSerializer):
         category_name = validated_data.pop('category_name')
         publisher_id = validated_data.pop('publisher_id', None)
 
+        # Mapeo de sinónimos comunes del frontend a la BD
+        synonyms = {
+            'carton': 'Cartones',
+            'cartón': 'Cartones',
+            'papel': 'Papeles',
+            'plastico': 'Plasticos',
+            'plásticos': 'Plasticos',
+            'plástico': 'Plasticos',
+            'metal': 'Metales',
+            'electronico': 'Electronicos',
+            'electrónico': 'Electronicos',
+            'madera': 'Maderas'
+        }
+        
+        search_name = synonyms.get(category_name.lower(), category_name)
+
         # Obtener categoría
         try:
-            category = Categories.objects.get(category_name__iexact=category_name)
+            category = Categories.objects.get(category_name__iexact=search_name)
         except Categories.DoesNotExist:
             raise serializers.ValidationError(
-                {"category_name": f"La categoría '{category_name}' no existe en la base de datos."}
+                {"category_name": f"La categoría '{category_name}' (buscada como '{search_name}') no existe en la base de datos."}
             )
 
         # Obtener publisher desde publisher_id o usar el primero disponible
@@ -135,6 +151,14 @@ class WasteSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(
                     {"publisher_id": "No hay usuarios activos disponibles. Proporciona publisher_id."}
                 )
+
+        # Obtener el estado 'Revision' (status_id = 1) por defecto si no se manda otro
+        if 'status' not in validated_data:
+            from ecoboros_api.models import Statuses
+            try:
+                validated_data['status'] = Statuses.objects.get(pk=1)
+            except Statuses.DoesNotExist:
+                pass
 
         # Crear el waste
         waste = Wastes.objects.create(
