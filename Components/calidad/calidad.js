@@ -199,6 +199,10 @@ function switchSection(section) {
     if (section === 'publications') {
         fetchQualityData();
     }
+    if (section === 'reports') {
+        loadPublicationsForReportSelect();
+        loadReportsHistory();
+    }
     if (matrizMode) activateMatrizLabels();
 }
 
@@ -810,49 +814,124 @@ function closeModal() {
     document.body.classList.remove('overflow-hidden');
 }
 
-// ========== REPORTES ==========
-function submitErrorReport(event) {
-    event.preventDefault();
-    const type = document.getElementById('error-type').value;
-    const publication = document.getElementById('error-publication').value;
-    const description = document.getElementById('error-description').value;
-    
-    if(!description) {
-        showNotification('Por favor describe el error', 'error');
-        return;
+// ========== REPORTE DE ERRORES ==========
+
+const REPORT_TYPE_MAP = {
+    documento_invalido:     '📄 Documento inválido',
+    imagen_invalida:        '🖼️ Imágenes inválidas',
+    datos_incorrectos:      '📦 Datos incorrectos',
+    descripcion_incorrecta: '✏️ Descripción incorrecta',
+    categoria_incorrecta:   '🏷️ Categoría incorrecta',
+    fraude_sospechoso:      '🚨 Fraude sospechoso',
+    tecnico:                '⚙️ Problema técnico',
+    otro:                   '📝 Otro',
+};
+
+async function loadPublicationsForReportSelect() {
+    const select = document.getElementById('error-publication-select');
+    if (!select) return;
+    try {
+        const res   = await fetch(`${API_BASE}/wastes/?format=json`);
+        const data  = res.ok ? await res.json() : [];
+        const wastes = Array.isArray(data) ? data : (data.results || []);
+        select.innerHTML = '<option value="">-- Sin publicación específica --</option>';
+        wastes.forEach(w => {
+            const opt = document.createElement('option');
+            opt.value = w.waste_id || w.id;
+            opt.textContent = `[${w.waste_id || w.id}] ${w.title}`;
+            opt.dataset.search = `${w.waste_id || w.id} ${(w.title || '').toLowerCase()}`;
+            select.appendChild(opt);
+        });
+        select._allOptions = Array.from(select.options);
+    } catch(e) {
+        select.innerHTML = '<option value="">Error al cargar publicaciones</option>';
     }
-    
-    const newReport = {
-        id: Date.now(),
-        type: type,
-        publication: publication || 'No especificada',
-        description: description,
-        date: new Date().toLocaleString(),
-        status: 'Enviado'
-    };
-    reportsHistory.unshift(newReport);
-    
+}
+
+function filterReportPublicationSelect(query) {
+    const select = document.getElementById('error-publication-select');
+    if (!select || !select._allOptions) return;
+    const q = query.toLowerCase().trim();
+    select.innerHTML = '';
+    (q ? select._allOptions.filter(o => o.dataset.search && o.dataset.search.includes(q))
+       : select._allOptions
+    ).forEach(o => select.appendChild(o.cloneNode(true)));
+}
+
+async function submitErrorReport(event) {
+    event.preventDefault();
+    const type        = document.getElementById('error-type').value;
+    const wasteId     = document.getElementById('error-publication-select')?.value || '';
+    const description = document.getElementById('error-description').value.trim();
+
+    if (!description) { showNotification('Por favor describe el error', 'error'); return; }
+
+    const userId = currentQualityUser?.user_id;
+    if (!userId) { showNotification('Sesión inválida, recarga la página', 'error'); return; }
+
+    const btn = document.getElementById('btn-submit-report');
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ Enviando...'; }
+
+    const payload = { type, description, reported_by: userId, status: 'pending' };
+    if (wasteId) payload.waste = Number(wasteId);
+
+    try {
+        const res = await fetch(`${API_BASE}/reports/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
+        if (res.ok) {
+            showNotification('✅ Reporte enviado al administrador correctamente', 'success');
+            document.getElementById('error-report-form').reset();
+            document.getElementById('pub-search').value = '';
+            filterReportPublicationSelect('');
+            await loadReportsHistory();
+        } else {
+            const err = await res.json().catch(() => ({}));
+            const msg = Object.entries(err).map(([k,v]) => `${k}: ${v}`).join(', ');
+            showNotification('Error: ' + (msg || JSON.stringify(err)), 'error');
+        }
+    } catch(e) {
+        showNotification('Error de red: ' + e.message, 'error');
+    } finally {
+        if (btn) { btn.disabled = false; btn.innerHTML = '<span>📨</span> Enviar Reporte al Administrador'; }
+    }
+}
+
+async function loadReportsHistory() {
     const historyDiv = document.getElementById('reports-history');
-    if(historyDiv) {
-        historyDiv.innerHTML = reportsHistory.map(r => `
+    if (!historyDiv) return;
+    try {
+        const userId = currentQualityUser?.user_id;
+        const url = userId ? `${API_BASE}/reports/?reported_by=${userId}` : `${API_BASE}/reports/`;
+        const res  = await fetch(url);
+        const data = res.ok ? await res.json() : [];
+        const reps = (Array.isArray(data) ? data : (data.results || []))
+                        .sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
+
+        if (!reps.length) {
+            historyDiv.innerHTML = '<p class="text-slate-400 text-sm text-center py-8">No hay reportes enviados aún.</p>';
+            return;
+        }
+        historyDiv.innerHTML = reps.map(r => `
             <div class="bg-slate-50 p-4 rounded-xl border border-slate-100 hover:bg-slate-100 transition-all text-xs">
                 <div class="flex justify-between items-start mb-2">
-                    <span class="text-xs font-bold text-slate-400">${r.date}</span>
-                    <span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">${r.status}</span>
+                    <span class="text-xs font-bold text-slate-400">${r.date || r.created_at?.substring(0,10) || ''}</span>
+                    <span class="text-xs px-2 py-1 rounded-full ${r.status === 'pending' ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'}">
+                        ${r.status === 'pending' ? '⏳ Pendiente' : '✅ Resuelto'}
+                    </span>
                 </div>
-                <p class="font-medium mb-1">
-                    ${r.type === 'publicacion' ? '📦 Error en publicación' : (r.type === 'documento' ? '📄 Documento inválido' : (r.type === 'tecnico' ? '⚙️ Problema técnico' : '📝 Otro'))}
-                </p>
+                <p class="font-medium mb-1">${REPORT_TYPE_MAP[r.type] || '📝 ' + r.type}</p>
                 <p class="text-slate-600">${r.description}</p>
-                ${r.publication !== 'No especificada' ? `<p class="text-slate-400 mt-2">📌 Publicación: ${r.publication}</p>` : ''}
+                ${r.publicationTitle ? `<p class="text-slate-400 mt-2">📌 Publicación: ${r.publicationTitle}</p>` : ''}
             </div>
         `).join('');
+    } catch(e) {
+        historyDiv.innerHTML = '<p class="text-red-400 text-sm text-center py-4">Error al cargar historial.</p>';
     }
-    
-    document.getElementById('error-publication').value = '';
-    document.getElementById('error-description').value = '';
-    showNotification('✅ Reporte enviado al administrador', 'success');
 }
+
 
 // ========== MODO MATRIZ ==========
 function toggleMatrizMode() {

@@ -9,11 +9,7 @@ let companies = [];
 let publications = [];
 let transactions = [];
 
-let reports = [
-    { id: 1, type: "publicacion", description: "La publicación muestra un peso incorrecto del material, dice 500kg pero en realidad son 50kg según las fotos adjuntas.", user: "usuario@ejemplo.com", company: "Metales del Norte", status: "pending", date: "2024-03-16", publicationId: 1, publicationTitle: "Recortes de Aluminio 6061" },
-    { id: 2, type: "documento", description: "El certificado de calidad parece estar alterado. La firma no coincide con los registros oficiales.", user: "comprador@ejemplo.com", company: "Reciclados del Norte", status: "pending", date: "2024-03-15", publicationId: 2, publicationTitle: "Bidones HDPE Tricapa" },
-    { id: 3, type: "tecnico", description: "No se pueden cargar imágenes en el formulario de registro de residuos.", user: "empresa@ecoboros.com", company: "Sistema", status: "resolved", date: "2024-03-14", publicationId: null, publicationTitle: null }
-];
+let reports = [];
 
 // ========== VARIABLES DE ESTADO ==========
 let currentView = "publications";
@@ -164,7 +160,25 @@ async function fetchTransactions() {
 }
 
 async function fetchAllData() {
-    await Promise.all([fetchCompanies(), fetchPublications(), fetchTransactions()]);
+    await Promise.all([fetchCompanies(), fetchPublications(), fetchTransactions(), fetchReports()]);
+}
+
+async function fetchReports() {
+    try {
+        const res  = await fetch(`${API_BASE}/reports/`);
+        const data = res.ok ? await res.json() : [];
+        reports = Array.isArray(data) ? data : (data.results || []);
+        // Normalizar id para compatibilidad con el renderer
+        reports = reports.map(r => ({
+            ...r,
+            id:            r.id || r.report_id,
+            publicationId: r.publicationId || r.waste || null,
+        }));
+        renderReports();
+        updateReportCounters();
+    } catch(e) {
+        console.error('Error cargando reportes:', e);
+    }
 }
 
 // ========== NAVEGACIÓN ==========
@@ -187,7 +201,7 @@ function switchView(view) {
     if (view === 'publications') filterPublications(); 
     if (view === 'companies') filterCompanies(); 
     if (view === 'transactions') filterTransactions(); 
-    if (view === 'reports') renderReports(); 
+    if (view === 'reports') fetchReports(); 
     if (matrizMode) activateMatrizLabels(); 
 }
 
@@ -515,7 +529,19 @@ function updateReportCounters() {
 }
 
 function openReportDetail(report) { 
-    const typeMap = { publicacion: '📦 Error en publicación', documento: '📄 Documento inválido', tecnico: '⚙️ Problema técnico', otro: '📝 Otro' }; 
+    const typeMap = {
+        documento_invalido:     '📄 Documento inválido',
+        imagen_invalida:        '🖼️ Imágenes inválidas',
+        datos_incorrectos:      '📦 Datos incorrectos',
+        descripcion_incorrecta: '✏️ Descripción incorrecta',
+        categoria_incorrecta:   '🏷️ Categoría incorrecta',
+        fraude_sospechoso:      '🚨 Fraude sospechoso',
+        tecnico:                '⚙️ Problema técnico',
+        otro:                   '📝 Otro',
+        // retrocompatibilidad
+        publicacion:            '📦 Error en publicación',
+        documento:              '📄 Documento inválido',
+    }; 
     const container = document.getElementById('report-detail-content'); 
     container.innerHTML = `<div class="space-y-4"><div class="detail-section"><div class="detail-label">Tipo</div><div class="detail-value">${typeMap[report.type]}</div></div><div class="detail-section"><div class="detail-label">Estado</div><div class="detail-value"><span class="status-badge ${report.status === 'pending' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}">${report.status === 'pending' ? '⚠️ Pendiente' : '✅ Resuelto'}</span></div></div><div class="detail-section"><div class="detail-label">Descripción</div><div class="detail-value bg-white p-3 rounded-xl border">${report.description}</div></div><div class="grid grid-cols-2 gap-4"><div class="detail-section"><div class="detail-label">Reportado por</div><div class="detail-value">👤 ${report.user}</div></div><div class="detail-section"><div class="detail-label">Empresa</div><div class="detail-value">🏢 ${report.company}</div></div></div><div class="detail-section"><div class="detail-label">Fecha</div><div class="detail-value">📅 ${report.date}</div></div>${report.publicationId ? `<div class="detail-section"><div class="detail-label">Publicación Relacionada</div><div class="detail-value"><button onclick="goToPublicationFromReport(${report.publicationId})" class="px-4 py-2 bg-[#78C043] text-white rounded-xl text-sm font-medium">🔍 Ver Publicación</button></div></div>` : ''}<div class="flex gap-3 pt-4">${report.status === 'pending' ? `<button onclick="resolveReportFromModal(${report.id})" class="flex-1 bg-green-600 text-white py-3 rounded-xl font-medium">✅ Resolver</button>` : ''}<button onclick="closeReportDetailModal()" class="flex-1 bg-slate-100 text-slate-700 py-3 rounded-xl font-medium">Cerrar</button></div></div>`; 
     document.getElementById('report-detail-modal').classList.remove('hidden'); 
@@ -530,14 +556,30 @@ function goToPublicationFromReport(publicationId) {
     else showNotification('No se encontró la publicación', 'warning'); 
 }
 
-function resolveReportFromModal(id) { 
-    const r = reports.find(r => r.id === id); 
-    if (r) { r.status = 'resolved'; showNotification('Reporte resuelto', 'success'); renderReports(); updateReportCounters(); closeReportDetailModal(); } 
+async function resolveReportFromModal(id) { 
+    await resolveReport(id);
+    closeReportDetailModal();
 }
 
-function resolveReport(id) { 
-    const r = reports.find(r => r.id === id); 
-    if (r) { r.status = 'resolved'; showNotification('Reporte resuelto', 'success'); renderReports(); updateReportCounters(); } 
+async function resolveReport(id) { 
+    try {
+        const res = await fetch(`${API_BASE}/reports/${id}/`, {
+            method:  'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ status: 'resolved' }),
+        });
+        if (res.ok) {
+            const r = reports.find(r => r.id === id);
+            if (r) r.status = 'resolved';
+            showNotification('✅ Reporte resuelto correctamente', 'success');
+            renderReports();
+            updateReportCounters();
+        } else {
+            showNotification('Error al resolver el reporte', 'error');
+        }
+    } catch(e) {
+        showNotification('Error de red: ' + e.message, 'error');
+    }
 }
 
 function renderReports() { 
@@ -552,8 +594,31 @@ function renderReports() {
     updateReportCounters(); 
     if (filtered.length === 0) { container.innerHTML = ''; noMsg.classList.remove('hidden'); return; } 
     noMsg.classList.add('hidden'); 
-    const typeIcon = { publicacion: '📦', documento: '📄', tecnico: '⚙️', otro: '📝' }; 
-    container.innerHTML = filtered.map(r => `<div class="report-card bg-white rounded-2xl border border-slate-100 p-5 shadow-sm hover:shadow-md transition-all cursor-pointer" onclick="openReportDetail(${JSON.stringify(r).replace(/"/g, '&quot;')})"><div class="flex justify-between items-start flex-wrap gap-3"><div><div class="flex items-center gap-2 mb-2"><span class="status-badge ${r.status === 'pending' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}">${r.status === 'pending' ? '⚠️ Pendiente' : '✅ Resuelto'}</span><span class="status-badge bg-slate-100">${typeIcon[r.type]} ${r.type === 'publicacion' ? 'Error publicación' : r.type === 'documento' ? 'Documento' : r.type === 'tecnico' ? 'Técnico' : 'Otro'}</span></div><h3 class="font-bold text-slate-800">${r.description.substring(0, 80)}${r.description.length > 80 ? '...' : ''}</h3><div class="flex gap-4 text-sm text-slate-500 mt-1"><span>👤 ${r.user}</span><span>🏢 ${r.company}</span><span>📅 ${r.date}</span></div></div><div class="flex gap-2">${r.status === 'pending' ? `<button onclick="event.stopPropagation(); resolveReport(${r.id})" class="px-4 py-2 bg-[#78C043] text-white rounded-xl text-sm font-medium">✅ Resolver</button>` : ''}<button onclick="event.stopPropagation(); openReportDetail(${JSON.stringify(r).replace(/"/g, '&quot;')})" class="px-4 py-2 bg-slate-100 text-slate-600 rounded-xl text-sm font-medium">🔍 Detalle</button></div></div></div>`).join(''); 
+    const typeIcon = {
+        documento_invalido:     '📄',
+        imagen_invalida:        '🖼️',
+        datos_incorrectos:      '📦',
+        descripcion_incorrecta: '✏️',
+        categoria_incorrecta:   '🏷️',
+        fraude_sospechoso:      '🚨',
+        tecnico:                '⚙️',
+        otro:                   '📝',
+        publicacion:            '📦',
+        documento:              '📄',
+    };
+    const typeLabelMap = {
+        documento_invalido:     'Documento inválido',
+        imagen_invalida:        'Imágenes inválidas',
+        datos_incorrectos:      'Datos incorrectos',
+        descripcion_incorrecta: 'Descripción incorrecta',
+        categoria_incorrecta:   'Categoría incorrecta',
+        fraude_sospechoso:      'Fraude sospechoso',
+        tecnico:                'Técnico',
+        otro:                   'Otro',
+        publicacion:            'Error publicación',
+        documento:              'Documento',
+    }; 
+    container.innerHTML = filtered.map(r => `<div class="report-card bg-white rounded-2xl border border-slate-100 p-5 shadow-sm hover:shadow-md transition-all cursor-pointer" onclick="openReportDetail(${JSON.stringify(r).replace(/"/g, '&quot;')})"><div class="flex justify-between items-start flex-wrap gap-3"><div><div class="flex items-center gap-2 mb-2"><span class="status-badge ${r.status === 'pending' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}">${r.status === 'pending' ? '⚠️ Pendiente' : '✅ Resuelto'}</span><span class="status-badge bg-slate-100">${typeIcon[r.type] || '📝'} ${typeLabelMap[r.type] || r.type}</span></div><h3 class="font-bold text-slate-800">${r.description.substring(0, 80)}${r.description.length > 80 ? '...' : ''}</h3><div class="flex gap-4 text-sm text-slate-500 mt-1"><span>👤 ${r.user || ''}</span><span>🏢 ${r.company || ''}</span><span>📅 ${r.date || ''}</span></div></div><div class="flex gap-2">${r.status === 'pending' ? `<button onclick="event.stopPropagation(); resolveReport(${r.id})" class="px-4 py-2 bg-[#78C043] text-white rounded-xl text-sm font-medium">✅ Resolver</button>` : ''}<button onclick="event.stopPropagation(); openReportDetail(${JSON.stringify(r).replace(/"/g, '&quot;')})" class="px-4 py-2 bg-slate-100 text-slate-600 rounded-xl text-sm font-medium">🔍 Detalle</button></div></div></div>`).join(''); 
     if (matrizMode) activateMatrizLabels(); 
 }
 

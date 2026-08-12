@@ -1,455 +1,568 @@
-<!DOCTYPE html>
-<html lang="es" class="scroll-smooth">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ECOBOROS - Buscador de Materiales</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="empresa.css">
-</head>
-
-<body class="bg-slate-50 font-sans relative min-h-screen text-slate-800">
-
-    <!-- Command Modal -->
-    <div id="commands-modal" class="hidden fixed z-50 w-[350px] shadow-2xl rounded-2xl border border-slate-200 bg-white"
-        style="bottom: 40px; right: 40px;">
-        <div id="modal-header"
-            class="bg-[#1a2b4b] p-4 flex justify-between items-center cursor-grab active:cursor-grabbing select-none"
-            style="border-bottom-left-radius: 0; border-bottom-right-radius: 0;">
-            <div class="flex items-center gap-2 pointer-events-none">
-                <span class="text-xl">⌨️</span>
-                <h3 class="text-white font-bold text-sm tracking-wide">Atajos de Teclado</h3>
-            </div>
-            <button onclick="toggleCommands()"
-                class="text-white/70 hover:text-white hover:bg-white/20 rounded-lg px-2 py-1 text-xs font-bold uppercase transition-colors">Ocultar</button>
-        </div>
-        <div class="p-0 select-none bg-white"
-            style="border-bottom-left-radius: 15px; border-bottom-right-radius: 15px;">
-            <table class="w-full text-left">
-                <tbody class="divide-y divide-slate-100">
-                    <tr class="hover:bg-slate-50 transition-colors">
-                        <td class="px-6 py-4 text-sm text-slate-600 font-medium">Buscar Material</td>
-                        <td class="px-6 py-4 text-right"><span
-                                class="shortcut-tag bg-slate-100 border border-slate-200 text-slate-500 px-2 py-1 rounded text-xs font-bold shadow-sm">Alt + B</span></td>
-                    </tr>
-                    <tr class="hover:bg-slate-50 transition-colors">
-                        <td class="px-6 py-4 text-sm text-slate-600 font-medium">Abrir Filtros</td>
-                        <td class="px-6 py-4 text-right"><span
-                                class="shortcut-tag bg-slate-100 border border-slate-200 text-slate-500 px-2 py-1 rounded text-xs font-bold shadow-sm">Alt + F</span></td>
-                    </tr>
-                    <tr class="hover:bg-slate-50 transition-colors">
-                        <td class="px-6 py-4 text-sm text-slate-600 font-medium">Limpiar Filtros</td>
-                        <td class="px-6 py-4 text-right"><span
-                                class="shortcut-tag bg-slate-100 border border-slate-200 text-slate-500 px-2 py-1 rounded text-xs font-bold shadow-sm">Alt + L</span></td>
-                    </tr>
-                    <tr class="hover:bg-slate-50 transition-colors">
-                        <td class="px-6 py-4 text-sm text-slate-600 font-medium">Activar Modo Matriz</td>
-                        <td class="px-6 py-4 text-right"><span
-                                class="shortcut-tag bg-slate-100 border border-slate-200 text-[#78C043] px-2 py-1 rounded text-xs font-bold shadow-sm">Q + A</span></td>
-                    </tr>
-                    <tr class="bg-slate-50">
-                        <td colspan="2" class="px-6 py-3 text-xs font-bold text-slate-400 uppercase tracking-wider">Navegación</td>
-                    </tr>
-                    <tr class="hover:bg-slate-50 transition-colors">
-                        <td class="px-6 py-4 text-sm text-slate-600 font-medium">Ir a Inicio</td>
-                        <td class="px-6 py-4 text-right"><span
-                                class="shortcut-tag bg-slate-100 border border-slate-200 text-slate-500 px-2 py-1 rounded text-xs font-bold shadow-sm">Alt + H</span></td>
-                    </tr>
-                    <tr class="hover:bg-slate-50 transition-colors">
-                        <td class="px-6 py-4 text-sm text-slate-600 font-medium">Mis Publicaciones</td>
-                        <td class="px-6 py-4 text-right"><span
-                                class="shortcut-tag bg-slate-100 border border-slate-200 text-slate-500 px-2 py-1 rounded text-xs font-bold shadow-sm">Alt + P</span></td>
-                    </tr>
-                    <tr class="hover:bg-slate-50 transition-colors">
-                        <td class="px-6 py-4 text-sm text-slate-600 font-medium">Mis Compras</td>
-                        <td class="px-6 py-4 text-right"><span
-                                class="shortcut-tag bg-slate-100 border border-slate-200 text-slate-500 px-2 py-1 rounded text-xs font-bold shadow-sm">Alt + C</span></td>
-                    </tr>
-                    <tr class="hover:bg-slate-50 transition-colors">
-                        <td class="px-6 py-4 text-sm text-slate-600 font-medium">Subir Residuos</td>
-                        <td class="px-6 py-4 text-right"><span
-                                class="shortcut-tag bg-slate-100 border border-slate-200 text-slate-500 px-2 py-1 rounded text-xs font-bold shadow-sm">Alt + U</span></td>
-                    </tr>
-                    <tr class="hover:bg-slate-50 transition-colors">
-                        <td class="px-6 py-4 text-sm text-slate-600 font-medium">Mostrar/Ocultar Atajos</td>
-                        <td class="px-6 py-4 text-right"><span
-                                class="shortcut-tag bg-slate-100 border border-slate-200 text-slate-500 px-2 py-1 rounded text-xs font-bold shadow-sm">Shift + ?</span></td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- Filters Modal -->
-    <div id="filters-modal" onclick="closeFiltersOnBackground(event)"
-        class="hidden fixed inset-0 z-[999999] flex items-start justify-center overflow-auto bg-slate-900/50 transition-all">
-        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-2xl mx-4 mt-12 mb-12 transform transition-all border border-slate-100"
-            style="z-index: 1000000;">
-            <div class="bg-[#1a2b4b] p-6 border-radius-[15px] flex justify-between items-center">
-                <h2 class="text-white text-xl font-bold flex items-center gap-3">
-                    <span class="bg-white/20 p-2 rounded-lg text-sm">⚙️</span> Filtros Avanzados
-                </h2>
-                <button onclick="toggleFilters()"
-                    class="text-white/70 hover:text-white hover:bg-white/20 rounded-full p-2 transition-colors">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
-                        </path>
-                    </svg>
-                </button>
-            </div>
-            <div class="p-8 flex flex-col gap-8 max-h-[70vh] bg-white">
-                <div>
-                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Categoría del
-                        Material</label>
-                    <div id="modal-category-buttons" class="flex flex-wrap gap-2"></div>
-                </div>
-                <div class="h-px bg-slate-100"></div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Fecha
-                            Desde</label>
-                        <input type="date" id="dateStartInput"
-                            class="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 focus:border-[#78C043] focus:ring-2 focus:ring-[#78C043]/20 outline-none transition-all">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Fecha
-                            Hasta</label>
-                        <input type="date" id="dateEndInput"
-                            class="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 focus:border-[#78C043] focus:ring-2 focus:ring-[#78C043]/20 outline-none transition-all">
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Peso Mínimo
-                        Requerido</label>
-                    <div class="relative">
-                        <input type="number" id="weightInput" placeholder="Ej: 500"
-                            class="w-full p-3.5 pl-4 pr-16 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 focus:border-[#78C043] focus:ring-2 focus:ring-[#78C043]/20 outline-none transition-all">
-                        <span
-                            class="absolute right-4 top-3.5 text-slate-400 font-bold text-sm bg-slate-100 px-2 py-0.5 rounded">KG</span>
-                    </div>
-                </div>
-            </div>
-            <div class="p-5 bg-slate-50 border-t border-slate-100 flex justify-between items-center gap-3 relative"
-                style="border-top-left-radius: 0; border-top-right-radius: 0;">
-                <button onclick="resetFilters()" id="btnResetModal"
-                    class="px-6 py-3 rounded-xl text-slate-500 font-bold hover:text-slate-800 hover:bg-slate-200/50 transition-colors">
-                    Limpiar Filtros
-                </button>
-                <button onclick="applyFiltersAndClose()"
-                    class="px-8 py-3 rounded-xl bg-[#78C043] text-white font-bold shadow-lg shadow-[#78C043]/30 hover:bg-[#66a338] transition-all transform active:scale-95 flex items-center gap-2">
-                    Aplicar Resultados <span id="modalResultCount"
-                        class="bg-white/20 px-2 py-0.5 rounded-md text-sm"></span>
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Header -->
-    <header class="bg-[#1a2b4b] border-radius-[15px] sticky top-0 z-50 shadow-lg">
-        <div class="max-w-7xl mx-auto px-6">
-            <div class="flex items-center justify-between py-4">
-                <div class="flex items-center gap-4">
-                    <img src="../../Public/Imagenes/Logo.png" alt="ECOBOROS Logo" class="h-12 w-auto object-contain drop-shadow-sm"
-                        onerror="this.src='https://placehold.co/150x60/1a2b4b/78C043?text=ECOBOROS'">
-                    <div>
-                        <h1 class="text-white text-lg font-bold">ECOBOROS</h1>
-                        <span class="text-[#78C043] text-xs font-medium">Marketplace de Residuos</span>
-                    </div>
-                </div>
-                <div class="flex items-center gap-4 relative">
-                    <div class="text-right">
-                        <p class="text-white text-sm font-bold" id="user-name-display">Empresa Demo S.A.</p>
-                        <p class="text-[#78C043] text-xs font-medium flex items-center justify-end gap-1">
-                            <span class="w-2 h-2 rounded-full bg-[#78C043] animate-pulse-custom"></span>
-                            <span id="user-role-display">Usuario Verificado</span>
-                        </p>
-                    </div>
-                    <div id="user-avatar"
-                        class="w-10 h-10 rounded-full bg-white text-[#1a2b4b] flex items-center justify-center font-bold text-sm border-2 border-white/20 cursor-pointer"
-                        onclick="toggleCompanyDropdown()">
-                        EM
-                    </div>
-                    <button onclick="logout()"
-                        class="logout-btn text-white/80 hover:text-white hover:bg-white/20 px-4 py-2 rounded-xl transition-all flex items-center gap-2 text-sm font-medium">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1">
-                            </path>
-                        </svg>
-                        Salir
-                    </button>
-
-                    <!-- Dropdown Empresa -->
-                    <div id="company-dropdown" class="dropdown-menu hidden">
-                        <div class="dropdown-item" onclick="showMyPublicationsPage()">
-                            <span>📋</span> Mis Publicaciones
-                        </div>
-                        <div class="dropdown-item" onclick="showMyPurchasesPage()">
-                            <span>🛒</span> Mis Compras
-                        </div>
-                        <div class="dropdown-divider"></div>
-                        <div class="dropdown-item" onclick="window.location.href='registro.html'">
-                            <span>➕</span> Subir Residuos
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <nav class="bg-[#152238] px-6">
-            <div class="max-w-7xl mx-auto flex gap-0">
-                <a href="#" onclick="showHomePage(); return false;" id="nav-home"
-                    class="text-white bg-white/5 border-b-2 border-[#78C043] px-5 py-3 text-sm font-medium">Inicio</a>
-                <a href="#" onclick="showMyPublicationsPage(); return false;" id="nav-publications"
-                    class="text-slate-400 hover:text-white hover:bg-white/5 px-5 py-3 text-sm font-medium transition-colors">Mis
-                    Publicaciones</a>
-                <a href="#" onclick="showMyPurchasesPage(); return false;" id="nav-purchases"
-                    class="text-slate-400 hover:text-white hover:bg-white/5 px-5 py-3 text-sm font-medium transition-colors">Mis
-                    Compras</a>
-                <a href="registro.html"
-                    class="text-slate-400 hover:text-white hover:bg-white/5 px-5 py-3 text-sm font-medium transition-colors">Subir
-                    Residuos</a>
-            </div>
-        </nav>
-    </header>
-
-    <!-- ==================== PÁGINA DE INICIO (TODAS LAS PUBLICACIONES) ==================== -->
-    <div id="home-page" class="page-visible page-transition">
-        <!-- Título de la página de inicio -->
-        <div class="max-w-7xl mx-auto px-6 pt-8 pb-2">
-            <div class="mb-6 animate-card" style="animation-delay: 0.1s;">
-                <h2 class="text-2xl font-bold text-[#1a2b4b] mb-1">Explora Materiales Disponibles</h2>
-                <p class="text-slate-500 text-sm">Descubre residuos industriales de otras empresas listos para tu
-                    proceso</p>
-            </div>
-        </div>
-
-        <!-- Search Section -->
-        <div id="search-section" class="max-w-7xl mx-auto px-6 pt-2 pb-4 scroll-mt-24">
-            <div class="relative flex flex-col md:flex-row gap-4">
-                <div class="relative flex-1 group search-container">
-                    <span
-                        class="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 text-xl group-focus-within:text-[#78C043] transition-colors">🔍</span>
-                    <input id="searchInput" onkeyup="applyFilters(false)"
-                        class="w-full border-none rounded-2xl py-4.5 pl-14 pr-6 text-slate-700 text-lg focus:outline-none focus:ring-4 focus:ring-[#78C043]/20 transition-all bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]"
-                        style="padding-top: 1rem; padding-bottom: 1rem;"
-                        placeholder="¿Qué material industrial estás buscando hoy?" />
-                </div>
-
-                <button onclick="toggleFilters()" id="btnFilter"
-                    class="bg-white text-slate-700 px-8 py-4 rounded-2xl flex items-center justify-center gap-3 font-bold shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:text-[#78C043] transition-all hover:-translate-y-1 active:translate-y-0 relative">
-                    <span class="text-xl">⚙️</span>
-                    <span class="text-lg">Filtros</span>
-                </button>
-            </div>
-
-            <div class="mt-4 flex justify-between items-center px-1">
-                <div id="active-filters-badges" class="flex flex-wrap gap-2"></div>
-            </div>
-        </div>
-
-        <!-- Products Section -->
-        <div id="products-section" class="max-w-7xl mx-auto px-6 py-6 scroll-mt-24 min-h-[500px]">
-            <div id="products-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            </div>
-
-            <!-- Contenedor de Paginación -->
-            <div id="home-pagination-container" class="mt-12 flex justify-center items-center gap-3"></div>
-
-            <div id="no-results" class="hidden flex-col items-center justify-center py-20 text-center">
-                <div class="bg-white w-24 h-24 rounded-full flex items-center justify-center mb-6 shadow-sm">
-                    <span class="text-4xl">🔍</span>
-                </div>
-                <h3 class="text-2xl font-bold text-[#1a2b4b] mb-2">No encontramos materiales</h3>
-                <p class="text-base text-slate-500 max-w-md">Intenta usar términos más generales o ajustar los filtros
-                    de búsqueda para ver más opciones.</p>
-                <button onclick="resetFilters()" class="mt-6 text-[#78C043] font-bold hover:underline">Limpiar todos los
-                    filtros</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- ==================== PÁGINA: MIS PUBLICACIONES ==================== -->
-    <div id="my-publications-page" class="page-hidden page-transition max-w-7xl mx-auto px-6 py-8">
-        <div class="mb-8 animate-card" style="animation-delay: 0.1s;">
-            <h2 class="text-2xl font-bold text-[#1a2b4b] mb-1">Mis Publicaciones</h2>
-            <p class="text-slate-500 text-sm">Gestiona tus materiales registrados</p>
-        </div>
-
-        <!-- Tabs de estado -->
-        <div class="flex gap-2 mb-6 border-b border-slate-200 animate-card" style="animation-delay: 0.15s;">
-            <button onclick="filterMyPublications('all')" id="my-tab-all"
-                class="tab-active px-6 py-3 rounded-t-xl font-bold text-sm transition-all">Todas</button>
-            <button onclick="filterMyPublications('revision')" id="my-tab-revision"
-                class="tab-inactive px-6 py-3 rounded-t-xl font-bold text-sm transition-all">Revisión</button>
-            <button onclick="filterMyPublications('aprobada')" id="my-tab-aprobada"
-                class="tab-inactive px-6 py-3 rounded-t-xl font-bold text-sm transition-all">Aprobadas</button>
-            <button onclick="filterMyPublications('rechazada')" id="my-tab-rechazada"
-                class="tab-inactive px-6 py-3 rounded-t-xl font-bold text-sm transition-all">Rechazadas</button>
-            <button onclick="filterMyPublications('pendiente')" id="my-tab-pendiente"
-                class="tab-inactive px-6 py-3 rounded-t-xl font-bold text-sm transition-all">Pendientes</button>
-            <button onclick="filterMyPublications('proceso')" id="my-tab-proceso"
-                class="tab-inactive px-6 py-3 rounded-t-xl font-bold text-sm transition-all">En Proceso</button>
-            <button onclick="filterMyPublications('completado')" id="my-tab-completado"
-                class="tab-inactive px-6 py-3 rounded-t-xl font-bold text-sm transition-all">Completadas</button>
-        </div>
-
-        <!-- Grid de publicaciones del usuario -->
-        <div id="my-publications-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        </div>
-
-        <div id="my-no-publications" class="hidden text-center py-16 animate-card">
-            <div class="bg-white w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
-                <span class="text-3xl">📭</span>
-            </div>
-            <p class="text-slate-500">No tienes publicaciones en esta categoría</p>
-            <a href="registro.html" class="inline-block mt-3 text-[#78C043] font-medium hover:underline">Subir
-                mi primer material</a>
-        </div>
-    </div>
-
-    <!-- ==================== PÁGINA: MIS COMPRAS ==================== -->
-    <div id="my-purchases-page" class="page-hidden page-transition max-w-7xl mx-auto px-6 py-8">
-        <div class="mb-8 animate-card" style="animation-delay: 0.1s;">
-            <h2 class="text-2xl font-bold text-[#1a2b4b] mb-1">Mis Compras</h2>
-            <p class="text-slate-500 text-sm">Historial de materiales adquiridos</p>
-        </div>
-
-        <!-- Resumen de compras -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8 animate-card" style="animation-delay: 0.15s;">
-            <div class="bg-gradient-to-br from-[#1a2b4b] to-[#2d4563] rounded-2xl p-5 text-white shadow-lg">
-                <p class="text-sm opacity-80">Total gastado</p>
-                <p class="text-2xl font-bold mt-1" id="total-spent">$0</p>
-            </div>
-            <div class="bg-white rounded-2xl p-5 shadow-md border border-slate-100">
-                <p class="text-sm text-slate-500">Compras realizadas</p>
-                <p class="text-2xl font-bold text-[#1a2b4b] mt-1" id="total-purchases-count">0</p>
-            </div>
-            <div class="bg-white rounded-2xl p-5 shadow-md border border-slate-100">
-                <p class="text-sm text-slate-500">En proceso</p>
-                <p class="text-2xl font-bold text-[#1a2b4b] mt-1" id="pending-purchases-count">0</p>
-            </div>
-        </div>
-
-        <!-- Lista de compras -->
-        <div id="purchases-list-container"
-            class="bg-white rounded-2xl shadow-md border border-slate-100 overflow-hidden animate-card"
-            style="animation-delay: 0.2s;">
-            <div class="overflow-x-auto">
-                <table class="w-full">
-                    <thead class="bg-slate-50 border-b border-slate-200">
-                        <tr>
-                            <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
-                                Producto</th>
-                            <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
-                                Fecha</th>
-                            <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
-                                Total</th>
-                            <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
-                                Estado</th>
-                            <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
-                                Vendedor</th>
-                        </tr>
-                    </thead>
-                    <tbody id="purchases-table-body" class="divide-y divide-slate-100">
-                    </tbody>
-                </table>
-            </div>
-            <div id="no-purchases" class="hidden text-center py-12">
-                <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <span class="text-2xl">🛍️</span>
-                </div>
-                <p class="text-slate-400">No has realizado compras aún</p>
-                <a href="#" onclick="showHomePage(); return false;"
-                    class="inline-block mt-2 text-[#78C043] text-sm font-medium hover:underline">Explorar materiales</a>
-            </div>
-        </div>
-    </div>
-
-    <!-- MODAL: Editar Publicación -->
-    <div id="edit-publication-modal"
-        class="hidden fixed inset-0 z-[999999] flex items-center justify-center bg-slate-900/50 transition-all overflow-auto p-4">
-        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg animate-card">
-            <div class="bg-[#1a2b4b] p-5 flex justify-between items-center">
-                <h2 class="text-white text-xl font-bold">Editar Publicacion</h2>
-                <button onclick="closeEditModal()" class="text-white/70 hover:text-white text-2xl">&times;</button>
-            </div>
-            <div class="p-6 space-y-4">
-                <div>
-                    <label for="edit-title" class="block text-sm font-medium text-slate-600">Titulo</label>
-                    <input type="text" id="edit-title" class="w-full mt-1 p-3 border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:border-[#78C043]" placeholder="Titulo de la publicacion" />
-                </div>
-                <div>
-                    <label for="edit-price" class="block text-sm font-medium text-slate-600">Precio ($/kg)</label>
-                    <input type="number" step="0.01" id="edit-price" class="w-full mt-1 p-3 border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:border-[#78C043]" placeholder="Ej: 12.50" />
-                </div>
-                <div>
-                    <label for="edit-qty" class="text-sm font-bold text-slate-600">Cantidad</label>
-                    <input type="number" id="edit-qty" class="w-full mt-1 p-3 border border-slate-200 rounded-xl bg-slate-50" placeholder="Cantidad" />
-                </div>
-                <div>
-                    <label for="edit-weight" class="text-sm font-bold text-slate-600">Peso Total (kg)</label>
-                    <input type="number" id="edit-weight" class="w-full mt-1 p-3 border border-slate-200 rounded-xl bg-slate-50" placeholder="Peso total (kg)" />
-                </div>
-                <div>
-                    <label class="text-sm font-bold text-slate-600">Descripcion Tecnica</label>
-                    <textarea id="edit-description" rows="2"
-                        class="w-full mt-1 p-3 border border-slate-200 rounded-xl bg-slate-50"></textarea>
-                </div>
-                <div id="edit-comment-container" class="hidden bg-amber-50 border border-amber-200 p-3 rounded-xl mt-4">
-                    <label class="text-sm font-bold text-amber-900">Comentario para Calidad</label>
-                    <textarea id="edit-comment" rows="2" class="w-full mt-1 p-2 border border-amber-300 rounded-lg bg-white text-sm" placeholder="Justificacion de los ajustes..."></textarea>
-                </div>
-                <div class="flex gap-3 pt-4">
-                    <button onclick="saveEditPublication()"
-                        class="flex-1 bg-[#78C043] text-white py-3 rounded-xl font-bold">Guardar Cambios</button>
-                    <button onclick="closeEditModal()"
-                        class="flex-1 bg-slate-200 text-slate-600 py-3 rounded-xl font-bold">Cancelar</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- MODAL: Detalles y Gestión de Solicitud de Compra -->
-    <div id="request-details-modal" class="hidden fixed inset-0 z-[999999] flex items-center justify-center bg-slate-900/50 transition-all overflow-auto p-4">
-        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-2xl animate-card overflow-hidden">
-            <div class="bg-[#1a2b4b] p-5 flex justify-between items-center text-white">
-                <div>
-                    <h2 class="text-xl font-bold flex items-center gap-2">
-                        <span id="modal-req-icon">🛒</span> Solicitud de Compra <span id="modal-req-id">#--</span>
-                    </h2>
-                    <p class="text-xs text-[#78C043] font-medium" id="modal-req-subtitle">Negociación y Estado de Transacción</p>
-                </div>
-                <button onclick="closeRequestDetailsModal()" class="text-white/70 hover:text-white text-2xl">&times;</button>
-            </div>
-            
-            <div class="p-6 space-y-6 max-h-[80vh] overflow-y-auto" id="request-modal-body">
-                <!-- Se llena dinámicamente en JS -->
-            </div>
-        </div>
-    </div>
-
-    <!-- Matriz Bubble -->
-    <div id="matriz-bubble" class="fixed bottom-6 right-6 z-[9999] animate-card">
-        <div
-            class="bg-gradient-to-br from-[#1a2b4b] to-[#2d4563] text-white rounded-xl shadow-2xl p-3 border border-[#78C043]/30 max-w-[260px]">
-            <div class="flex items-start justify-between gap-2">
-                <div>
-                    <h3 id="matriz-bubble-title" class="font-bold text-sm text-[#78C043]">Modo Matriz Desactivado</h3>
-                    <p id="matriz-bubble-text" class="text-xs text-slate-200">Presiona <span class="font-mono">Q +
-                            A</span> para activar</p>
-                </div>
-                <button id="matriz-toggle-btn"
-                    class="text-xs bg-white/20 hover:bg-white/35 px-2 py-1 rounded">Activar</button>
-            </div>
-        </div>
-    </div>
-
-    <footer class="text-center py-6 text-slate-400 text-xs">
-        Universidad Tecnologica de Tijuana - ECOBOROS - Marketplace de Residuos Industriales
-    </footer>
-
-    <script src="empresa.js"></script>
-</body>
-
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ECOBOROS - Buscador de Materiales</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="empresa.css">
+</head>
+
+<body class="bg-slate-50 font-sans relative min-h-screen text-slate-800">
+
+    <!-- Command Modal -->
+    <div id="commands-modal" class="hidden fixed z-50 w-[350px] shadow-2xl rounded-2xl border border-slate-200 bg-white"
+        style="bottom: 40px; right: 40px;">
+        <div id="modal-header"
+            class="bg-[#1a2b4b] p-4 flex justify-between items-center cursor-grab active:cursor-grabbing select-none"
+            style="border-bottom-left-radius: 0; border-bottom-right-radius: 0;">
+            <div class="flex items-center gap-2 pointer-events-none">
+                <span class="text-xl">⌨️</span>
+                <h3 class="text-white font-bold text-sm tracking-wide">Atajos de Teclado</h3>
+            </div>
+            <button onclick="toggleCommands()"
+                class="text-white/70 hover:text-white hover:bg-white/20 rounded-lg px-2 py-1 text-xs font-bold uppercase transition-colors">Ocultar</button>
+        </div>
+        <div class="p-0 select-none bg-white"
+            style="border-bottom-left-radius: 15px; border-bottom-right-radius: 15px;">
+            <table class="w-full text-left">
+                <tbody class="divide-y divide-slate-100">
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="px-6 py-4 text-sm text-slate-600 font-medium">Buscar Material</td>
+                        <td class="px-6 py-4 text-right"><span
+                                class="shortcut-tag bg-slate-100 border border-slate-200 text-slate-500 px-2 py-1 rounded text-xs font-bold shadow-sm">Alt + B</span></td>
+                    </tr>
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="px-6 py-4 text-sm text-slate-600 font-medium">Abrir Filtros</td>
+                        <td class="px-6 py-4 text-right"><span
+                                class="shortcut-tag bg-slate-100 border border-slate-200 text-slate-500 px-2 py-1 rounded text-xs font-bold shadow-sm">Alt + F</span></td>
+                    </tr>
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="px-6 py-4 text-sm text-slate-600 font-medium">Limpiar Filtros</td>
+                        <td class="px-6 py-4 text-right"><span
+                                class="shortcut-tag bg-slate-100 border border-slate-200 text-slate-500 px-2 py-1 rounded text-xs font-bold shadow-sm">Alt + L</span></td>
+                    </tr>
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="px-6 py-4 text-sm text-slate-600 font-medium">Activar Modo Matriz</td>
+                        <td class="px-6 py-4 text-right"><span
+                                class="shortcut-tag bg-slate-100 border border-slate-200 text-[#78C043] px-2 py-1 rounded text-xs font-bold shadow-sm">Q + A</span></td>
+                    </tr>
+                    <tr class="bg-slate-50">
+                        <td colspan="2" class="px-6 py-3 text-xs font-bold text-slate-400 uppercase tracking-wider">Navegación</td>
+                    </tr>
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="px-6 py-4 text-sm text-slate-600 font-medium">Ir a Inicio</td>
+                        <td class="px-6 py-4 text-right"><span
+                                class="shortcut-tag bg-slate-100 border border-slate-200 text-slate-500 px-2 py-1 rounded text-xs font-bold shadow-sm">Alt + H</span></td>
+                    </tr>
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="px-6 py-4 text-sm text-slate-600 font-medium">Mis Publicaciones</td>
+                        <td class="px-6 py-4 text-right"><span
+                                class="shortcut-tag bg-slate-100 border border-slate-200 text-slate-500 px-2 py-1 rounded text-xs font-bold shadow-sm">Alt + P</span></td>
+                    </tr>
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="px-6 py-4 text-sm text-slate-600 font-medium">Mis Compras</td>
+                        <td class="px-6 py-4 text-right"><span
+                                class="shortcut-tag bg-slate-100 border border-slate-200 text-slate-500 px-2 py-1 rounded text-xs font-bold shadow-sm">Alt + C</span></td>
+                    </tr>
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="px-6 py-4 text-sm text-slate-600 font-medium">Subir Residuos</td>
+                        <td class="px-6 py-4 text-right"><span
+                                class="shortcut-tag bg-slate-100 border border-slate-200 text-slate-500 px-2 py-1 rounded text-xs font-bold shadow-sm">Alt + U</span></td>
+                    </tr>
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="px-6 py-4 text-sm text-slate-600 font-medium">Mostrar/Ocultar Atajos</td>
+                        <td class="px-6 py-4 text-right"><span
+                                class="shortcut-tag bg-slate-100 border border-slate-200 text-slate-500 px-2 py-1 rounded text-xs font-bold shadow-sm">Shift + ?</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Filters Modal -->
+    <div id="filters-modal" onclick="closeFiltersOnBackground(event)"
+        class="hidden fixed inset-0 z-[999999] flex items-start justify-center overflow-auto bg-slate-900/50 transition-all">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-2xl mx-4 mt-12 mb-12 transform transition-all border border-slate-100"
+            style="z-index: 1000000;">
+            <div class="bg-[#1a2b4b] p-6 border-radius-[15px] flex justify-between items-center">
+                <h2 class="text-white text-xl font-bold flex items-center gap-3">
+                    <span class="bg-white/20 p-2 rounded-lg text-sm">⚙️</span> Filtros Avanzados
+                </h2>
+                <button onclick="toggleFilters()"
+                    class="text-white/70 hover:text-white hover:bg-white/20 rounded-full p-2 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
+                    </svg>
+                </button>
+            </div>
+            <div class="p-8 flex flex-col gap-8 max-h-[70vh] bg-white">
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Categoría del
+                        Material</label>
+                    <div id="modal-category-buttons" class="flex flex-wrap gap-2"></div>
+                </div>
+                <div class="h-px bg-slate-100"></div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Fecha
+                            Desde</label>
+                        <input type="date" id="dateStartInput"
+                            class="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 focus:border-[#78C043] focus:ring-2 focus:ring-[#78C043]/20 outline-none transition-all">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Fecha
+                            Hasta</label>
+                        <input type="date" id="dateEndInput"
+                            class="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 focus:border-[#78C043] focus:ring-2 focus:ring-[#78C043]/20 outline-none transition-all">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Peso Mínimo
+                        Requerido</label>
+                    <div class="relative">
+                        <input type="number" id="weightInput" placeholder="Ej: 500"
+                            class="w-full p-3.5 pl-4 pr-16 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 focus:border-[#78C043] focus:ring-2 focus:ring-[#78C043]/20 outline-none transition-all">
+                        <span
+                            class="absolute right-4 top-3.5 text-slate-400 font-bold text-sm bg-slate-100 px-2 py-0.5 rounded">KG</span>
+                    </div>
+                </div>
+            </div>
+            <div class="p-5 bg-slate-50 border-t border-slate-100 flex justify-between items-center gap-3 relative"
+                style="border-top-left-radius: 0; border-top-right-radius: 0;">
+                <button onclick="resetFilters()" id="btnResetModal"
+                    class="px-6 py-3 rounded-xl text-slate-500 font-bold hover:text-slate-800 hover:bg-slate-200/50 transition-colors">
+                    Limpiar Filtros
+                </button>
+                <button onclick="applyFiltersAndClose()"
+                    class="px-8 py-3 rounded-xl bg-[#78C043] text-white font-bold shadow-lg shadow-[#78C043]/30 hover:bg-[#66a338] transition-all transform active:scale-95 flex items-center gap-2">
+                    Aplicar Resultados <span id="modalResultCount"
+                        class="bg-white/20 px-2 py-0.5 rounded-md text-sm"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="bg-[#1a2b4b] border-radius-[15px] sticky top-0 z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="flex items-center justify-between py-4">
+                <div class="flex items-center gap-4">
+                    <img src="../../Public/Imagenes/Logo.png" alt="ECOBOROS Logo" class="h-12 w-auto object-contain drop-shadow-sm"
+                        onerror="this.src='https://placehold.co/150x60/1a2b4b/78C043?text=ECOBOROS'">
+                    <div>
+                        <h1 class="text-white text-lg font-bold">ECOBOROS</h1>
+                        <span class="text-[#78C043] text-xs font-medium">Marketplace de Residuos</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4 relative">
+                    <div class="text-right">
+                        <p class="text-white text-sm font-bold" id="user-name-display">Empresa Demo S.A.</p>
+                        <p class="text-[#78C043] text-xs font-medium flex items-center justify-end gap-1">
+                            <span class="w-2 h-2 rounded-full bg-[#78C043] animate-pulse-custom"></span>
+                            <span id="user-role-display">Usuario Verificado</span>
+                        </p>
+                    </div>
+                    <div id="user-avatar"
+                        class="w-10 h-10 rounded-full bg-white text-[#1a2b4b] flex items-center justify-center font-bold text-sm border-2 border-white/20 cursor-pointer"
+                        onclick="toggleCompanyDropdown()">
+                        EM
+                    </div>
+                    <button onclick="logout()"
+                        class="logout-btn text-white/80 hover:text-white hover:bg-white/20 px-4 py-2 rounded-xl transition-all flex items-center gap-2 text-sm font-medium">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1">
+                            </path>
+                        </svg>
+                        Salir
+                    </button>
+
+                    <!-- Dropdown Empresa -->
+                    <div id="company-dropdown" class="dropdown-menu hidden">
+                        <div class="dropdown-item" onclick="showMyPublicationsPage()">
+                            <span>📋</span> Mis Publicaciones
+                        </div>
+                        <div class="dropdown-item" onclick="showMyPurchasesPage()">
+                            <span>🛒</span> Mis Compras
+                        </div>
+                        <div class="dropdown-divider"></div>
+                        <div class="dropdown-item" onclick="window.location.href='registro.html'">
+                            <span>➕</span> Subir Residuos
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <nav class="bg-[#152238] px-6">
+            <div class="max-w-7xl mx-auto flex gap-0">
+                <a href="#" onclick="showHomePage(); return false;" id="nav-home"
+                    class="text-white bg-white/5 border-b-2 border-[#78C043] px-5 py-3 text-sm font-medium">Inicio</a>
+                <a href="#" onclick="showMyPublicationsPage(); return false;" id="nav-publications"
+                    class="text-slate-400 hover:text-white hover:bg-white/5 px-5 py-3 text-sm font-medium transition-colors">Mis
+                    Publicaciones</a>
+                <a href="#" onclick="showMyPurchasesPage(); return false;" id="nav-purchases"
+                    class="text-slate-400 hover:text-white hover:bg-white/5 px-5 py-3 text-sm font-medium transition-colors">Mis
+                    Compras</a>
+                <a href="registro.html"
+                    class="text-slate-400 hover:text-white hover:bg-white/5 px-5 py-3 text-sm font-medium transition-colors">Subir
+                    Residuos</a>
+            </div>
+        </nav>
+    </header>
+
+    <!-- ==================== PÁGINA DE INICIO (TODAS LAS PUBLICACIONES) ==================== -->
+    <div id="home-page" class="page-visible page-transition">
+        <!-- Título de la página de inicio -->
+        <div class="max-w-7xl mx-auto px-6 pt-8 pb-2">
+            <div class="mb-6 animate-card" style="animation-delay: 0.1s;">
+                <h2 class="text-2xl font-bold text-[#1a2b4b] mb-1">Explora Materiales Disponibles</h2>
+                <p class="text-slate-500 text-sm">Descubre residuos industriales de otras empresas listos para tu
+                    proceso</p>
+            </div>
+        </div>
+
+        <!-- Search Section -->
+        <div id="search-section" class="max-w-7xl mx-auto px-6 pt-2 pb-4 scroll-mt-24">
+            <div class="relative flex flex-col md:flex-row gap-4">
+                <div class="relative flex-1 group search-container">
+                    <span
+                        class="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 text-xl group-focus-within:text-[#78C043] transition-colors">🔍</span>
+                    <input id="searchInput" onkeyup="applyFilters(false)"
+                        class="w-full border-none rounded-2xl py-4.5 pl-14 pr-6 text-slate-700 text-lg focus:outline-none focus:ring-4 focus:ring-[#78C043]/20 transition-all bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]"
+                        style="padding-top: 1rem; padding-bottom: 1rem;"
+                        placeholder="¿Qué material industrial estás buscando hoy?" />
+                </div>
+
+                <button onclick="toggleFilters()" id="btnFilter"
+                    class="bg-white text-slate-700 px-8 py-4 rounded-2xl flex items-center justify-center gap-3 font-bold shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:text-[#78C043] transition-all hover:-translate-y-1 active:translate-y-0 relative">
+                    <span class="text-xl">⚙️</span>
+                    <span class="text-lg">Filtros</span>
+                </button>
+            </div>
+
+            <div class="mt-4 flex justify-between items-center px-1">
+                <div id="active-filters-badges" class="flex flex-wrap gap-2"></div>
+            </div>
+        </div>
+
+        <!-- Products Section -->
+        <div id="products-section" class="max-w-7xl mx-auto px-6 py-6 scroll-mt-24 min-h-[500px]">
+            <div id="products-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            </div>
+
+            <!-- Contenedor de Paginación -->
+            <div id="home-pagination-container" class="mt-12 flex justify-center items-center gap-3"></div>
+
+            <div id="no-results" class="hidden flex-col items-center justify-center py-20 text-center">
+                <div class="bg-white w-24 h-24 rounded-full flex items-center justify-center mb-6 shadow-sm">
+                    <span class="text-4xl">🔍</span>
+                </div>
+                <h3 class="text-2xl font-bold text-[#1a2b4b] mb-2">No encontramos materiales</h3>
+                <p class="text-base text-slate-500 max-w-md">Intenta usar términos más generales o ajustar los filtros
+                    de búsqueda para ver más opciones.</p>
+                <button onclick="resetFilters()" class="mt-6 text-[#78C043] font-bold hover:underline">Limpiar todos los
+                    filtros</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== PÁGINA: MIS PUBLICACIONES ==================== -->
+    <div id="my-publications-page" class="page-hidden page-transition max-w-7xl mx-auto px-6 py-8">
+        <div class="mb-8 animate-card" style="animation-delay: 0.1s;">
+            <h2 class="text-2xl font-bold text-[#1a2b4b] mb-1">Mis Publicaciones</h2>
+            <p class="text-slate-500 text-sm">Gestiona tus materiales registrados</p>
+        </div>
+
+        <!-- Tabs de estado -->
+        <div class="flex gap-2 mb-6 border-b border-slate-200 animate-card" style="animation-delay: 0.15s;">
+            <button onclick="filterMyPublications('all')" id="my-tab-all"
+                class="tab-active px-6 py-3 rounded-t-xl font-bold text-sm transition-all">Todas</button>
+            <button onclick="filterMyPublications('revision')" id="my-tab-revision"
+                class="tab-inactive px-6 py-3 rounded-t-xl font-bold text-sm transition-all">Revisión</button>
+            <button onclick="filterMyPublications('aprobada')" id="my-tab-aprobada"
+                class="tab-inactive px-6 py-3 rounded-t-xl font-bold text-sm transition-all">Aprobadas</button>
+            <button onclick="filterMyPublications('rechazada')" id="my-tab-rechazada"
+                class="tab-inactive px-6 py-3 rounded-t-xl font-bold text-sm transition-all">Rechazadas</button>
+            <button onclick="filterMyPublications('pendiente')" id="my-tab-pendiente"
+                class="tab-inactive px-6 py-3 rounded-t-xl font-bold text-sm transition-all">Pendientes</button>
+            <button onclick="filterMyPublications('proceso')" id="my-tab-proceso"
+                class="tab-inactive px-6 py-3 rounded-t-xl font-bold text-sm transition-all">En Proceso</button>
+            <button onclick="filterMyPublications('completado')" id="my-tab-completado"
+                class="tab-inactive px-6 py-3 rounded-t-xl font-bold text-sm transition-all">Completadas</button>
+        </div>
+
+        <!-- Grid de publicaciones del usuario -->
+        <div id="my-publications-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        </div>
+
+        <div id="my-no-publications" class="hidden text-center py-16 animate-card">
+            <div class="bg-white w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
+                <span class="text-3xl">📭</span>
+            </div>
+            <p class="text-slate-500">No tienes publicaciones en esta categoría</p>
+            <a href="registro.html" class="inline-block mt-3 text-[#78C043] font-medium hover:underline">Subir
+                mi primer material</a>
+        </div>
+    </div>
+
+    <!-- ==================== PÁGINA: MIS COMPRAS ==================== -->
+    <div id="my-purchases-page" class="page-hidden page-transition max-w-7xl mx-auto px-6 py-8">
+        <div class="mb-8 animate-card" style="animation-delay: 0.1s;">
+            <h2 class="text-2xl font-bold text-[#1a2b4b] mb-1">Mis Compras</h2>
+            <p class="text-slate-500 text-sm">Historial de materiales adquiridos</p>
+        </div>
+
+        <!-- Resumen de compras -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8 animate-card" style="animation-delay: 0.15s;">
+            <div class="bg-gradient-to-br from-[#1a2b4b] to-[#2d4563] rounded-2xl p-5 text-white shadow-lg">
+                <p class="text-sm opacity-80">Total gastado</p>
+                <p class="text-2xl font-bold mt-1" id="total-spent">$0</p>
+            </div>
+            <div class="bg-white rounded-2xl p-5 shadow-md border border-slate-100">
+                <p class="text-sm text-slate-500">Compras realizadas</p>
+                <p class="text-2xl font-bold text-[#1a2b4b] mt-1" id="total-purchases-count">0</p>
+            </div>
+            <div class="bg-white rounded-2xl p-5 shadow-md border border-slate-100">
+                <p class="text-sm text-slate-500">En proceso</p>
+                <p class="text-2xl font-bold text-[#1a2b4b] mt-1" id="pending-purchases-count">0</p>
+            </div>
+        </div>
+
+        <!-- Lista de compras -->
+        <div id="purchases-list-container"
+            class="bg-white rounded-2xl shadow-md border border-slate-100 overflow-hidden animate-card"
+            style="animation-delay: 0.2s;">
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-slate-50 border-b border-slate-200">
+                        <tr>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                Producto</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                Fecha</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                Total</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                Estado</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                Vendedor</th>
+                        </tr>
+                    </thead>
+                    <tbody id="purchases-table-body" class="divide-y divide-slate-100">
+                    </tbody>
+                </table>
+            </div>
+            <div id="no-purchases" class="hidden text-center py-12">
+                <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <span class="text-2xl">🛍️</span>
+                </div>
+                <p class="text-slate-400">No has realizado compras aún</p>
+                <a href="#" onclick="showHomePage(); return false;"
+                    class="inline-block mt-2 text-[#78C043] text-sm font-medium hover:underline">Explorar materiales</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Editar Publicación -->
+    <div id="edit-publication-modal"
+        class="hidden fixed inset-0 z-[999999] flex items-center justify-center bg-slate-900/50 transition-all overflow-auto p-4">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg animate-card">
+            <div class="bg-[#1a2b4b] p-5 flex justify-between items-center">
+                <h2 class="text-white text-xl font-bold">Editar Publicacion</h2>
+                <button onclick="closeEditModal()" class="text-white/70 hover:text-white text-2xl">&times;</button>
+            </div>
+            <div class="p-6 space-y-4">
+                <div>
+                    <label for="edit-title" class="block text-sm font-medium text-slate-600">Titulo</label>
+                    <input type="text" id="edit-title" class="w-full mt-1 p-3 border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:border-[#78C043]" placeholder="Titulo de la publicacion" />
+                </div>
+                <div>
+                    <label for="edit-price" class="block text-sm font-medium text-slate-600">Precio ($/kg)</label>
+                    <input type="number" step="0.01" id="edit-price" class="w-full mt-1 p-3 border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:border-[#78C043]" placeholder="Ej: 12.50" />
+                </div>
+                <div>
+                    <label for="edit-qty" class="text-sm font-bold text-slate-600">Cantidad</label>
+                    <input type="number" id="edit-qty" class="w-full mt-1 p-3 border border-slate-200 rounded-xl bg-slate-50" placeholder="Cantidad" />
+                </div>
+                <div>
+                    <label for="edit-weight" class="text-sm font-bold text-slate-600">Peso Total (kg)</label>
+                    <input type="number" id="edit-weight" class="w-full mt-1 p-3 border border-slate-200 rounded-xl bg-slate-50" placeholder="Peso total (kg)" />
+                </div>
+                <div>
+                    <label class="text-sm font-bold text-slate-600">Descripcion Tecnica</label>
+                    <textarea id="edit-description" rows="2"
+                        class="w-full mt-1 p-3 border border-slate-200 rounded-xl bg-slate-50"></textarea>
+                </div>
+                <div id="edit-comment-container" class="hidden bg-amber-50 border border-amber-200 p-3 rounded-xl mt-4">
+                    <label class="text-sm font-bold text-amber-900">Comentario para Calidad</label>
+                    <textarea id="edit-comment" rows="2" class="w-full mt-1 p-2 border border-amber-300 rounded-lg bg-white text-sm" placeholder="Justificacion de los ajustes..."></textarea>
+                </div>
+                <div class="flex gap-3 pt-4">
+                    <button onclick="saveEditPublication()"
+                        class="flex-1 bg-[#78C043] text-white py-3 rounded-xl font-bold">Guardar Cambios</button>
+                    <button onclick="closeEditModal()"
+                        class="flex-1 bg-slate-200 text-slate-600 py-3 rounded-xl font-bold">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Detalles y Gestión de Solicitud de Compra -->
+    <div id="request-details-modal" class="hidden fixed inset-0 z-[999999] flex items-center justify-center bg-slate-900/50 transition-all overflow-auto p-4">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-2xl animate-card overflow-hidden">
+            <div class="bg-[#1a2b4b] p-5 flex justify-between items-center text-white">
+                <div>
+                    <h2 class="text-xl font-bold flex items-center gap-2">
+                        <span id="modal-req-icon">🛒</span> Solicitud de Compra <span id="modal-req-id">#--</span>
+                    </h2>
+                    <p class="text-xs text-[#78C043] font-medium" id="modal-req-subtitle">Negociación y Estado de Transacción</p>
+                </div>
+                <button onclick="closeRequestDetailsModal()" class="text-white/70 hover:text-white text-2xl">&times;</button>
+            </div>
+            
+            <div class="p-6 space-y-6 max-h-[80vh] overflow-y-auto" id="request-modal-body">
+                <!-- Se llena dinámicamente en JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Matriz Bubble -->
+    <div id="matriz-bubble" class="fixed bottom-6 right-6 z-[9999] animate-card">
+        <div
+            class="bg-gradient-to-br from-[#1a2b4b] to-[#2d4563] text-white rounded-xl shadow-2xl p-3 border border-[#78C043]/30 max-w-[260px]">
+            <div class="flex items-start justify-between gap-2">
+                <div>
+                    <h3 id="matriz-bubble-title" class="font-bold text-sm text-[#78C043]">Modo Matriz Desactivado</h3>
+                    <p id="matriz-bubble-text" class="text-xs text-slate-200">Presiona <span class="font-mono">Q +
+                            A</span> para activar</p>
+                </div>
+                <button id="matriz-toggle-btn"
+                    class="text-xs bg-white/20 hover:bg-white/35 px-2 py-1 rounded">Activar</button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="text-center py-6 text-slate-400 text-xs">
+        Universidad Tecnologica de Tijuana - ECOBOROS - Marketplace de Residuos Industriales
+    </footer>
+
+    <script src="empresa.js"></script>
+</body>
+
 </html>
+    <!-- MODAL: Correccin Avanzada de Publicacin Rechazada -->
+    <div id="advanced-correction-modal" class="hidden fixed inset-0 z-[999999] flex items-center justify-center bg-slate-900/50 overflow-y-auto p-4">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-2xl mx-auto max-h-[90vh] overflow-y-auto animate-fade-up">
+            <div class="sticky top-0 bg-white border-b border-slate-100 px-6 py-4 flex justify-between items-center">
+                <h3 class="text-xl font-bold text-slate-800">?? Correccin de Publicacin Rechazada</h3>
+                <button onclick="closeAdvancedCorrectionModal()" class="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
+            </div>
+            <div class="p-6">
+                <!-- Mostraremos aqu la razn del rechazo -->
+                <div class="bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl mb-6">
+                    <h4 class="font-bold flex items-center gap-2"><span class="text-xl">?</span> Publicacin Rechazada por Calidad</h4>
+                    <p class="text-sm mt-1" id="ac-rejection-reason">Buscando el motivo del rechazo...</p>
+                </div>
+                
+                <form id="advanced-correction-form" class="space-y-4">
+                    <input type="hidden" id="ac-waste-id">
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="col-span-2">
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Ttulo</label>
+                            <input type="text" id="ac-title" class="w-full p-3 border border-slate-200 rounded-xl" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Categora</label>
+                            <select id="ac-category" class="w-full p-3 border border-slate-200 rounded-xl" disabled>
+                                <option value="Metales">?? Metales</option>
+                                <option value="Plsticos">??? Plsticos</option>
+                                <option value="Cartn">?? Cartn</option>
+                                <option value="Papel">?? Papel</option>
+                                <option value="Electrnicos">?? Electrnicos</option>
+                                <option value="Maderas">?? Maderas</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Precio Unitario ($)</label>
+                            <input type="number" step="0.01" id="ac-price" class="w-full p-3 border border-slate-200 rounded-xl" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Peso Decimal (kg)</label>
+                            <input type="number" step="0.01" id="ac-weight" class="w-full p-3 border border-slate-200 rounded-xl" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Cantidad Visual (Ej. 5 Ton)</label>
+                            <input type="text" id="ac-qty" class="w-full p-3 border border-slate-200 rounded-xl">
+                        </div>
+                        <div class="col-span-2">
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Descripcin Tcnica</label>
+                            <textarea id="ac-description" rows="3" class="w-full p-3 border border-slate-200 rounded-xl"></textarea>
+                        </div>
+                        
+                        <!-- Uploaders de imgenes/pdfs nuevos -->
+                        <div class="col-span-2 mt-2">
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Anexar Nuevas Evidencias (Opcional, reemplaza las anteriores)</label>
+                            <input type="file" id="ac-files" multiple class="w-full p-3 border border-slate-200 rounded-xl text-sm" accept="image/*,.pdf">
+                            <p class="text-xs text-slate-500 mt-1">Si dejas este campo vaco, se conservarn las imgenes y documentos que ya enviaste previamente.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex gap-3 mt-6">
+                        <button type="button" onclick="submitAdvancedCorrection()" id="btn-submit-ac" class="flex-1 bg-[#78C043] text-white py-3 rounded-xl font-medium">?? Guardar y Reenviar a Revisin</button>
+                        <button type="button" onclick="closeAdvancedCorrectionModal()" class="px-6 py-3 bg-slate-100 text-slate-700 rounded-xl font-medium">Cancelar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+<!-- MODAL: Lectura Sólo de Publicación (Revisión / Aprobada) -->
+<div id="read-only-publication-modal" class="hidden fixed inset-0 z-[999999] flex items-center justify-center bg-slate-900/50 overflow-y-auto p-4">
+    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-2xl mx-auto max-h-[90vh] overflow-y-auto animate-fade-up">
+        <div class="sticky top-0 bg-white border-b border-slate-100 px-6 py-4 flex justify-between items-center">
+            <h3 class="text-xl font-bold text-slate-800">📖 Detalle de Publicación (Solo Lectura)</h3>
+            <button onclick="closeReadOnlyPublicationModal()" class="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
+        </div>
+
+        <div class="p-6 space-y-4">
+            <input type="hidden" id="ro-waste-id">
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="col-span-2">
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Título</label>
+                    <input type="text" id="ro-title" class="w-full p-3 border border-slate-200 rounded-xl bg-slate-50" disabled>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Categoría</label>
+                    <select id="ro-category" class="w-full p-3 border border-slate-200 rounded-xl bg-slate-50" disabled></select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Precio Unitario ($)</label>
+                    <input type="number" step="0.01" id="ro-price" class="w-full p-3 border border-slate-200 rounded-xl bg-slate-50" disabled>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Peso Decimal (kg)</label>
+                    <input type="number" step="0.01" id="ro-weight" class="w-full p-3 border border-slate-200 rounded-xl bg-slate-50" disabled>
+                </div>
+
+                <div class="col-span-2">
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Descripción Técnica</label>
+                    <textarea id="ro-description" rows="3" class="w-full p-3 border border-slate-200 rounded-xl bg-slate-50" disabled></textarea>
+                </div>
+            </div>
+
+            <div class="flex justify-end">
+                <button type="button" onclick="closeReadOnlyPublicationModal()" class="px-6 py-3 bg-slate-100 text-slate-700 rounded-xl font-medium">
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
