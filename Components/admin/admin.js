@@ -3,115 +3,11 @@
 // ============================================
 
 // ========== DATOS ==========
-let companies = [
-    { id: 1, name: "Reciclados del Norte S.A. de C.V.", rfc: "RDN123456XYZ", phone: "(664) 123-4567", email: "contacto@recicladosnorte.com", address: "Av. Industrial 123, Otay, Tijuana", status: "active", createdAt: "2024-01-15", totalPurchases: 12, totalSpent: 45800, lastPurchase: "2024-03-15" },
-    { id: 2, name: "Aluminios del Pacífico S.A.", rfc: "ADP789012ABC", phone: "(664) 234-5678", email: "ventas@aluminios.com", address: "Blvd. Pacífico 456, El Florido", status: "active", createdAt: "2024-01-20", totalPurchases: 8, totalSpent: 32450, lastPurchase: "2024-03-14" },
-    { id: 3, name: "Maderas del Noroeste S.A.", rfc: "MDN345678DEF", phone: "(664) 345-6789", email: "info@maderasnoroeste.com", address: "Calle Roble 789, La Mesa", status: "active", createdAt: "2024-02-01", totalPurchases: 5, totalSpent: 18900, lastPurchase: "2024-03-10" },
-    { id: 4, name: "Plásticos Reciclados BC", rfc: "PRB901234GHI", phone: "(664) 456-7890", email: "ventas@plasticosbc.com", address: "Av. Reciclaje 321, Rosarito", status: "suspended", createdAt: "2024-02-10", totalPurchases: 3, totalSpent: 5200, lastPurchase: "2024-02-28" }
-];
+const API_BASE = 'http://localhost:8000/api-ecoboros-v1';
 
-let publications = [
-    { id: 1, title: "Recortes de Aluminio 6061", category: "Metales", location: "El Florido", qty: "2.5 Ton", weightKg: 2500, price: "$28.50/kg", date: "2023-10-05", status: "approved", company: "Aluminios del Pacífico S.A.", description: "Recortes de aluminio grado 6061, libres de impurezas. Material de calidad industrial, perfecto para reciclaje y reutilización.", images: ["🔩"], customImage: "../../Public/Imagenes/aluminio.jpeg", documentation: [{ title: "Ficha Técnica", text: "Aleación 6061-T6; ideal para mecanizado y soldadura de alta precisión." }, { title: "Especificaciones Químicas", text: "Aluminio: 95-98%, Magnesio: 0.8-1.2%, Silicio: 0.4-0.8%, Cobre: 0.15-0.4%, Cromo: 0.04-0.35%" }] },
-    { id: 2, title: "Bidones HDPE Tricapa", category: "Plásticos", location: "Otay Industrial", qty: "850 Pzas", weightKg: 850, price: "$15.00/pza", date: "2023-10-01", status: "approved", company: "Reciclados del Norte S.A. de C.V.", description: "Bidones industriales de HDPE de alta densidad, limpios y listos para reciclaje.", images: ["🛢️"], customImage: null, documentation: [{ title: "Ficha técnica", text: "Bidones HDPE de alta resistencia; capacidad 220 L; aptos para líquidos industriales no corrosivos." }] },
-    { id: 3, title: "Pallets de Pino (Reparables)", category: "Maderas", location: "Pacifico", qty: "200 Uds", weightKg: 4000, price: "$45.00/ud", date: "2023-09-28", status: "pending", company: "Maderas del Noroeste S.A.", description: "Pallets de pino en buen estado, reparables.", images: ["🪵"], customImage: "../../Public/Imagenes/madera.png", documentation: [] },
-    { id: 4, title: "Pacas de Cartón Corrugado", category: "Cartón", location: "La Mesa", qty: "5 Ton", weightKg: 5000, price: "$3.20/kg", date: "2023-10-10", status: "pending", company: "Cartones del Valle", description: "Cartón corrugado reciclado, densidad media, buena resistencia a compresión vertical.", images: ["📦"], customImage: "../../Public/Imagenes/cartoncorrugado.png", documentation: [] },
-    { id: 5, title: "Botellas PET Cristal", category: "Plásticos", location: "Rosarito", qty: "1 Ton", weightKg: 1000, price: "$8.00/kg", date: "2023-10-02", status: "approved", company: "Plásticos Reciclados BC", description: "PET transparente de grado alimenticio triturado, limpio y sin etiquetas.", images: ["🛢️"], customImage: "../../Public/Imagenes/BotellasPetCristal.png", documentation: [] },
-    { id: 6, title: "Perfiles de Aluminio", category: "Metales", location: "Tijuana", qty: "500 kg", weightKg: 500, price: "$32.00/kg", date: "2023-10-20", status: "pending", company: "Aluminios del Pacífico S.A.", description: "Perfiles extruidos de aluminio, sección rectangular, superficie limpia.", images: ["🔩"], customImage: "../../Public/Imagenes/PerfilesAluminio.png", documentation: [] }
-];
-
-// MOVIMIENTOS MEJORADOS - con información más detallada
-let transactions = [
-    { 
-        id: 1, 
-        material: "Bidones HDPE Tricapa", 
-        quantity: "500 Pzas", 
-        total: 7500, 
-        date: "2024-03-15", 
-        status: "completed",
-        seller: "Reciclados del Norte S.A. de C.V.",
-        sellerContact: "contacto@recicladosnorte.com",
-        sellerPhone: "(664) 123-4567",
-        buyer: "Plásticos Industriales SA",
-        buyerContact: "compras@plasticosindustriales.com",
-        buyerPhone: "(664) 987-6543",
-        paymentMethod: "Transferencia Bancaria",
-        trackingNumber: "ECOB-2024-001",
-        deliveryAddress: "Av. Industrial 456, Parque Industrial, Tijuana",
-        notes: "Material entregado en buen estado. Pago confirmado."
-    },
-    { 
-        id: 2, 
-        material: "Recortes de Aluminio 6061", 
-        quantity: "1.2 Ton", 
-        total: 34200, 
-        date: "2024-03-14", 
-        status: "completed",
-        seller: "Aluminios del Pacífico S.A.",
-        sellerContact: "ventas@aluminios.com",
-        sellerPhone: "(664) 234-5678",
-        buyer: "Fundiciones del Norte",
-        buyerContact: "compras@fundicionesnorte.com",
-        buyerPhone: "(664) 555-1234",
-        paymentMethod: "Transferencia Bancaria",
-        trackingNumber: "ECOB-2024-002",
-        deliveryAddress: "Blvd. Fundidores 789, Zona Industrial, Tijuana",
-        notes: "Material de alta pureza. Se entregó certificado de calidad."
-    },
-    { 
-        id: 3, 
-        material: "Pallets de Pino", 
-        quantity: "80 Uds", 
-        total: 3600, 
-        date: "2024-03-12", 
-        status: "completed",
-        seller: "Maderas del Noroeste S.A.",
-        sellerContact: "info@maderasnoroeste.com",
-        sellerPhone: "(664) 345-6789",
-        buyer: "Logística Express",
-        buyerContact: "logistica@express.com",
-        buyerPhone: "(664) 444-5678",
-        paymentMethod: "Efectivo",
-        trackingNumber: "ECOB-2024-003",
-        deliveryAddress: "Calle Transporte 123, Zona Logistic, Tijuana",
-        notes: "Entrega en sitio. Pago contra entrega."
-    },
-    { 
-        id: 4, 
-        material: "Perfiles de Aluminio", 
-        quantity: "800 kg", 
-        total: 25600, 
-        date: "2024-03-08", 
-        status: "pending",
-        seller: "Aluminios del Pacífico S.A.",
-        sellerContact: "ventas@aluminios.com",
-        sellerPhone: "(664) 234-5678",
-        buyer: "Industrias del Metal",
-        buyerContact: "compras@industriasmetal.com",
-        buyerPhone: "(664) 777-8901",
-        paymentMethod: "Crédito (30 días)",
-        trackingNumber: "ECOB-2024-004",
-        deliveryAddress: "Av. Metalurgia 456, Zona Industrial, Tijuana",
-        notes: "Pendiente de confirmación de pago."
-    },
-    { 
-        id: 5, 
-        material: "Botellas PET Cristal", 
-        quantity: "500 kg", 
-        total: 4000, 
-        date: "2024-03-10", 
-        status: "completed",
-        seller: "Plásticos Reciclados BC",
-        sellerContact: "ventas@plasticosbc.com",
-        sellerPhone: "(664) 456-7890",
-        buyer: "EcoPlast Recicladores",
-        buyerContact: "compras@ecoplast.com",
-        buyerPhone: "(664) 333-4567",
-        paymentMethod: "Transferencia",
-        trackingNumber: "ECOB-2024-005",
-        deliveryAddress: "Calle Reciclaje 789, Rosarito",
-        notes: "Material clasificado por colores. Factura electrónica enviada."
-    }
-];
+let companies = [];
+let publications = [];
+let transactions = [];
 
 let reports = [
     { id: 1, type: "publicacion", description: "La publicación muestra un peso incorrecto del material, dice 500kg pero en realidad son 50kg según las fotos adjuntas.", user: "usuario@ejemplo.com", company: "Metales del Norte", status: "pending", date: "2024-03-16", publicationId: 1, publicationTitle: "Recortes de Aluminio 6061" },
@@ -182,6 +78,94 @@ function closeConfirmModal() {
 
 document.getElementById('confirm-yes').onclick = () => { if (confirmCallback) confirmCallback(); };
 document.getElementById('confirm-no').onclick = closeConfirmModal;
+
+// ========== FETCH DATA FROM API ==========
+async function fetchCompanies() {
+    try {
+        const res = await fetch(`${API_BASE}/users/`);
+        if (!res.ok) throw new Error('Network response was not ok');
+        const data = await res.json();
+        companies = data.map(u => ({
+            id: u.user_id,
+            name: u.company_name,
+            rfc: u.rfc || 'N/A',
+            phone: u.contact_phone || 'N/A',
+            email: u.contact_email || 'N/A',
+            address: 'No registrada',
+            status: u.is_active ? 'active' : 'suspended',
+            createdAt: 'N/A',
+            totalPurchases: 0,
+            totalSpent: 0,
+            lastPurchase: 'N/A'
+        }));
+        if (currentView === 'companies') filterCompanies();
+    } catch (e) {
+        console.error('Error fetching companies:', e);
+        showNotification('Error al cargar empresas', 'warning');
+    }
+}
+
+async function fetchPublications() {
+    try {
+        const res = await fetch(`${API_BASE}/wastes/`);
+        if (!res.ok) throw new Error('Network response was not ok');
+        const data = await res.json();
+        publications = data.map(w => ({
+            id: w.waste_id,
+            title: w.title,
+            category: w.category_name_display || 'Otros',
+            location: 'No especificada',
+            qty: w.quantity || '0',
+            weightKg: parseFloat(w.weight_decimal) || 0,
+            price: `$${w.unit_price}/kg`,
+            date: w.generation_date,
+            status: w.status_name ? (w.status_name.toLowerCase() === 'publicado' || w.status_name.toLowerCase() === 'aprobado' || w.status_name.toLowerCase() === 'revision' ? 'approved' : w.status_name.toLowerCase() === 'pendiente' ? 'pending' : 'rejected') : 'pending',
+            company: w.publisher_name || 'Desconocido',
+            description: w.technical_description || '',
+            images: ["📦"],
+            customImage: w.first_image_url || null,
+            documentation: w.evidence_files ? w.evidence_files.map(ev => ({ title: 'Documento', text: ev.file_type })) : []
+        }));
+        if (currentView === 'publications') filterPublications();
+    } catch (e) {
+        console.error('Error fetching publications:', e);
+        showNotification('Error al cargar publicaciones', 'warning');
+    }
+}
+
+async function fetchTransactions() {
+    try {
+        const res = await fetch(`${API_BASE}/purchase-requests/`);
+        if (!res.ok) throw new Error('Network response was not ok');
+        const data = await res.json();
+        transactions = data.map(t => ({
+            id: t.request_id,
+            material: t.product_name || 'Material',
+            quantity: t.quantity || '0',
+            total: t.total_amount || 0,
+            date: t.date || 'N/A',
+            status: t.status_name ? (t.status_name.toLowerCase() === 'completado' ? 'completed' : 'pending') : 'pending',
+            seller: t.seller_name || 'Vendedor',
+            sellerContact: 'N/A',
+            sellerPhone: 'N/A',
+            buyer: t.buyer_name || 'Comprador',
+            buyerContact: 'N/A',
+            buyerPhone: 'N/A',
+            paymentMethod: 'Plataforma',
+            trackingNumber: `ECOB-2024-${t.request_id.toString().padStart(3, '0')}`,
+            deliveryAddress: 'N/A',
+            notes: t.negotiation_comment || ''
+        }));
+        if (currentView === 'transactions') filterTransactions();
+    } catch (e) {
+        console.error('Error fetching transactions:', e);
+        showNotification('Error al cargar transacciones', 'warning');
+    }
+}
+
+async function fetchAllData() {
+    await Promise.all([fetchCompanies(), fetchPublications(), fetchTransactions()]);
+}
 
 // ========== NAVEGACIÓN ==========
 function switchView(view) { 
@@ -258,15 +242,43 @@ function closePublicationDetailModal() {
     document.body.classList.remove('overflow-hidden'); 
 }
 
-function approvePublication(id) { 
+async function approvePublication(id) { 
     const pub = publications.find(p => p.id === id); 
-    if (pub) { pub.status = 'approved'; showNotification(`✅ Publicación "${pub.title}" aprobada`, 'success'); filterPublications(); } 
+    if (pub) { 
+        try {
+            const res = await fetch(`${API_BASE}/wastes/${id}/`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: 2 }) // 2 = Aprobado
+            });
+            if (!res.ok) throw new Error('Error al aprobar');
+            showNotification(`✅ Publicación "${pub.title}" aprobada`, 'success'); 
+            fetchPublications();
+        } catch (e) {
+            console.error(e);
+            showNotification('Error al aprobar publicación', 'warning');
+        }
+    } 
 }
 
 function rejectPublication(id) { 
-    confirmCallback = () => { 
+    confirmCallback = async () => { 
         const pub = publications.find(p => p.id === id); 
-        if (pub) { pub.status = 'rejected'; showNotification(`❌ Publicación "${pub.title}" rechazada`, 'warning'); filterPublications(); } 
+        if (pub) { 
+            try {
+                const res = await fetch(`${API_BASE}/wastes/${id}/`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: 3 }) // 3 = Rechazado
+                });
+                if (!res.ok) throw new Error('Error al rechazar');
+                showNotification(`❌ Publicación "${pub.title}" rechazada`, 'warning'); 
+                fetchPublications();
+            } catch (e) {
+                console.error(e);
+                showNotification('Error al rechazar publicación', 'warning');
+            }
+        } 
         closeConfirmModal(); 
     }; 
     openConfirmModal('Rechazar Publicación', '¿Estás seguro?'); 
@@ -298,43 +310,52 @@ function editPublication(id) {
     } 
 }
 
-function savePublication(e) { 
+async function savePublication(e) { 
     e.preventDefault(); 
     const id = document.getElementById('pub-id').value; 
-    const customImageValue = document.getElementById('pub-custom-image').value; 
     const data = { 
         title: document.getElementById('pub-title').value, 
-        category: document.getElementById('pub-category').value, 
-        location: document.getElementById('pub-location').value, 
-        qty: document.getElementById('pub-qty').value, 
-        weightKg: parseInt(document.getElementById('pub-weight').value), 
-        price: document.getElementById('pub-price').value, 
-        status: document.getElementById('pub-status').value, 
-        company: document.getElementById('pub-company').value, 
-        description: document.getElementById('pub-description').value, 
-        customImage: customImageValue ? customImageValue : null, 
-        date: new Date().toISOString().split('T')[0], 
-        images: [], 
-        documentation: [] 
+        category_name: document.getElementById('pub-category').value, 
+        quantity: document.getElementById('pub-qty').value, 
+        weight_decimal: document.getElementById('pub-weight').value || 0, 
+        unit_price: document.getElementById('pub-price').value.replace(/[^0-9.]/g, '') || 0, 
+        technical_description: document.getElementById('pub-description').value, 
+        generation_date: new Date().toISOString().split('T')[0],
+        availability_date: new Date().toISOString().split('T')[0],
     }; 
-    if (id) { 
-        const idx = publications.findIndex(p => p.id === parseInt(id)); 
-        if (idx !== -1) publications[idx] = { ...publications[idx], ...data }; 
-        showNotification('Publicación actualizada', 'success'); 
-    } else { 
-        const newId = Math.max(...publications.map(p => p.id), 0) + 1; 
-        publications.push({ id: newId, ...data }); 
-        showNotification('Publicación creada', 'success'); 
-    } 
-    closePublicationModal(); 
-    filterPublications(); 
+    if (!id) {
+        data.publisher_id = 1; // Default to first active user if needed by API
+    }
+    
+    try {
+        const url = id ? `${API_BASE}/wastes/${id}/` : `${API_BASE}/wastes/`;
+        const method = id ? 'PATCH' : 'POST';
+        const res = await fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        if (!res.ok) throw new Error('Error saving');
+        showNotification(id ? 'Publicación actualizada' : 'Publicación creada', 'success'); 
+        fetchPublications();
+        closePublicationModal();
+    } catch (e) {
+        console.error(e);
+        showNotification('Error al guardar publicación', 'warning');
+    }
 }
 
 function deletePublication(id) { 
-    confirmCallback = () => { 
-        publications = publications.filter(p => p.id !== id); 
-        filterPublications(); 
-        showNotification('Publicación eliminada', 'success'); 
+    confirmCallback = async () => { 
+        try {
+            const res = await fetch(`${API_BASE}/wastes/${id}/`, { method: 'DELETE' });
+            if (!res.ok) throw new Error('Error al eliminar');
+            showNotification('Publicación eliminada', 'success'); 
+            fetchPublications();
+        } catch (e) {
+            console.error(e);
+            showNotification('Error al eliminar publicación', 'warning');
+        }
         closeConfirmModal(); 
     }; 
     openConfirmModal('Eliminar Publicación', 'Esta acción no se puede deshacer.'); 
@@ -389,38 +410,50 @@ function editCompany(id) {
     } 
 }
 
-function saveCompany(e) { 
+async function saveCompany(e) { 
     e.preventDefault(); 
     const id = document.getElementById('company-id').value; 
     const data = { 
-        name: document.getElementById('company-name').value, 
+        company_name: document.getElementById('company-name').value, 
         rfc: document.getElementById('company-rfc').value, 
-        phone: document.getElementById('company-phone').value, 
-        email: document.getElementById('company-email').value, 
-        address: document.getElementById('company-address').value, 
-        status: document.getElementById('company-status').value, 
-        totalPurchases: 0, 
-        totalSpent: 0, 
-        createdAt: new Date().toISOString().split('T')[0] 
+        contact_phone: document.getElementById('company-phone').value, 
+        contact_email: document.getElementById('company-email').value, 
+        is_active: document.getElementById('company-status').value === 'active',
+        role: 1 // Empresa
     }; 
-    if (id) { 
-        const idx = companies.findIndex(c => c.id === parseInt(id)); 
-        if (idx !== -1) companies[idx] = { ...companies[idx], ...data }; 
-        showNotification('Empresa actualizada', 'success'); 
-    } else { 
-        const newId = Math.max(...companies.map(c => c.id), 0) + 1; 
-        companies.push({ id: newId, ...data }); 
-        showNotification('Empresa creada', 'success'); 
-    } 
-    closeCompanyModal(); 
-    filterCompanies(); 
+    
+    try {
+        const url = id ? `${API_BASE}/users/${id}/` : `${API_BASE}/users/`;
+        const method = id ? 'PATCH' : 'POST';
+        // Mock password if creating
+        if (!id) data.password = "eco123";
+        
+        const res = await fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        if (!res.ok) throw new Error('Error saving');
+        showNotification(id ? 'Empresa actualizada' : 'Empresa creada', 'success'); 
+        fetchCompanies();
+        closeCompanyModal();
+    } catch (e) {
+        console.error(e);
+        showNotification('Error al guardar empresa', 'warning');
+    }
 }
 
 function deleteCompany(id) { 
-    confirmCallback = () => { 
-        companies = companies.filter(c => c.id !== id); 
-        filterCompanies(); 
-        showNotification('Empresa eliminada', 'success'); 
+    confirmCallback = async () => { 
+        try {
+            const res = await fetch(`${API_BASE}/users/${id}/`, { method: 'DELETE' });
+            if (!res.ok) throw new Error('Error al eliminar');
+            showNotification('Empresa eliminada', 'success'); 
+            fetchCompanies();
+        } catch (e) {
+            console.error(e);
+            showNotification('Error al eliminar empresa', 'warning');
+        }
         closeConfirmModal(); 
     }; 
     openConfirmModal('Eliminar Empresa', '¿Estás seguro?'); 
@@ -633,7 +666,11 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('admin-name').textContent = user.name; 
     } else { 
         window.location.href = '../../Components/login/login.html'; 
-    } 
+    }
+    
+    // Load data from API
+    fetchAllData();
+    
     switchView('publications'); 
     updateMatrizBubble(); 
     renderReports(); 
