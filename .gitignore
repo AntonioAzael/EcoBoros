@@ -1,0 +1,6 @@
+# Ignorar cache
+.cache/
+node_modules/
+dist/
+# Ignorar archivos de configuración de IDE
+.vscode/

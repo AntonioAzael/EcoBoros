@@ -57,7 +57,13 @@ const categoryStyles = {
     "Cartón": { color: "bg-amber-500", icon: "📦" },
     "Papel": { color: "bg-slate-400", icon: "📄" },
     "Maderas": { color: "bg-[#795548]", icon: "🪵" },
-    "Electrónicos": { color: "bg-orange-500", icon: "🔌" }
+    "Electrónicos": { color: "bg-orange-500", icon: "🔌" },
+    "Plasticos": { color: "bg-blue-500", icon: "🛢️", hoverGlow: "hover:border-blue-500 hover:shadow-blue-500/30", btnHover: "group-hover:bg-blue-500 group-hover:border-blue-500 group-hover:text-white" },
+    "Cartones": { color: "bg-amber-500", icon: "📦", hoverGlow: "hover:border-amber-500 hover:shadow-amber-500/30", btnHover: "group-hover:bg-amber-500 group-hover:border-amber-500 group-hover:text-white" },
+    "Carton": { color: "bg-amber-500", icon: "📦", hoverGlow: "hover:border-amber-500 hover:shadow-amber-500/30", btnHover: "group-hover:bg-amber-500 group-hover:border-amber-500 group-hover:text-white" },
+    "Papeles": { color: "bg-slate-400", icon: "📄", hoverGlow: "hover:border-slate-400 hover:shadow-slate-400/30", btnHover: "group-hover:bg-slate-400 group-hover:border-slate-400 group-hover:text-white" },
+    "Electronicos": { color: "bg-orange-500", icon: "🔌", hoverGlow: "hover:border-orange-500 hover:shadow-orange-500/30", btnHover: "group-hover:bg-orange-500 group-hover:border-orange-500 group-hover:text-white" },
+
 };
 
 const LOCAL_STORAGE_PUBLICATIONS_KEY = 'ecoboros_publications';
@@ -134,7 +140,7 @@ function renderProductDetailFromAPI(waste) {
 
     const thumbnailsHtml = imageEvidences.slice(0, 4).map(ev =>
         `<div class="w-16 h-16 bg-slate-100 rounded-lg overflow-hidden cursor-pointer hover:ring-2 hover:ring-[#78C043] transition-all">
-            <img src="${ev.file_url}" class="w-full h-full object-cover" onerror="this.style.display='none'">
+            <img src="${ev.file_url}" class="w-full h-full object-cover" onerror="this.style.display='none'; this.parentElement.innerHTML='<span class=\'text-7xl group-hover:scale-110 transition-transform duration-500 opacity-90 flex items-center justify-center w-full h-full\'>${style.icon}</span>';">
         </div>`
     ).join('');
 
@@ -314,7 +320,7 @@ function renderProductDetail(productId) {
                     <div class="flex gap-2 mt-4">
                         <div class="w-16 h-16 bg-slate-100 rounded-lg flex items-center justify-center cursor-pointer hover:bg-slate-200 transition-colors">
                             ${hasCustomImage ? 
-                                `<img src="${product.customImage}" class="w-full h-full object-cover rounded-lg" onerror="this.style.display='none'">` : 
+                                `<img src="${product.customImage}" class="w-full h-full object-cover rounded-lg" onerror="this.style.display='none'; this.parentElement.innerHTML='<span class=\'text-7xl group-hover:scale-110 transition-transform duration-500 opacity-90 flex items-center justify-center w-full h-full\'>${style.icon}</span>';">` : 
                                 `<span class="text-2xl">${style.icon}</span>`
                             }
                         </div>

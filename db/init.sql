@@ -29,7 +29,7 @@ CREATE TABLE users (
     role_id INT NOT NULL,
     company_name VARCHAR(150) NOT NULL,
     rfc VARCHAR(13) UNIQUE NULL, 
-    contact_email VARCHAR(100) NOT NULL,
+    contact_email VARCHAR(100) NOT NULL UNIQUE,
     contact_phone VARCHAR(20) NOT NULL,
     password VARCHAR(128) NULL,
     is_active BOOLEAN DEFAULT TRUE,    /* Lógica: Bandera para activar o desactivar cuentas de forma lógica */

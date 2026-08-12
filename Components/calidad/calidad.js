@@ -29,7 +29,13 @@ const categoryStyles = {
     "Cartón": { color: "bg-amber-500", icon: "📦", hoverGlow: "hover:border-amber-500" },
     "Papel": { color: "bg-slate-400", icon: "📄", hoverGlow: "hover:border-slate-400" },
     "Maderas": { color: "bg-[#795548]", icon: "🪵", hoverGlow: "hover:border-[#795548]" },
-    "Electrónicos": { color: "bg-orange-500", icon: "🔌", hoverGlow: "hover:border-orange-500" }
+    "Electrónicos": { color: "bg-orange-500", icon: "🔌", hoverGlow: "hover:border-orange-500" },
+    "Plasticos": { color: "bg-blue-500", icon: "🛢️", hoverGlow: "hover:border-blue-500 hover:shadow-blue-500/30", btnHover: "group-hover:bg-blue-500 group-hover:border-blue-500 group-hover:text-white" },
+    "Cartones": { color: "bg-amber-500", icon: "📦", hoverGlow: "hover:border-amber-500 hover:shadow-amber-500/30", btnHover: "group-hover:bg-amber-500 group-hover:border-amber-500 group-hover:text-white" },
+    "Carton": { color: "bg-amber-500", icon: "📦", hoverGlow: "hover:border-amber-500 hover:shadow-amber-500/30", btnHover: "group-hover:bg-amber-500 group-hover:border-amber-500 group-hover:text-white" },
+    "Papeles": { color: "bg-slate-400", icon: "📄", hoverGlow: "hover:border-slate-400 hover:shadow-slate-400/30", btnHover: "group-hover:bg-slate-400 group-hover:border-slate-400 group-hover:text-white" },
+    "Electronicos": { color: "bg-orange-500", icon: "🔌", hoverGlow: "hover:border-orange-500 hover:shadow-orange-500/30", btnHover: "group-hover:bg-orange-500 group-hover:border-orange-500 group-hover:text-white" },
+
 };
 
 // ========== FUNCIONES GENERALES ==========
@@ -488,7 +494,7 @@ function openReviewModal(id) {
             <div class="bg-slate-50 rounded-2xl p-5 border border-slate-200">
                 <div class="flex items-center gap-3 mb-4">
                     ${hasCustomImage ? 
-                        `<img src="${currentPublication.customImage}" class="w-16 h-16 rounded-lg object-cover" onerror="this.style.display='none'">` : 
+                        `<img src="${currentPublication.customImage}" class="w-16 h-16 rounded-lg object-cover" onerror="this.style.display='none'; this.parentElement.innerHTML='<span class=\'text-7xl group-hover:scale-110 transition-transform duration-500 opacity-90 flex items-center justify-center w-full h-full\'>${style.icon}</span>';">` : 
                         `<span class="text-4xl">${style.icon}</span>`
                     }
                     <div>
