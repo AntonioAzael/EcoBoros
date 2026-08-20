@@ -1,10 +1,21 @@
-# Ignorar cache
+# Ignorar dependencias y compilación de Frontend
 .cache/
+node_modules/
+dist/
+
+# Ignorar entorno virtual del Backend
+back/venv/
+back/env/
+back/ENV/
+
+# Ignorar base de datos SQLite local
+back/db.sqlite3
+
+# Ignorar archivos temporales y caché de Python
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
-node_modules/
-dist/
-# Ignorar archivos de configuración de IDE
+
+# Ignorar configuración del editor
 .vscode/
